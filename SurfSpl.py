@@ -8,8 +8,13 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Lin, gp_Sphere
 from OCC.Core.gp import gp_Mat, gp_GTrsf, gp_XYZ
 from OCC.Core.gp import gp_Trsf, gp_GTrsf
+from OCC.Core.TColgp import TColgp_Array2OfPnt
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
+from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
+from OCC.Core.GeomAPI import GeomAPI_Interpolate
+from OCC.Core.GeomAbs import GeomAbs_C2, GeomAbs_C0, GeomAbs_G1, GeomAbs_G2
 
 from base import plotocc
 
@@ -32,6 +37,23 @@ def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
     return ellips
 
 
+def spl_face(px, py, pz):
+    nx, ny = px.shape
+    pnt_2d = TColgp_Array2OfPnt(1, nx, 1, ny)
+    for row in range(pnt_2d.LowerRow(), pnt_2d.UpperRow() + 1):
+        for col in range(pnt_2d.LowerCol(), pnt_2d.UpperCol() + 1):
+            i, j = row - 1, col - 1
+            pnt = gp_Pnt(px[i, j], py[i, j], pz[i, j])
+            pnt_2d.SetValue(row, col, pnt)
+            #print (i, j, px[i, j], py[i, j], pz[i, j])
+
+    api = GeomAPI_PointsToBSplineSurface(pnt_2d, 3, 8, GeomAbs_G2, 0.001)
+    api.Interpolate(pnt_2d)
+    #surface = BRepBuilderAPI_MakeFace(curve, 1e-6)
+    # return surface.Face()
+    return BRepBuilderAPI_MakeFace(api.Surface(), 1e-6).Face()
+
+
 if __name__ == '__main__':
     obj = plotocc()
     obj.show_axs_pln(scale=20)
@@ -42,6 +64,14 @@ if __name__ == '__main__':
     axs = gp_Ax3(
         gp_Pnt(3, 0, 0), gp_Dir(1, 1, 1)
     )
-    obj.display.DisplayShape(gen_ellipsoid(axs), transparency=0.1)
+    #obj.display.DisplayShape(gen_ellipsoid(axs), transparency=0.1)
+
+    px = np.linspace(-1, 1, 10) * 100 / 2
+    py = np.linspace(-1, 1, 15) * 120 / 2
+    mesh = np.meshgrid(px, py)
+    surf = mesh[0]**2 / 100 + mesh[1]**2 / 1000
+    surf[5, 7] = 50
+    obj.display.DisplayShape(spl_face(*mesh, surf))
+
     obj.show_axs_pln(axs, scale=20)
     obj.show()
