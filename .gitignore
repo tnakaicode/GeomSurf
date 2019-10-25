@@ -1,0 +1,13 @@
+# VSCode
+.vscode/*
+
+# Build
+build/*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyc[cod]
+
+# Tmp
+tmp/*
