@@ -9,12 +9,15 @@ from OCC.Core.gp import gp_Lin, gp_Sphere
 from OCC.Core.gp import gp_Mat, gp_GTrsf, gp_XYZ
 from OCC.Core.gp import gp_Trsf, gp_GTrsf
 from OCC.Core.TColgp import TColgp_Array2OfPnt
+from OCC.Core.BRepFill import BRepFill_Filling
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
 from OCC.Core.GeomAbs import GeomAbs_C2, GeomAbs_C0, GeomAbs_G1, GeomAbs_G2
+from OCCUtils.Construct import make_n_sided, make_n_sections
+from OCCUtils.Construct import make_edge
 
 from base import plotocc
 
@@ -70,8 +73,28 @@ if __name__ == '__main__':
     py = np.linspace(-1, 1, 15) * 120 / 2
     mesh = np.meshgrid(px, py)
     surf = mesh[0]**2 / 100 + mesh[1]**2 / 1000
-    surf[5, 7] = 50
+    surf[7, 5] = 50
     obj.display.DisplayShape(spl_face(*mesh, surf))
+
+    p0 = gp_Pnt(mesh[0][0, 0], mesh[1][0, 0], surf[0, 0])
+    p1 = gp_Pnt(mesh[0][0, -1], mesh[1][0, -1], surf[0, -1])
+    p2 = gp_Pnt(mesh[0][-1, 0], mesh[1][-1, 0], surf[-1, 0])
+    p3 = gp_Pnt(mesh[0][-1, 1], mesh[1][-1, -1], surf[-1, -1])
+
+    n_sided = BRepFill_Filling()
+    n_sided.Add(make_edge(p0, p1), GeomAbs_C2)
+    n_sided.Add(make_edge(p0, p2), GeomAbs_C2)
+    n_sided.Add(make_edge(p1, p3), GeomAbs_C2)
+    n_sided.Add(make_edge(p2, p3), GeomAbs_C2)
+    n_sided.Add(gp_Pnt(0, 0, 50))
+
+    """n_sided.Add(p0)
+    n_sided.Add(p1)
+    n_sided.Add(p2)
+    n_sided.Add(p3)"""
+    n_sided.Build()
+    face = n_sided.Face()
+    obj.display.DisplayShape(face)
 
     obj.show_axs_pln(axs, scale=20)
     obj.show()
