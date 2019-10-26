@@ -64,22 +64,13 @@ def spl_face(px, py, pz):
 if __name__ == '__main__':
     obj = plotocc()
     obj.show_axs_pln(scale=20)
-    # obj.show_ball()
-
-    obj.display.DisplayShape(gen_ellipsoid(), transparency=0.0)
-
-    axs = gp_Ax3(
-        gp_Pnt(3, 0, 0), gp_Dir(1, 1, 1)
-    )
-    #obj.display.DisplayShape(gen_ellipsoid(axs), transparency=0.1)
 
     px = np.linspace(-1, 1, 10) * 100 / 2
     py = np.linspace(-1, 1, 15) * 120 / 2
     mesh = np.meshgrid(px, py)
     surf = mesh[0]**2 / 100 + mesh[1]**2 / 1000
     surf[7, 5] = 50
-    obj.display.DisplayShape(spl_face(*mesh, surf))
-
+    
     p0 = gp_Pnt(mesh[0][0, 0], mesh[1][0, 0], surf[0, 0])
     p1 = gp_Pnt(mesh[0][0, -1], mesh[1][0, -1], surf[0, -1])
     p2 = gp_Pnt(mesh[0][-1, 0], mesh[1][-1, 0], surf[-1, 0])
@@ -87,11 +78,11 @@ if __name__ == '__main__':
 
     pt = np.linspace(0, 2 * np.pi, 100)
     pts = []
-    p_array = TColgp_Array1OfPnt(1, 100 - 1)
-    for idx, t in enumerate(pt[:-1]):
-        x = 75.0 * np.cos(t)
-        y = 75.0 * np.sin(t)
-        z = 50 * np.cos(2 * t)
+    p_array = TColgp_Array1OfPnt(1, 100)
+    for idx, t in enumerate(pt):
+        x = 30.0 * np.cos(t)
+        y = 30.0 * np.sin(t)
+        z = 15 * np.cos(3 * t)
         pnt = gp_Pnt(x, y, z)
         pts.append(pnt)
         p_array.SetValue(idx + 1, pnt)
@@ -102,5 +93,4 @@ if __name__ == '__main__':
         obj.display.DisplayShape(t)
     obj.display.DisplayShape(api.Curve())
 
-    obj.show_axs_pln(axs, scale=20)
     obj.show()
