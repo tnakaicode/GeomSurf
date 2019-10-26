@@ -78,9 +78,53 @@ def spl_curv(px, py, pz):
     return p_array, api.Curve()
 
 
+class CurvDEMO (plotocc):
+
+    def __init__(self, show=None):
+        if show != None:
+            plotocc.__init__(self)
+        self.pt = np.linspace(0, 2 * np.pi, 100)
+
+        self.hz = 15.0
+        self.rt = 2.0
+        self.r_xy = 30.0
+        self.radi = 100
+        self.px = 30.0 * np.cos(self.pt)
+        self.py = 30.0 * np.sin(self.pt)
+        self.pz = 15 * np.cos(5 * self.pt)
+
+        curv_pts, curv_shp = spl_curv(self.px, self.py, self.pz)
+        crv1_pts, crv1_shp = self.sin_curv_x(10, 30, pos=-10, scale=2)
+        crv2_pts, crv2_shp = self.sin_curv_x(20, 40, pos=+10, scale=1)
+        crv3_pts, crv3_shp = self.sin_curv_y(0, 30, pos=0)
+        api = GeomFill_BSplineCurves(crv1_shp, crv2_shp, GeomFill_CoonsStyle)
+
+        # self.show_pts_1d(curv_pts)
+        # self.display.DisplayShape(curv_shp)
+
+        self.show_pts_1d(crv1_pts)
+        self.show_pts_1d(crv2_pts)
+        self.show_pts_1d(crv3_pts)
+        # self.display.DisplayShape(crv1_shp)
+        # self.display.DisplayShape(crv2_shp)
+        # self.display.DisplayShape(api.Surface())
+
+    def sin_curv_x(self, ns=10, ne=50, pos=10, scale=2.0):
+        px = 30.0 * np.cos(self.rt * self.pt[ns:ne]) * scale
+        py = np.zeros_like(px) + pos
+        pz = px**2 / self.radi
+        return spl_curv(px, py, pz)
+
+    def sin_curv_y(self, ns=10, ne=50, pos=10, scale=2.0):
+        py = 30.0 * np.cos(self.rt * self.pt[ns:ne]) * 2
+        px = np.zeros_like(py) + pos
+        pz = py**2 / self.radi
+        return spl_curv(px, py, pz)
+
+
 if __name__ == '__main__':
-    obj = plotocc()
-    obj.show_axs_pln(scale=20)
+    #obj = plotocc()
+    # obj.show_axs_pln(scale=20)
 
     px = np.linspace(-1, 1, 10) * 100 / 2
     py = np.linspace(-1, 1, 15) * 120 / 2
@@ -93,36 +137,9 @@ if __name__ == '__main__':
     p2 = gp_Pnt(mesh[0][-1, 0], mesh[1][-1, 0], surf[-1, 0])
     p3 = gp_Pnt(mesh[0][-1, 1], mesh[1][-1, -1], surf[-1, -1])
 
-    pt = np.linspace(0, 2 * np.pi, 100)
-    px = 30.0 * np.cos(pt)
-    py = 30.0 * np.sin(pt)
-    pz = 15 * np.cos(5 * pt)
-    curv_pts, curv_shp = spl_curv(px, py, pz)
+    obj = CurvDEMO(show=1)
+    obj.show_axs_pln(scale=20)
 
-    px = 30.0 * np.cos(pt[10:50]) * 2
-    py = np.zeros_like(px) * 10
-    pz = px**2 / 100
-    crv1_pts, crv1_shp = spl_curv(px, py, pz)
-
-    py = 30.0 * np.sin(pt[20:60]) * 1.5
-    px = np.zeros_like(py) - 10
-    pz = py**2 / 200 + 50
-    crv2_pts, crv2_shp = spl_curv(px, py, pz)
-
-    px = 30.0 * np.sin(pt[30:70]) * 1.0
-    py = np.zeros_like(px) - 10
-    pz = px**2 / 500
-    crv3_pts, crv3_shp = spl_curv(px, py, pz)
-
-    api = GeomFill_BSplineCurves(crv1_shp, crv2_shp, GeomFill_CoonsStyle)
-
-    #api = geomapi.To3d(curv_shp)
-    # obj.display.DisplayShape(api)
-
-    obj.show_pts_1d(curv_pts)
-    obj.show_pts_1d(crv1_pts)
-    obj.show_pts_1d(crv2_pts)
-    obj.display.DisplayShape(curv_shp)
-    obj.display.DisplayShape(api.Surface())
+    #api = GeomFill_BSplineCurves(crv1_shp, crv2_shp, GeomFill_CoonsStyle)
 
     obj.show()
