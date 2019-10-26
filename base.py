@@ -71,8 +71,8 @@ class plotocc (object):
 
     def show_pnt(self, xyz=[0, 0, 0]):
         self.display.DisplayShape(gp_Pnt(*xyz))
-    
-    def show_ball (self, scale=100, trans=0.5):
+
+    def show_ball(self, scale=100, trans=0.5):
         shape = BRepPrimAPI_MakeSphere(scale).Shape()
         self.display.DisplayShape(shape, transparency=trans)
 
@@ -98,6 +98,11 @@ class plotocc (object):
         vec = dir_to_vec(axs.Direction())
         pln = make_plane(pnt, vec, -scale, scale, -scale, scale)
         self.display.DisplayShape(pln)
+
+    def show_pts_1d(self, pts):
+        # plot point in TColgp_Array1OfPnt
+        for idx in range(pts.Lower(), pts.Upper() + 1):
+            self.display.DisplayShape(pts.Value(idx))
 
     def show(self):
         self.display.FitAll()

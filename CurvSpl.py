@@ -20,6 +20,8 @@ from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
 from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
+from OCC.Core.GeomFill import GeomFill_BSplineCurves
+from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
@@ -97,11 +99,30 @@ if __name__ == '__main__':
     pz = 15 * np.cos(5 * pt)
     curv_pts, curv_shp = spl_curv(px, py, pz)
 
-    #api = geomapi.To3d(curv_shp)
-    #obj.display.DisplayShape(api)
+    px = 30.0 * np.cos(pt[10:50]) * 2
+    py = np.zeros_like(px) * 10
+    pz = px**2 / 100
+    crv1_pts, crv1_shp = spl_curv(px, py, pz)
 
-    for idx in range(curv_pts.Lower(), curv_pts.Upper() + 1):
-        obj.display.DisplayShape(curv_pts.Value(idx))
+    py = 30.0 * np.sin(pt[20:60]) * 1.5
+    px = np.zeros_like(py) - 10
+    pz = py**2 / 200 + 50
+    crv2_pts, crv2_shp = spl_curv(px, py, pz)
+
+    px = 30.0 * np.sin(pt[30:70]) * 1.0
+    py = np.zeros_like(px) - 10
+    pz = px**2 / 500
+    crv3_pts, crv3_shp = spl_curv(px, py, pz)
+
+    api = GeomFill_BSplineCurves(crv1_shp, crv2_shp, GeomFill_CoonsStyle)
+
+    #api = geomapi.To3d(curv_shp)
+    # obj.display.DisplayShape(api)
+
+    obj.show_pts_1d(curv_pts)
+    obj.show_pts_1d(crv1_pts)
+    obj.show_pts_1d(crv2_pts)
     obj.display.DisplayShape(curv_shp)
+    obj.display.DisplayShape(api.Surface())
 
     obj.show()
