@@ -179,6 +179,11 @@ class plotocc (object):
 
     def show_pnt(self, xyz=[0, 0, 0]):
         self.display.DisplayShape(gp_Pnt(*xyz))
+    
+    def show_pts(self, pts=[gp_Pnt()], num=1):
+        for p in pts[::num]:
+            self.display.DisplayShape(p)
+        self.display.DisplayShape(make_polygon(pts))
 
     def show_ball(self, scale=100, trans=0.5):
         shape = BRepPrimAPI_MakeSphere(scale).Shape()
