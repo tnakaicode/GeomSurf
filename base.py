@@ -13,10 +13,11 @@ from OCC.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.gp import gp_XYZ
 from OCC.gp import gp_Lin
 from OCC.gp import gp_Mat, gp_GTrsf, gp_Trsf
-from OCC.TopoDS import TopoDS_Shape
+from OCC.TopoDS import TopoDS_Shape, TopoDS_Compound
 from OCC.TopLoc import TopLoc_Location
 from OCC.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+from OCC.BRep import BRep_Builder
 from OCC.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeWire
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
@@ -200,6 +201,13 @@ def spl_curv(px, py, pz):
     api = GeomAPI_PointsToBSpline(p_array)
     return p_array, api.Curve()
 
+class GenCompound (object):
+    
+    def __init__(self):
+        self.builder = BRep_Builder()
+        self.compound = TopoDS_Compound()
+        self.builder.MakeCompound(compound)
+
 class plotocc (object):
 
     def __init__(self):
@@ -374,3 +382,4 @@ class LineDrawer(object):
             plt.show()
         except AttributeError:
             pass
+

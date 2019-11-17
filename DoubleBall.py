@@ -68,6 +68,7 @@ class DBall (plotocc):
             GeomLProp_SurfaceTool.D1(h_surf, u, v, p1, vx, vy)
             vz = vx.Crossed(vy)
             norm = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
+            self.show_axs_pln(norm, scale=10)
             beam = self.beam
             beam.SetLocation(p1)
             beam.SetDirection(beam.Direction().Reversed())
@@ -92,6 +93,7 @@ class DBall (plotocc):
             GeomLProp_SurfaceTool.D1(h_surf, u, v, p1, vx, vy)
             vz = vx.Crossed(vy).Reversed()
             norm = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
+            self.show_axs_pln(norm, scale=10)
             beam = self.beam
             beam.SetLocation(p1)
             beam.SetDirection(beam.Direction().Reversed())
