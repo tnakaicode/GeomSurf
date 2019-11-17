@@ -23,8 +23,8 @@ from OCC.GeomAPI import GeomAPI_IntCS, GeomAPI_IntSS
 from OCC.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
 from OCC.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.GeomLProp import GeomLProp_CLProps, GeomLProp_CurveTool
-from OCC.GeomFill import GeomFill_BSplineCurves
-from OCC.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
+#from OCC.GeomFill import GeomFill_BSplineCurves
+#from OCC.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
@@ -36,28 +36,30 @@ def trsf_scale(axs=gp_Ax3(), scale=1):
     trf.SetDisplacement(gp_Ax3(), axs)
     return trf
 
+
 if __name__ == '__main__':
     obj = plotocc()
     obj.show_axs_pln(scale=5)
 
-    px = np.linspace(-1, 1, 10) * 2*np.pi
-    py = np.linspace(-1, 1, 15) * 2*np.pi
+    px = np.linspace(-1, 1, 10) * 2 * np.pi
+    py = np.linspace(-1, 1, 15) * 2 * np.pi
     mesh = np.meshgrid(px, py)
-    surf1 = np.sin(mesh[0]/4)*0.5
-    surf2 = np.sin(mesh[1]/2)
+    surf1 = np.sin(mesh[0] / 4) * 0.5
+    surf2 = np.sin(mesh[1] / 2)
     face1 = spl_face(*mesh, surf1)
     face2 = spl_face(*mesh, surf2)
-    
-    api = GeomAPI_IntSS(BRep_Tool.Surface(face1), BRep_Tool.Surface(face2), 1.0e-7)
+
+    api = GeomAPI_IntSS(BRep_Tool.Surface(
+        face1), BRep_Tool.Surface(face2), 1.0e-7)
     print(api.NbLines())
-    
+
     obj.display.DisplayShape(face1)
     obj.display.DisplayShape(face2)
     for i in range(api.NbLines()):
-        crv = api.Line(i+1)
+        crv = api.Line(i + 1)
         p0 = GeomLProp_CurveTool.FirstParameter(crv)
         p1 = GeomLProp_CurveTool.LastParameter(crv)
         print(p0, p1)
         obj.display.DisplayShape(crv)
-    
+
     obj.show()

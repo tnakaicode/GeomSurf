@@ -28,8 +28,8 @@ from OCC.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.GeomAPI import GeomAPI_Interpolate
 from OCC.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
 from OCC.GeomAbs import GeomAbs_G1, GeomAbs_G2
-from OCC.GeomFill import GeomFill_BSplineCurves
-from OCC.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
+#from OCC.GeomFill import GeomFill_BSplineCurves
+#from OCC.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCCUtils.Construct import make_box, make_line, make_wire
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
@@ -201,12 +201,14 @@ def spl_curv(px, py, pz):
     api = GeomAPI_PointsToBSpline(p_array)
     return p_array, api.Curve()
 
+
 class GenCompound (object):
-    
+
     def __init__(self):
         self.builder = BRep_Builder()
         self.compound = TopoDS_Compound()
         self.builder.MakeCompound(compound)
+
 
 class plotocc (object):
 
@@ -229,7 +231,7 @@ class plotocc (object):
 
     def show_pnt(self, xyz=[0, 0, 0]):
         self.display.DisplayShape(gp_Pnt(*xyz))
-    
+
     def show_pts(self, pts=[gp_Pnt()], num=1):
         for p in pts[::num]:
             self.display.DisplayShape(p)
@@ -238,8 +240,8 @@ class plotocc (object):
     def show_ball(self, scale=100, trans=0.5):
         shape = BRepPrimAPI_MakeSphere(scale).Shape()
         self.display.DisplayShape(shape, transparency=trans)
-    
-    def show_vec (self, beam=gp_Ax3(), scale=1.0):
+
+    def show_vec(self, beam=gp_Ax3(), scale=1.0):
         pnt = beam.Location()
         vec = dir_to_vec(beam.Direction()).Scaled(scale)
         print(vec.Magnitude())
@@ -382,4 +384,3 @@ class LineDrawer(object):
             plt.show()
         except AttributeError:
             pass
-
