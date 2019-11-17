@@ -15,9 +15,20 @@ from OCC.gp import gp_Lin
 from OCC.gp import gp_Mat, gp_GTrsf, gp_Trsf
 from OCC.TopoDS import TopoDS_Shape
 from OCC.TopLoc import TopLoc_Location
+from OCC.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
+from OCC.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
 from OCC.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeWire
+from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.BRepBuilderAPI import BRepBuilderAPI_GTransform
+from OCC.GeomAPI import geomapi
+from OCC.GeomAPI import GeomAPI_PointsToBSplineSurface
+from OCC.GeomAPI import GeomAPI_PointsToBSpline
+from OCC.GeomAPI import GeomAPI_Interpolate
+from OCC.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
+from OCC.GeomAbs import GeomAbs_G1, GeomAbs_G2
+from OCC.GeomFill import GeomFill_BSplineCurves
+from OCC.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCCUtils.Construct import make_box, make_line, make_wire
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
@@ -157,6 +168,37 @@ def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
     ellips.Location(loc)
     return ellips
 
+
+def spl_face(px, py, pz):
+    nx, ny = px.shape
+    pnt_2d = TColgp_Array2OfPnt(1, nx, 1, ny)
+    for row in range(pnt_2d.LowerRow(), pnt_2d.UpperRow() + 1):
+        for col in range(pnt_2d.LowerCol(), pnt_2d.UpperCol() + 1):
+            i, j = row - 1, col - 1
+            pnt = gp_Pnt(px[i, j], py[i, j], pz[i, j])
+            pnt_2d.SetValue(row, col, pnt)
+            #print (i, j, px[i, j], py[i, j], pz[i, j])
+
+    api = GeomAPI_PointsToBSplineSurface(pnt_2d, 3, 8, GeomAbs_G2, 0.001)
+    api.Interpolate(pnt_2d)
+    #surface = BRepBuilderAPI_MakeFace(curve, 1e-6)
+    # return surface.Face()
+    return BRepBuilderAPI_MakeFace(api.Surface(), 1e-6).Face()
+
+
+def spl_curv(px, py, pz):
+    num = px.size
+    pts = []
+    p_array = TColgp_Array1OfPnt(1, num)
+    for idx, t in enumerate(px):
+        x = px[idx]
+        y = py[idx]
+        z = pz[idx]
+        pnt = gp_Pnt(x, y, z)
+        pts.append(pnt)
+        p_array.SetValue(idx + 1, pnt)
+    api = GeomAPI_PointsToBSpline(p_array)
+    return p_array, api.Curve()
 
 class plotocc (object):
 
