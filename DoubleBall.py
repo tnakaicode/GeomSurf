@@ -10,9 +10,11 @@ from OCC.BRep import BRep_Tool
 from OCC.Geom import Geom_ToroidalSurface
 from OCC.Geom import Geom_Line
 from OCC.GeomAPI import GeomAPI_IntCS
+from OCC.GeomLProp import GeomLProp_SurfaceTool
 from OCC.TopoDS import TopoDS_Shape, TopoDS_Compound
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
+from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 
 from base import plotocc, gen_ellipsoid
@@ -30,6 +32,17 @@ class DBall (plotocc):
         h_surf = BRep_Tool.Surface(self.b2)
         ray = Geom_Line(self.beam.Axis())
         self.RayTrace = GeomAPI_IntCS(ray.GetHandle(), h_surf)
+        print(self.RayTrace.NbPoints())
+        self.num = 0
+        self.pts = [self.beam.Location()]
+        for i in range(3):
+            self.beam = self.reflect_b1()
+            self.beam = self.reflect_b2()
+
+    def beam_run(self):
+        for i in range(3):
+            self.beam = self.reflect_b1()
+            self.beam = self.reflect_b2()
 
     def get_face(self, sol):
         top_api = Topo(sol)
@@ -39,18 +52,60 @@ class DBall (plotocc):
         return sol_face
 
     def reflect_b1(self):
-        print(self.b1)
+        print(self.num, self.b1)
         h_surf = BRep_Tool.Surface(self.b1)
         ray = Geom_Line(self.beam.Axis())
-        self.RayTrace.Perform(ray, h_surf)
+        self.RayTrace.Perform(ray.GetHandle(), h_surf)
+        if self.RayTrace.NbPoints() == 0:
+            beam = self.beam
+        else:
+            self.num += 1
+            uvw = self.RayTrace.Parameters(1)
+            u, v, w = uvw
+            p1, vx, vy = gp_Pnt(), gp_Vec(), gp_Vec()
+            GeomLProp_SurfaceTool.D1(h_surf, u, v, p1, vx, vy)
+            vz = vx.Crossed(vy)
+            vx.Normalize()
+            vy.Normalize()
+            vz.Normalize()
+            norm = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
+            beam = self.beam
+            beam.SetLocation(p1)
+            beam.SetDirection(beam.Direction().Reversed())
+            beam.Mirror(norm.Ax2())
+            self.pts.append(p1)
+            # self.beam.XReverse()
+            # self.beam.Mirror(norm.Ax2())
+        return beam
 
     def reflect_b2(self):
-        print(self.b2)
+        print(self.num, self.b2)
         h_surf = BRep_Tool.Surface(self.b2)
         ray = Geom_Line(self.beam.Axis())
-        self.RayTrace.Perform(ray, h_surf)
+        self.RayTrace.Perform(ray.GetHandle(), h_surf)
+        if self.RayTrace.NbPoints() == 0:
+            beam = self.beam
+        else:
+            self.num += 1
+            uvw = self.RayTrace.Parameters(1)
+            u, v, w = uvw
+            p1, vx, vy = gp_Pnt(), gp_Vec(), gp_Vec()
+            GeomLProp_SurfaceTool.D1(h_surf, u, v, p1, vx, vy)
+            vz = vx.Crossed(vy)
+            vx.Normalize()
+            vy.Normalize()
+            vz.Normalize()
+            norm = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
+            beam = self.beam
+            beam.SetLocation(p1)
+            beam.SetDirection(beam.Direction().Reversed())
+            beam.Mirror(norm.Axis())
+            self.pts.append(p1)
+            # self.beam.XReverse()
+            # self.beam.Mirror(norm.Ax2())
+        return beam
 
-    #def reflect(self, p0, v0, face):
+    # def reflect(self, p0, v0, face):
     #    h_surf = BRep_Tool.Surface(face)
     #    ray = Geom_Line(gp_Lin(p0, vec_to_dir(v0)))
     #    uvw = GeomAPI_IntCS(ray.GetHandle(), h_surf).Parameters(1)
@@ -65,10 +120,12 @@ class DBall (plotocc):
     #    return p1, v1
 
     def display_ball(self):
-        self.show_vec(self.beam, scale=50)
+        #self.show_vec(self.beam, scale=50)
         self.display.DisplayShape(self.b1, transparency=0.7, color="RED")
         self.display.DisplayShape(self.b2, transparency=0.7, color="BLUE")
+        self.display.DisplayShape(self.beam.Location())
         self.show_axs_pln(scale=100)
+        self.show_axs_pln(self.beam, scale=10)
         self.show()
 
 
