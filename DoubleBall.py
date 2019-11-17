@@ -13,7 +13,7 @@ from OCC.GeomAPI import GeomAPI_IntCS
 from OCC.GeomLProp import GeomLProp_SurfaceTool
 from OCC.TopoDS import TopoDS_Shape, TopoDS_Compound
 from OCCUtils.Construct import make_n_sided, make_n_sections
-from OCCUtils.Construct import make_edge
+from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 
@@ -35,7 +35,7 @@ class DBall (plotocc):
         print(self.RayTrace.NbPoints())
         self.num = 0
         self.pts = [self.beam.Location()]
-        for i in range(3):
+        for i in range(5):
             self.beam = self.reflect_b1()
             self.beam = self.reflect_b2()
 
@@ -52,7 +52,6 @@ class DBall (plotocc):
         return sol_face
 
     def reflect_b1(self):
-        print(self.num, self.b1)
         h_surf = BRep_Tool.Surface(self.b1)
         ray = Geom_Line(self.beam.Axis())
         self.RayTrace.Perform(ray.GetHandle(), h_surf)
@@ -60,26 +59,23 @@ class DBall (plotocc):
             beam = self.beam
         else:
             self.num += 1
-            uvw = self.RayTrace.Parameters(1)
+            uvw = self.RayTrace.Parameters(2)
             u, v, w = uvw
             p1, vx, vy = gp_Pnt(), gp_Vec(), gp_Vec()
             GeomLProp_SurfaceTool.D1(h_surf, u, v, p1, vx, vy)
-            vz = vx.Crossed(vy)
-            vx.Normalize()
-            vy.Normalize()
-            vz.Normalize()
+            vz = vx.Crossed(vy).Reversed()
             norm = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
             beam = self.beam
             beam.SetLocation(p1)
             beam.SetDirection(beam.Direction().Reversed())
             beam.Mirror(norm.Ax2())
+            print(self.num, self.b1, p1)
             self.pts.append(p1)
             # self.beam.XReverse()
             # self.beam.Mirror(norm.Ax2())
         return beam
 
     def reflect_b2(self):
-        print(self.num, self.b2)
         h_surf = BRep_Tool.Surface(self.b2)
         ray = Geom_Line(self.beam.Axis())
         self.RayTrace.Perform(ray.GetHandle(), h_surf)
@@ -87,19 +83,17 @@ class DBall (plotocc):
             beam = self.beam
         else:
             self.num += 1
-            uvw = self.RayTrace.Parameters(1)
+            uvw = self.RayTrace.Parameters(2)
             u, v, w = uvw
             p1, vx, vy = gp_Pnt(), gp_Vec(), gp_Vec()
             GeomLProp_SurfaceTool.D1(h_surf, u, v, p1, vx, vy)
-            vz = vx.Crossed(vy)
-            vx.Normalize()
-            vy.Normalize()
-            vz.Normalize()
+            vz = vx.Crossed(vy).Reversed()
             norm = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
             beam = self.beam
             beam.SetLocation(p1)
             beam.SetDirection(beam.Direction().Reversed())
             beam.Mirror(norm.Axis())
+            print(self.num, self.b2, p1)
             self.pts.append(p1)
             # self.beam.XReverse()
             # self.beam.Mirror(norm.Ax2())
@@ -126,6 +120,7 @@ class DBall (plotocc):
         self.display.DisplayShape(self.beam.Location())
         self.show_axs_pln(scale=100)
         self.show_axs_pln(self.beam, scale=10)
+        self.display.DisplayShape(make_polygon(self.pts))
         self.show()
 
 
