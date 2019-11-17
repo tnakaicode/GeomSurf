@@ -8,6 +8,7 @@ from OCC.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.gp import gp_Lin, gp_Pln, gp_Sphere
 from OCC.gp import gp_Mat, gp_XYZ
 from OCC.gp import gp_Trsf, gp_GTrsf
+from OCC.BRepFill import BRepFill_Filling
 from OCC.BRepPrimAPI import BRepPrimAPI_MakeWedge
 from OCC.BRepPrimAPI import BRepPrimAPI_MakePrism
 from OCC.BRepAlgoAPI import BRepAlgoAPI_Common
