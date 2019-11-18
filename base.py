@@ -202,6 +202,15 @@ def spl_curv(px, py, pz):
     return p_array, api.Curve()
 
 
+def spl_curv_pts(pts=[gp_Pnt()]):
+    num = len(pts)
+    p_array = TColgp_Array1OfPnt(1, num)
+    for idx, pnt in enumerate(pts):
+        p_array.SetValue(idx + 1, pnt)
+    api = GeomAPI_PointsToBSpline(p_array)
+    return p_array, api.Curve()
+
+
 class GenCompound (object):
 
     def __init__(self):
