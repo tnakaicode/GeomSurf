@@ -15,6 +15,7 @@ from OCC.BRepFill import BRepFill_Filling
 from OCC.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.BRepBuilderAPI import BRepBuilderAPI_GTransform
+from OCC.Geom import Geom_BSplineSurface
 from OCC.GeomAPI import geomapi
 from OCC.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.GeomAPI import GeomAPI_PointsToBSpline
