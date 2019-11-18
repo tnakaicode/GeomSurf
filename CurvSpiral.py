@@ -36,13 +36,12 @@ if __name__ == '__main__':
     obj = plotocc()
     obj.show_axs_pln(scale=1)
 
-    pt = np.linspace(0, 1, 200)
-    num = 3
+    pt = np.linspace(0, 1, 100)
+    num = 2
     omg = 0.5
-    tau = 0.5
     idx = 2
     pts = []
-    for t in pt:
+    for t in pt[:-1]:
         ft = 1 - (idx - 1) * np.sin(2 * np.pi * t)
         if ft >= 1:
             ut = omg**ft
@@ -50,11 +49,16 @@ if __name__ == '__main__':
             ut = 1 - (1 - omg)**(2 - ft)
         x = np.cos(num * ut * 2 * np.pi)
         y = np.sin(num * ut * 2 * np.pi)
+        #z = 2 * (t % 0.5)
         z = 2 * t
         pnt = gp_Pnt(x, y, z)
         pts.append(pnt)
 
     crv_p, crv = spl_curv_pts(pts)
+
+    print(GeomLProp_CurveTool.FirstParameter(crv))
+    print(GeomLProp_CurveTool.LastParameter(crv))
+
     obj.display.DisplayShape(crv)
     for pnt in pts[::10]:
         obj.display.DisplayShape(pnt)
