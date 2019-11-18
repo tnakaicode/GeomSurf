@@ -14,20 +14,20 @@ from OCC.GeomAbs import GeomAbs_Intersection
 from OCC.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
+from OCCUtils.Topology import Topo
 
 
 # DEFINE GEOMETRY
 def gyroid(x, y, z, t):
-    return cos(x) * sin(y) + cos(y) * sin(z) + cos(z) * sin(x) - t  # Gyroïd
+    # Gyroïd
+    return cos(x) * sin(y) + cos(y) * sin(z) + cos(z) * sin(x) - t
 
 
-lattice_param = 1.
 size = 1.
-strut_param = 0.
+strut_param = 1.
 resolution = 6j  # >6 crashes
 res = int(np.imag(resolution))
-x, y, z = pi / 2 * np.mgrid[-1:1:resolution, -
-                            1:1:resolution, -1:1:resolution] * lattice_param
+x, y, z = pi / 2 * np.mgrid[-1:1:resolution, -1:1:resolution, -1:1:resolution]
 vol = gyroid(x, y, z, strut_param) * size
 verts, faces, norm, val = measure.marching_cubes_lewiner(vol, level=None)
 xv, yv, zv = verts[:, 0], verts[:, 1], verts[:, 2]
@@ -51,17 +51,6 @@ gy_max = list(gy_max[np.argsort(np.linalg.norm(gy_max - gy_max[0], axis=1))])
 gz_max = list(gz_max[np.argsort(np.linalg.norm(gz_max - gz_max[0], axis=1))])
 # BUILD EXTERNAL EDGE
 xyz_max = gx_max + gz_min[::-1] + gy_max + gx_min[::-1] + gz_max + gy_min
-
-# OCC FUNCTIONS
-# def make_n_sided(edges, points, continuity=GeomAbs_C0):
-#    n_sided = BRepFill_Filling(2, len(points), 2, False, 0.00001, 0.0001, 0.01, 0.1, 8, 9)
-#    for edg in edges:
-#        n_sided.Add(edg, continuity)
-#    for pt in points:
-#        n_sided.Add(pt)
-#    n_sided.Build()
-#    face = n_sided.Face()
-#    return face
 
 
 def make_closed_polygon(*args):
@@ -88,7 +77,11 @@ def geom_plate(event=None):
         e = gp_Pnt(float(x), float(y), float(z))
         e_array.append(e)
     poly = make_closed_polygon(e_array)
-    edges = [i for i in TopologyExplorer(poly).edges()]
+    top = Topo(poly)
+
+    edges = []
+    for e in top.edges():
+        edges.append(e)
 
     # POINTS CONSTRAINT
     p_array = []
@@ -97,22 +90,23 @@ def geom_plate(event=None):
         if (x < xmax) and (x > xmin) and (y < ymax) and (y > ymin) and (z < zmax) and (z > zmin):
             p = gp_Pnt(float(x), float(y), float(z))
             p_array.append(p)
-
+    
+    print(len(edges), len(p_array))
     face = make_n_sided(edges, p_array)
 
     # THICKEN SURFACE
     thickness = 0.15
     solid = BRepOffset_MakeOffset()
-    solid.Initialize(face, thickness, 1.e-5, BRepOffset_Skin, False, False,
+    solid.Initialize(face, thickness, 1.0E-5, BRepOffset_Skin, False, False,
                      GeomAbs_Intersection, True)  # The last True is important to make solid
-    solid.MakeOffsetShape()
+    # solid.MakeOffsetShape()
     aShape = solid.Shape()
 
-    display.DisplayShape(edges)
+    display.DisplayShape(poly)
     for p in p_array:
         display.DisplayShape(make_vertex(p))
-    display.DisplayShape(face, update=True)
-    display.DisplayShape(aShape, update=True)
+    display.DisplayShape(face)
+    #display.DisplayShape(aShape, update=True)
 
 
 # DISPLAY ALL
