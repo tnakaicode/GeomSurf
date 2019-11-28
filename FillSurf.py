@@ -3,15 +3,15 @@ import matplotlib.pyplot as plt
 import sys
 
 from OCC.Display.SimpleGui import init_display
-from OCC.Coregp import gp_Pnt, gp_Vec, gp_Dir
-from OCC.Coregp import gp_Ax1, gp_Ax2, gp_Ax3
-from OCC.Coregp import gp_Lin, gp_Sphere
-from OCC.Coregp import gp_Mat, gp_XYZ
-from OCC.Coregp import gp_Trsf, gp_GTrsf
-from OCC.CoreFEmTool import FEmTool_Curve, FEmTool_ProfileMatrix
-from OCC.CoreBRepFill import BRepFill_Filling, BRepFill_Draft, BRepFill_Pipe
-from OCC.CoreGeomAbs import GeomAbs_G1, GeomAbs_G2
-from OCC.CoreGeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2, GeomAbs_C3
+from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
+from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_Lin, gp_Sphere
+from OCC.Core.gp import gp_Mat, gp_XYZ
+from OCC.Core.gp import gp_Trsf, gp_GTrsf
+from OCC.Core.FEmTool import FEmTool_Curve, FEmTool_ProfileMatrix
+from OCC.Core.BRepFill import BRepFill_Filling, BRepFill_Draft, BRepFill_Pipe
+from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
+from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2, GeomAbs_C3
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 

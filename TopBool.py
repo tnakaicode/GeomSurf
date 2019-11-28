@@ -3,20 +3,20 @@ import matplotlib.pyplot as plt
 import sys
 
 from OCC.Display.SimpleGui import init_display
-from OCC.Coregp import gp_Pnt, gp_Vec, gp_Dir
-from OCC.Coregp import gp_Ax1, gp_Ax2, gp_Ax3
-from OCC.Coregp import gp_Lin, gp_Pln, gp_Sphere
-from OCC.Coregp import gp_Mat, gp_XYZ
-from OCC.Coregp import gp_Trsf, gp_GTrsf
-from OCC.CoreBRepFill import BRepFill_Filling
-from OCC.CoreBRepPrimAPI import BRepPrimAPI_MakeWedge
-from OCC.CoreBRepPrimAPI import BRepPrimAPI_MakePrism
-from OCC.CoreBRepAlgoAPI import BRepAlgoAPI_Common
-from OCC.CoreBRepAlgoAPI import BRepAlgoAPI_Fuse
-from OCC.CoreBRepAlgoAPI import BRepAlgoAPI_Section
-from OCC.CoreBRepSweep import BRepSweep_Prism
-from OCC.CoreBRepOffsetAPI import BRepOffsetAPI_MakePipe
-from OCC.CoreBRepOffsetAPI import BRepOffsetAPI_ThruSections
+from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
+from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_Lin, gp_Pln, gp_Sphere
+from OCC.Core.gp import gp_Mat, gp_XYZ
+from OCC.Core.gp import gp_Trsf, gp_GTrsf
+from OCC.Core.BRepFill import BRepFill_Filling
+from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeWedge
+from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Fuse
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Section
+from OCC.Core.BRepSweep import BRepSweep_Prism
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 

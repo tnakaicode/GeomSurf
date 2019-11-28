@@ -3,38 +3,38 @@ import matplotlib.pyplot as plt
 import sys
 
 from OCC.Display.SimpleGui import init_display
-from OCC.Coregp import gp_Pnt, gp_Vec, gp_Dir
-from OCC.Coregp import gp_Ax1, gp_Ax2, gp_Ax3
-from OCC.Coregp import gp_Lin, gp_Sphere
-from OCC.Coregp import gp_Mat, gp_XYZ
-from OCC.Coregp import gp_Trsf, gp_GTrsf
-from OCC.CoreTopoDS import TopoDS_Shape
-from OCC.CoreTopLoc import TopLoc_Location
-from OCC.CoreTColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
-from OCC.CoreTColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
-from OCC.CoreBRepFill import BRepFill_Filling
-from OCC.CoreBRepPrimAPI import BRepPrimAPI_MakeSphere
-from OCC.CoreBRepBuilderAPI import BRepBuilderAPI_MakeFace
-from OCC.CoreBRepBuilderAPI import BRepBuilderAPI_GTransform
-from OCC.CoreGeom import Geom_SphericalSurface, Geom_OsculatingSurface
-from OCC.CoreGeom import Geom_Line
-from OCC.CoreGeomAPI import geomapi
-from OCC.CoreGeomAPI import GeomAPI_IntCS
-from OCC.CoreGeomAPI import GeomAPI_ExtremaCurveSurface
-from OCC.CoreGeomAPI import GeomAPI_PointsToBSplineSurface
-from OCC.CoreGeomAPI import GeomAPI_PointsToBSpline
-from OCC.CoreGeomAPI import GeomAPI_Interpolate
-from OCC.CoreGeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
-from OCC.CoreGeomAbs import GeomAbs_G1, GeomAbs_G2
+from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
+from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_Lin, gp_Sphere
+from OCC.Core.gp import gp_Mat, gp_XYZ
+from OCC.Core.gp import gp_Trsf, gp_GTrsf
+from OCC.Core.TopoDS import TopoDS_Shape
+from OCC.Core.TopLoc import TopLoc_Location
+from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
+from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+from OCC.Core.BRepFill import BRepFill_Filling
+from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
+from OCC.Core.Geom import Geom_SphericalSurface, Geom_OsculatingSurface
+from OCC.Core.Geom import Geom_Line
+from OCC.Core.GeomAPI import geomapi
+from OCC.Core.GeomAPI import GeomAPI_IntCS
+from OCC.Core.GeomAPI import GeomAPI_ExtremaCurveSurface
+from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
+from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
+from OCC.Core.GeomAPI import GeomAPI_Interpolate
+from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
+from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCCUtils.Topology import TopExp_Explorer, Topo
 from OCCUtils.Topology import TopAbs_FACE
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from OCC.CoreGeomAPI import GeomAPI_IntCS
-from OCC.CoreShapeAnalysis import ShapeAnalysis_ShapeTolerance
-from OCC.CoreBRepTools import breptools_UVBounds
-from OCC.CoreBRep import BRep_Tool_Surface
+from OCC.Core.GeomAPI import GeomAPI_IntCS
+from OCC.Core.ShapeAnalysis import ShapeAnalysis_ShapeTolerance
+from OCC.Core.BRepTools import breptools_UVBounds
+from OCC.Core.BRep import BRep_Tool_Surface
 
 from base import plotocc
 

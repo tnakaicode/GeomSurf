@@ -3,16 +3,16 @@ import matplotlib.pyplot as plt
 import sys
 
 from OCC.Display.SimpleGui import init_display
-from OCC.Coregp import gp_Pnt, gp_Vec, gp_Dir
-from OCC.Coregp import gp_Ax1, gp_Ax2, gp_Ax3
-from OCC.Coregp import gp_Lin, gp_Sphere
-from OCC.CoreBRep import BRep_Tool, BRep_Builder
-from OCC.CoreBRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse, BRepAlgoAPI_Section
-from OCC.CoreGeom import Geom_ToroidalSurface
-from OCC.CoreGeom import Geom_Line
-from OCC.CoreGeomAPI import GeomAPI_IntCS
-from OCC.CoreGeomLProp import GeomLProp_SurfaceTool
-from OCC.CoreTopoDS import TopoDS_Compound
+from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
+from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_Lin, gp_Sphere
+from OCC.Core.BRep import BRep_Tool, BRep_Builder
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse, BRepAlgoAPI_Section
+from OCC.Core.Geom import Geom_ToroidalSurface
+from OCC.Core.Geom import Geom_Line
+from OCC.Core.GeomAPI import GeomAPI_IntCS
+from OCC.Core.GeomLProp import GeomLProp_SurfaceTool
+from OCC.Core.TopoDS import TopoDS_Compound
 from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon

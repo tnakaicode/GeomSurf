@@ -3,15 +3,15 @@ from numpy import sin, cos, pi
 from skimage import measure
 
 from OCC.Display.SimpleGui import init_display
-from OCC.CoreBRepBuilderAPI import BRepBuilderAPI_MakePolygon
-from OCC.CoreBRepFill import BRepFill_CurveConstraint
-from OCC.CoreGeomAbs import GeomAbs_C0
-from OCC.Coregp import gp_Pnt
-from OCC.CoreBRepFill import BRepFill_Filling
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
+from OCC.Core.BRepFill import BRepFill_CurveConstraint
+from OCC.Core.GeomAbs import GeomAbs_C0
+from OCC.Core.gp import gp_Pnt
+from OCC.Core.BRepFill import BRepFill_Filling
 from OCC.Extend.TopologyUtils import TopologyExplorer, WireExplorer
 from OCC.Extend.ShapeFactory import make_face, make_vertex
-from OCC.CoreGeomAbs import GeomAbs_Intersection
-from OCC.CoreBRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
+from OCC.Core.GeomAbs import GeomAbs_Intersection
+from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 from OCCUtils.Topology import Topo
