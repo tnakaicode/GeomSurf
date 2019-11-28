@@ -13,7 +13,7 @@ from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRepFill import BRepFill_Filling
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeEdge
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
 from OCC.Core.Geom import Geom_BSplineSurface
 from OCC.Core.GeomAPI import geomapi

@@ -32,7 +32,7 @@ class DBall (plotocc):
 
         h_surf = BRep_Tool.Surface(self.b2)
         ray = Geom_Line(self.beam.Axis())
-        self.RayTrace = GeomAPI_IntCS(ray.GetHandle(), h_surf)
+        self.RayTrace = GeomAPI_IntCS(ray, h_surf)
         print(self.RayTrace.NbPoints())
         self.num = 0
         self.pts = [self.beam.Location()]
@@ -57,7 +57,7 @@ class DBall (plotocc):
     def reflect_b1(self, num=1):
         h_surf = BRep_Tool.Surface(self.b1)
         ray = Geom_Line(self.beam.Axis())
-        self.RayTrace.Perform(ray.GetHandle(), h_surf)
+        self.RayTrace.Perform(ray, h_surf)
         if self.RayTrace.NbPoints() == 0:
             beam = self.beam
         else:
@@ -82,7 +82,7 @@ class DBall (plotocc):
     def reflect_b2(self, num=1):
         h_surf = BRep_Tool.Surface(self.b2)
         ray = Geom_Line(self.beam.Axis())
-        self.RayTrace.Perform(ray.GetHandle(), h_surf)
+        self.RayTrace.Perform(ray, h_surf)
         if self.RayTrace.NbPoints() == 0:
             beam = self.beam
         else:

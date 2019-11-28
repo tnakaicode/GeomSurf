@@ -102,12 +102,12 @@ class CurvDEMO (plotocc):
         # self.show_pts_1d(curv_pts)
         # self.display.DisplayShape(curv_shp)
 
-        self.show_pts_1d(crv1_pts)
-        self.show_pts_1d(crv2_pts)
-        self.show_pts_1d(crv3_pts)
-        # self.display.DisplayShape(crv1_shp)
-        # self.display.DisplayShape(crv2_shp)
-        # self.display.DisplayShape(api.Surface())
+        #self.show_pts_1d(crv1_pts)
+        #self.show_pts_1d(crv2_pts)
+        #self.show_pts_1d(crv3_pts)
+        self.display.DisplayShape(crv1_shp)
+        self.display.DisplayShape(crv2_shp)
+        self.display.DisplayShape(api.Surface())
 
     def sin_curv_x(self, ns=10, ne=50, pos=10, scale=2.0):
         px = 30.0 * np.cos(self.rt * self.pt[ns:ne]) * scale
