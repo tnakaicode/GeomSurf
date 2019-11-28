@@ -3,25 +3,25 @@ import matplotlib.pyplot as plt
 import sys
 
 from OCC.Display.SimpleGui import init_display
-from OCC.gp import gp_Pnt, gp_Vec, gp_Dir
-from OCC.gp import gp_Ax1, gp_Ax2, gp_Ax3
-from OCC.gp import gp_Lin, gp_Pln, gp_Sphere
-from OCC.gp import gp_Mat, gp_XYZ
-from OCC.gp import gp_Trsf, gp_GTrsf
-from OCC.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
-from OCC.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
-from OCC.BRepFill import BRepFill_Filling
-from OCC.BRepPrimAPI import BRepPrimAPI_MakeSphere
-from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
-from OCC.BRepBuilderAPI import BRepBuilderAPI_GTransform
-from OCC.GeomAPI import geomapi
-from OCC.GeomAPI import GeomAPI_PointsToBSplineSurface
-from OCC.GeomAPI import GeomAPI_PointsToBSpline
-from OCC.GeomAPI import GeomAPI_Interpolate
-from OCC.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
-from OCC.GeomAbs import GeomAbs_G1, GeomAbs_G2
-from OCC.GeomFill import GeomFill_BSplineCurves
-from OCC.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
+from OCC.Coregp import gp_Pnt, gp_Vec, gp_Dir
+from OCC.Coregp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Coregp import gp_Lin, gp_Pln, gp_Sphere
+from OCC.Coregp import gp_Mat, gp_XYZ
+from OCC.Coregp import gp_Trsf, gp_GTrsf
+from OCC.CoreTColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
+from OCC.CoreTColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+from OCC.CoreBRepFill import BRepFill_Filling
+from OCC.CoreBRepPrimAPI import BRepPrimAPI_MakeSphere
+from OCC.CoreBRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCC.CoreBRepBuilderAPI import BRepBuilderAPI_GTransform
+from OCC.CoreGeomAPI import geomapi
+from OCC.CoreGeomAPI import GeomAPI_PointsToBSplineSurface
+from OCC.CoreGeomAPI import GeomAPI_PointsToBSpline
+from OCC.CoreGeomAPI import GeomAPI_Interpolate
+from OCC.CoreGeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
+from OCC.CoreGeomAbs import GeomAbs_G1, GeomAbs_G2
+from OCC.CoreGeomFill import GeomFill_BSplineCurves
+from OCC.CoreGeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
