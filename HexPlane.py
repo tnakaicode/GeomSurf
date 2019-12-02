@@ -24,6 +24,30 @@ from OCCUtils.Topology import Topo
 
 from base import plotocc, gen_ellipsoid, set_loc
 
+# https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_fill___filling.html
+# N-Side Filling This algorithm avoids to build a face from:
+#   a set of edges defining the bounds of the face and some constraints the surface support has to satisfy
+#   a set of edges and points defining some constraints the support surface has to satisfy
+#       an initial surface to deform for satisfying the constraints
+#
+#   a set of parameters to control the constraints.
+#   The support surface of the face is computed by deformation of the initial surface in order to satisfy the given constraints.
+#   The set of bounding edges defines the wire of the face.
+#
+#   If no initial surface is given, the algorithm computes it automatically.
+#   If the set of edges is not connected (Free constraint) missing edges are automatically computed.
+#
+#   Limitations:
+#
+#   If some constraints are not compatible
+#       The algorithm does not take them into account.
+#       So the constraints will not be satisfyed in an area containing the incompatibilitries.
+#       he constraints defining the bound of the face have to be entered in order to have a continuous wire.
+#
+#   Other Applications:
+#   Deformation of a face to satisfy internal constraints
+#   Deformation of a face to improve Gi continuity with connected faces
+
 
 class HexPlane (plotocc):
 
@@ -39,8 +63,8 @@ class HexPlane (plotocc):
         # self.pln1 = self.make_PolyPlane(radi=2.0, num=5, shft=0.0, axs=axs1)
         #
 
-        self.pln1 = self.make_PolyPlane(radi=1.0, num=16, shft=0.1, axs=axs1)
-        self.pln2 = self.make_PolyPlane(radi=2.0, num=6, shft=30.0)
+        self.pln1 = self.make_PolyPlane(radi=1.0, num=50, shft=10.0, axs=axs1)
+        self.pln2 = self.make_PolyPlane(radi=1.0, num=6, shft=30.0)
 
     def make_PolyPlane(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3()):
         pnts = []
@@ -53,14 +77,17 @@ class HexPlane (plotocc):
         poly = make_polygon(pnts)
 
         n_sided = BRepFill_Filling()
+        n_sided.SetApproxParam()
         n_sided.SetResolParam()
         n_sided.SetConstrParam()
         for i, pnt in enumerate(pnts[:-1]):
+            i0, i1 = i, i + 1
             n_sided.Add(pnt)
-            n_sided.Add(make_edge(pnts[i], pnts[i + 1]), GeomAbs_C0)
-        n_sided.Add(gp_Pnt())
+            n_sided.Add(make_edge(pnts[i0], pnts[i1]), GeomAbs_C0)
+        n_sided.Add(gp_Pnt(0, 0, 1))
         n_sided.Build()
         face = n_sided.Face()
+        print(n_sided.G0Error())
         face.Location(set_loc(gp_Ax3(), axs))
         return face
 
@@ -73,7 +100,7 @@ class HexPlane (plotocc):
         #builder.Add(compound, make_polygon(self.pts))
         write_step_file(compound, "./tmp/HexPlane.stp")
 
-    def display_ball(self):
+    def display_Plane(self):
         write_step_file(self.pln2, "./tmp/HexPlane.stp")
         self.display.DisplayShape(self.pln1)
         self.display.DisplayShape(self.pln2)
@@ -83,4 +110,4 @@ class HexPlane (plotocc):
 
 if __name__ == '__main__':
     obj = HexPlane()
-    obj.display_ball()
+    obj.display_Plane()

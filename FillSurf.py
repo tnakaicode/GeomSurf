@@ -71,7 +71,7 @@ def fill_surface():
     n_sided.Add(p10)
     n_sided.Add(p11)
     n_sided.Build()
-    write_step_file(n_sided.Face(), "./FillSurf.stp")
+    write_step_file(n_sided.Face(), "./tmp/FillSurf.stp")
     return n_sided.Face()
 
 
