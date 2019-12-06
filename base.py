@@ -170,7 +170,9 @@ def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
     return ellips
 
 
-def spl_face(px, py, pz):
+def spl_face(px, py, pz, axs=gp_Ax3()):
+    loc = set_loc(gp_Ax3(), axs)
+
     nx, ny = px.shape
     pnt_2d = TColgp_Array2OfPnt(1, nx, 1, ny)
     for row in range(pnt_2d.LowerRow(), pnt_2d.UpperRow() + 1):
@@ -184,7 +186,9 @@ def spl_face(px, py, pz):
     api.Interpolate(pnt_2d)
     #surface = BRepBuilderAPI_MakeFace(curve, 1e-6)
     # return surface.Face()
-    return BRepBuilderAPI_MakeFace(api.Surface(), 1e-6).Face()
+    face = BRepBuilderAPI_MakeFace(api.Surface(), 1e-6).Face()
+    face.Location(loc)
+    return face
 
 
 def spl_curv(px, py, pz):
