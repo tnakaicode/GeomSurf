@@ -6,23 +6,25 @@ from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Lin, gp_Sphere
-from OCC.Core.BRep import BRep_Tool, BRep_Builder
+from OCC.Core.BRep import BRep_Tool, BRep_Builder, BRep_PointsOnSurface
 from OCC.Core.BRepFill import BRepFill_Filling
+from OCC.Core.BRepCheck import BRepCheck_Face, BRepCheck_Analyzer
+from OCC.Core.BRepTools import BRepTools_MapOfVertexPnt2d
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse, BRepAlgoAPI_Section
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire
 from OCC.Core.Geom import Geom_ToroidalSurface
 from OCC.Core.Geom import Geom_Line
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2, GeomAbs_C3
-from OCC.Core.GeomAPI import GeomAPI_IntCS
+from OCC.Core.GeomAPI import GeomAPI_IntCS, GeomAPI_IntSS
 from OCC.Core.GeomLProp import GeomLProp_SurfaceTool
-from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Builder
+from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Builder, TopoDS_Face, TopoDS_Shell
 from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon, make_vertex
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Construct import point_to_vector, vector_to_point
-from OCCUtils.Topology import Topo
+from OCCUtils.Topology import Topo, dumpTopology
 
 from base import plotocc, gen_ellipsoid, set_loc, spl_face
 
@@ -68,8 +70,7 @@ from base import plotocc, gen_ellipsoid, set_loc, spl_face
 def line_from_axs(axs=gp_Ax3(), length=100):
     vec = point_to_vector(axs.Location()) + \
         dir_to_vec(axs.Direction()) * length
-    lin = make_edge(axs.Location(), vector_to_point(vec))
-    return lin
+    return make_edge(axs.Location(), vector_to_point(vec))
 
 
 class HexPlane (plotocc):
@@ -95,6 +96,8 @@ class HexPlane (plotocc):
         self.surf = spl_face(*mesh, surf, ax)
 
         self.display.DisplayShape(self.surf, transparency=0.7)
+        self.plns = TopoDS_Shell()
+        self.builder.MakeShell(self.plns)
         for ix in np.linspace(0, 1, 5):
             for iy in np.linspace(0, 1, 5):
                 p1, vx, vy = gp_Pnt(), gp_Vec(), gp_Vec()
@@ -102,12 +105,53 @@ class HexPlane (plotocc):
                     BRep_Tool.Surface(self.surf), ix, iy, p1, vx, vy)
                 vz = vx.Crossed(vy)
                 axs = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
-                pln = self.make_PolyPlane(axs=axs, radi=2.5, shft=15.0)
-                print(ix, iy, pln)
+                pln = self.make_PolyPlane(axs=axs, radi=2.5, shft=0.0)
+                #print(ix, iy, pln)
                 self.display.DisplayShape(p1)
-                self.display.DisplayShape(pln)
-                self.builder.Add(pln, make_vertex(p1))
-                self.builder.Add(self.compound, pln)
+
+                self.builder.Add(self.compound, make_vertex(p1))
+                #self.builder.Add(self.compound, pln)
+                self.builder.Add(self.plns, pln)
+
+                p2, vx, vy = gp_Pnt(), gp_Vec(), gp_Vec()
+                GeomLProp_SurfaceTool.D1(
+                    BRep_Tool.Surface(pln), 0, 2.5, p2, vx, vy)
+                vz = vx.Crossed(vy)
+                print(ix, iy)
+                print(p1)
+                print(p2)
+                self.display.DisplayShape(p2)
+                self.builder.Add(self.compound, make_vertex(p2))
+
+        self.builder.Add(self.compound, self.plns)
+
+        for face in Topo(self.plns).faces():
+            cs = GeomAPI_IntCS(Geom_Line(self.beam.Location(
+            ), self.beam.Direction()), BRep_Tool.Surface(face))
+            uvw = cs.Parameters(1)
+            u, v, w = uvw
+            p1, vx, vy = gp_Pnt(), gp_Vec(), gp_Vec()
+            GeomLProp_SurfaceTool.D1(
+                BRep_Tool.Surface(face), u, v, p1, vx, vy)
+            vz = vx.Crossed(vy)
+
+            if u > 0 and v > 0:
+                print(u, v, p1)
+                print(cs.Point(1))
+                self.display.DisplayShape(p1)
+                self.display.DisplayShape(face, transparency=0.7)
+            else:
+                print(u, v)
+                self.display.DisplayShape(face)
+
+        cs = GeomAPI_IntCS(Geom_Line(self.beam.Location(),
+                                     self.beam.Direction()), BRep_Tool.Surface(self.surf))
+        print(cs.NbPoints())
+        print(cs.Point(1))
+
+        cs = GeomAPI_IntCS(Geom_Line(self.beam.Location(),
+                                     self.beam.Direction()), BRep_Tool.Surface(self.plns))
+        print(cs.NbPoints())
 
     def make_PolyPlane(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3()):
         pnts = []
