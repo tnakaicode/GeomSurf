@@ -167,7 +167,7 @@ class HexPlane (plotocc):
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
         proj = BRepProj_Projection(poly, self.surf, gp_Pnt(0, 0, 10))
-        print(proj.Current())
+        #print(proj.Current())
         brep = BRepBuilderAPI_MakeFace(self.surf, poly)
         # brep.Add(poly)
         face = brep.Face()

@@ -28,9 +28,10 @@ from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
 from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
-#from OCC.Core.GeomFill import GeomFill_BSplineCurves
-#from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
-from OCCUtils.Construct import make_box, make_line, make_wire
+from OCC.Core.GeomFill import GeomFill_BoundWithSurf
+from OCC.Core.GeomFill import GeomFill_BSplineCurves
+from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
+from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
@@ -130,6 +131,16 @@ class plot3d (object):
             plt.show()
         except AttributeError:
             pass
+
+
+def pnt_from_axs(axs=gp_Ax3(), length=100):
+    vec = point_to_vector(axs.Location()) + \
+        dir_to_vec(axs.Direction()) * length
+    return vector_to_point(vec)
+
+
+def line_from_axs(axs=gp_Ax3(), length=100):
+    return make_edge(axs.Location(), pnt_from_axs(axs, length))
 
 
 def pnt_trf_vec(pnt=gp_Pnt(), vec=gp_Vec()):
