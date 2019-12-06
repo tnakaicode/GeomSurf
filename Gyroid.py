@@ -3,15 +3,15 @@ from numpy import sin, cos, pi
 from skimage import measure
 
 from OCC.Display.SimpleGui import init_display
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
-from OCC.Core.BRepFill import BRepFill_CurveConstraint
-from OCC.Core.GeomAbs import GeomAbs_C0
 from OCC.Core.gp import gp_Pnt
+from OCC.Core.GeomAbs import GeomAbs_C0
+from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
 from OCC.Core.BRepFill import BRepFill_Filling
+from OCC.Core.BRepFill import BRepFill_CurveConstraint
+from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin, BRepOffset_Interval
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
 from OCC.Extend.TopologyUtils import TopologyExplorer, WireExplorer
 from OCC.Extend.ShapeFactory import make_face, make_vertex
-from OCC.Core.GeomAbs import GeomAbs_Intersection
-from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin
 from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon
@@ -19,11 +19,48 @@ from OCCUtils.Topology import Topo
 
 from base import plotocc
 
-# DEFINE GEOMETRY
+# https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_fill___filling.html
+# N-Side Filling This algorithm avoids to build a face from:
+#   a set of edges defining the bounds of the face and some constraints the surface support has to satisfy
+#   a set of edges and points defining some constraints the support surface has to satisfy
+#       an initial surface to deform for satisfying the constraints
+#
+#   a set of parameters to control the constraints.
+#   The support surface of the face is computed by deformation of the initial surface in order to satisfy the given constraints.
+#   The set of bounding edges defines the wire of the face.
+#
+#   If no initial surface is given, the algorithm computes it automatically.
+#   If the set of edges is not connected (Free constraint) missing edges are automatically computed.
+#
+#   Limitations:
+#
+#   If some constraints are not compatible
+#       The algorithm does not take them into account.
+#       So the constraints will not be satisfyed in an area containing the incompatibilitries.
+#       he constraints defining the bound of the face have to be entered in order to have a continuous wire.
+#
+#   Other Applications:
+#   Deformation of a face to satisfy internal constraints
+#   Deformation of a face to improve Gi continuity with connected faces
+#
+# BRepFill_Filling Example
+#
+# n_sided = BRepFill_Filling()
+# n_sided.SetApproxParam()
+# n_sided.SetResolParam()
+# n_sided.SetConstrParam()
+# for i, pnt in enumerate(pnts[:-1]):
+#    i0, i1 = i, i + 1
+#    n_sided.Add(pnt)
+#    n_sided.Add(make_edge(pnts[i0], pnts[i1]), GeomAbs_C0)
+# n_sided.Add(gp_Pnt(0, 0, 1))
+# n_sided.Build()
+# face = n_sided.Face()
 
 
 def gyroid(x, y, z, t):
     # Gyroïd
+    # DEFINE GEOMETRY
     return cos(x) * sin(y) + cos(y) * sin(z) + cos(z) * sin(x) - t
 
 
@@ -62,6 +99,11 @@ class Gyroid (plotocc):
     def __init__(self):
         plotocc.__init__(self)
 
+        print(gxyz.shape)
+        for i, xyz in enumerate(gxyz):
+            print(i, *xyz)
+            self.display.DisplayShape(gp_Pnt(*xyz))
+
         e_array = []
         for e in xyz_max:
             x, y, z = e
@@ -70,35 +112,31 @@ class Gyroid (plotocc):
         e_array.append(e_array[0])
         poly = make_polygon(e_array)
 
-        edges = []
+        n_sided = BRepFill_Filling()
         for e in Topo(poly).edges():
-            edges.append(e)
-
-        # POINTS CONSTRAINT
-        p_array = []
+            n_sided.Add(e, GeomAbs_C0)
         for pt in gxyz:
             x, y, z = pt
             if (x < xmax) and (x > xmin) and (y < ymax) and (y > ymin) and (z < zmax) and (z > zmin):
-                p = gp_Pnt(float(x), float(y), float(z))
-                p_array.append(p)
+                n_sided.Add(gp_Pnt(x, y, z))
+        n_sided.Build()
+        face = n_sided.Face()
 
-        print(len(edges), len(p_array))
-        face = make_n_sided(edges, p_array)
+        #face = make_n_sided(edges, p_array)
 
         # THICKEN SURFACE
         thickness = 0.15
-        solid = BRepOffset_MakeOffset()
-        solid.Initialize(face, thickness, 1.0E-5, BRepOffset_Skin, False, False,
-                         GeomAbs_Intersection, True)  # The last True is important to make solid
-        solid.MakeOffsetShape()
-        aShape = solid.Shape()
+        solid = BRepOffset_MakeOffset(
+            face, thickness, 1.0E-5, BRepOffset_Skin, False, False, GeomAbs_Intersection, True)
+        # The last True is important to make solid
+        # solid.MakeOffsetShape()
+        # solid.MakeThickSolid()
+        #aShape = solid.Shape()
 
         self.display.DisplayShape(poly)
-        for p in p_array:
-            self.display.DisplayShape(make_vertex(p))
         self.display.DisplayShape(face)
         #display.DisplayShape(aShape, update=True)
-        write_step_file(aShape, "./tmp/gyroid.stp")
+        #write_step_file(aShape, "./tmp/gyroid.stp")
 
 
 if __name__ == '__main__':

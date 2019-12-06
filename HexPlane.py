@@ -29,44 +29,6 @@ from OCCUtils.Topology import Topo, dumpTopology
 
 from base import plotocc, gen_ellipsoid, set_loc, spl_face
 
-# https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_fill___filling.html
-# N-Side Filling This algorithm avoids to build a face from:
-#   a set of edges defining the bounds of the face and some constraints the surface support has to satisfy
-#   a set of edges and points defining some constraints the support surface has to satisfy
-#       an initial surface to deform for satisfying the constraints
-#
-#   a set of parameters to control the constraints.
-#   The support surface of the face is computed by deformation of the initial surface in order to satisfy the given constraints.
-#   The set of bounding edges defines the wire of the face.
-#
-#   If no initial surface is given, the algorithm computes it automatically.
-#   If the set of edges is not connected (Free constraint) missing edges are automatically computed.
-#
-#   Limitations:
-#
-#   If some constraints are not compatible
-#       The algorithm does not take them into account.
-#       So the constraints will not be satisfyed in an area containing the incompatibilitries.
-#       he constraints defining the bound of the face have to be entered in order to have a continuous wire.
-#
-#   Other Applications:
-#   Deformation of a face to satisfy internal constraints
-#   Deformation of a face to improve Gi continuity with connected faces
-#
-# BRepFill_Filling Example
-#
-# n_sided = BRepFill_Filling()
-# n_sided.SetApproxParam()
-# n_sided.SetResolParam()
-# n_sided.SetConstrParam()
-# for i, pnt in enumerate(pnts[:-1]):
-#    i0, i1 = i, i + 1
-#    n_sided.Add(pnt)
-#    n_sided.Add(make_edge(pnts[i0], pnts[i1]), GeomAbs_C0)
-# n_sided.Add(gp_Pnt(0, 0, 1))
-# n_sided.Build()
-# face = n_sided.Face()
-
 
 def line_from_axs(axs=gp_Ax3(), length=100):
     vec = point_to_vector(axs.Location()) + \
@@ -167,7 +129,7 @@ class HexPlane (plotocc):
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
         proj = BRepProj_Projection(poly, self.surf, gp_Pnt(0, 0, 10))
-        #print(proj.Current())
+        # print(proj.Current())
         brep = BRepBuilderAPI_MakeFace(self.surf, poly)
         # brep.Add(poly)
         face = brep.Face()
