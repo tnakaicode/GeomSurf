@@ -21,6 +21,7 @@ from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon, make_vertex
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
+from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Topology import Topo
 
 from base import plotocc, gen_ellipsoid, set_loc, spl_face
@@ -48,6 +49,27 @@ from base import plotocc, gen_ellipsoid, set_loc, spl_face
 #   Other Applications:
 #   Deformation of a face to satisfy internal constraints
 #   Deformation of a face to improve Gi continuity with connected faces
+#
+# BRepFill_Filling Example
+#
+# n_sided = BRepFill_Filling()
+# n_sided.SetApproxParam()
+# n_sided.SetResolParam()
+# n_sided.SetConstrParam()
+# for i, pnt in enumerate(pnts[:-1]):
+#    i0, i1 = i, i + 1
+#    n_sided.Add(pnt)
+#    n_sided.Add(make_edge(pnts[i0], pnts[i1]), GeomAbs_C0)
+# n_sided.Add(gp_Pnt(0, 0, 1))
+# n_sided.Build()
+# face = n_sided.Face()
+
+
+def line_from_axs(axs=gp_Ax3(), length=100):
+    vec = point_to_vector(axs.Location()) + \
+        dir_to_vec(axs.Direction()) * length
+    lin = make_edge(axs.Location(), vector_to_point(vec))
+    return lin
 
 
 class HexPlane (plotocc):
@@ -58,7 +80,14 @@ class HexPlane (plotocc):
         self.builder = BRep_Builder()
         self.builder.MakeCompound(self.compound)
 
-        ax = gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1))
+        self.beam = gp_Ax3()
+        self.beam.SetLocation(gp_Pnt(0.5, 0.5, 0.0))
+        self.beam.SetDirection(gp_Dir(0.5, 0.1, 1.0))
+        beam_line = line_from_axs(self.beam, length=20)
+        self.display.DisplayShape(beam_line)
+        self.builder.Add(self.compound, beam_line)
+
+        ax = gp_Ax3(gp_Pnt(0, 0, 10), gp_Dir(0, 0, -1))
         px = np.linspace(-1, 1, 10) * 10
         py = np.linspace(-1, 1, 10) * 10
         mesh = np.meshgrid(px, py)
@@ -89,20 +118,6 @@ class HexPlane (plotocc):
             pnts.append(gp_Pnt(x, y, 0))
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
-
-        # n_sided = BRepFill_Filling()
-        # n_sided.SetApproxParam()
-        # n_sided.SetResolParam()
-        # n_sided.SetConstrParam()
-        # for i, pnt in enumerate(pnts[:-1]):
-        #    i0, i1 = i, i + 1
-        #    n_sided.Add(pnt)
-        #    n_sided.Add(make_edge(pnts[i0], pnts[i1]), GeomAbs_C0)
-        # n_sided.Add(gp_Pnt(0, 0, 1))
-        # n_sided.Build()
-        # face = n_sided.Face()
-        # print(n_sided.G0Error())
-
         face = BRepBuilderAPI_MakeFace(poly).Face()
         face.Location(set_loc(gp_Ax3(), axs))
         return face
