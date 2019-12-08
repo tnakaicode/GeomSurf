@@ -5,6 +5,7 @@ import sys
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_XYZ
 from OCC.Core.gp import gp_Lin, gp_Sphere, gp_Pln
 from OCC.Core.BRep import BRep_Tool, BRep_Builder, BRep_PointsOnSurface
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse, BRepAlgoAPI_Section
@@ -26,6 +27,7 @@ from OCCUtils.Topology import Topo, dumpTopology
 
 from base import plotocc
 
+
 class ODE1 (plotocc):
 
     def __init__(self):
@@ -33,6 +35,11 @@ class ODE1 (plotocc):
         self.compound = TopoDS_Compound()
         self.builder = BRep_Builder()
         self.builder.MakeCompound(self.compound)
+
+        mmat = math_Matrix(1, 3, 1, 3, 0.0)
+        print(mmat)
+        mvec = math_Vector(gp_XYZ(1, 2, 3))
+        print(mvec.Norm())
 
     def export_file(self):
         write_step_file(self.compound, "./tmp/ODE1.stp")

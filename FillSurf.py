@@ -12,6 +12,7 @@ from OCC.Core.FEmTool import FEmTool_Curve, FEmTool_ProfileMatrix
 from OCC.Core.BRepFill import BRepFill_Filling, BRepFill_Draft, BRepFill_Pipe
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2, GeomAbs_C3
+from OCC.Core.GeomFill import GeomFill_Filling
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 

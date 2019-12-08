@@ -66,7 +66,7 @@ def gyroid(x, y, z, t):
 
 size = 1.
 strut_param = 1.
-resolution = 6j  # >6 crashes
+resolution = 10j  # >6 crashes
 res = int(np.imag(resolution))
 x, y, z = pi / 2 * np.mgrid[-1:1:resolution, -1:1:resolution, -1:1:resolution]
 vol = gyroid(x, y, z, strut_param) * size
