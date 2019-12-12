@@ -18,6 +18,10 @@ from OCC.Core.GeomLProp import GeomLProp_SurfaceTool
 from OCC.Core.GeomFill import GeomFill_Filling
 from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Builder, TopoDS_Face, TopoDS_Shell
 from OCC.Core.math import math_Vector, math_Matrix, math_Jacobi
+from OCC.Core.math import math_NewtonMinimum, math_BracketMinimum
+from OCC.Core.math import math_GaussMultipleIntegration
+from OCC.Core.FEmTool import FEmTool_Curve
+from OCC.Core.FairCurve import FairCurve_Newton
 from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon, make_vertex
@@ -36,10 +40,13 @@ class ODE1 (plotocc):
         self.builder = BRep_Builder()
         self.builder.MakeCompound(self.compound)
 
-        mmat = math_Matrix(1, 3, 1, 3, 0.0)
-        print(mmat)
-        mvec = math_Vector(gp_XYZ(1, 2, 3))
+        mmat = math_Matrix(1, 4, 1, 3, 0.0)
+        mmat.SetDiag(1.0)
+        print(mmat.Determinant())
+        print(mmat.DumpToString())
+        mvec = math_Vector(1, 3)
         print(mvec.Norm())
+        print(mvec.DumpToString())
 
     def export_file(self):
         write_step_file(self.compound, "./tmp/ODE1.stp")
@@ -51,5 +58,5 @@ class ODE1 (plotocc):
 
 if __name__ == '__main__':
     obj = ODE1()
-    obj.export_file()
-    obj.display_Plane()
+    # obj.export_file()
+    # obj.display_Plane()
