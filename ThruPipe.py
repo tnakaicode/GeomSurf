@@ -5,7 +5,7 @@ import sys
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Lin, gp_Sphere, gp_Pln
-from OCC.Core.gp import gp_Circ
+from OCC.Core.gp import gp_Circ, gp_Elips
 from OCC.Core.BRep import BRep_Tool, BRep_Builder
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections, BRepOffsetAPI_MakeOffset, BRepOffsetAPI_MakeEvolved, BRepOffsetAPI_MakePipe, BRepOffsetAPI_MakePipeShell
@@ -30,7 +30,7 @@ from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
 from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCC.Extend.DataExchange import read_iges_file, write_iges_file
 from OCC.Extend.DataExchange import read_stl_file, write_stl_file
-from OCCUtils.Construct import make_polygon, make_circle
+from OCCUtils.Construct import make_polygon, make_circle, make_vertex, make_edge, make_wire
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 from OCCUtils.Topology import Topo
@@ -45,8 +45,8 @@ class GenThruSurf (plotocc):
         self.axs = gp_Ax3()
 
         p_array = TColgp_Array1OfPnt(1, 100)
-        for idx, pt in enumerate(np.linspace(0, 2.0, 100)):
-            pnt = gp_Pnt(300 * np.sin(pt), 100 * np.cos(3*pt), 0)
+        for idx, pt in enumerate(np.linspace(-2.0, 2.0, 100)):
+            pnt = gp_Pnt(300 * np.sin(pt), 100 * np.cos(3 * pt), 0)
             p_array.SetValue(idx + 1, pnt)
         api = GeomAPI_PointsToBSpline(p_array)
         self.curv = api.Curve()
@@ -55,13 +55,13 @@ class GenThruSurf (plotocc):
         api = BRepOffsetAPI_ThruSections()
         api.SetSmoothing(True)
         num_list = [
-            3, 3, 3,
+            3, 3, 3, 3, 3,
             6, 6, 6, 6, 6, 6, 6, 6, 6,
             7, 7, 7, 7, 7, 7, 7, 7,
             4, 4, 4
         ]
         p1, v1, v2 = gp_Pnt(), gp_Vec(), gp_Vec()
-        for idx, pt in enumerate(np.linspace(0.25, 0.75, len(num_list))):
+        for idx, pt in enumerate(np.linspace(0.0, 0.5, len(num_list))):
             GeomLProp_CurveTool.D2(self.curv, pt, p1, v1, v2)
             v3 = v1.Crossed(v2)
             axis = gp_Ax3(p1, vec_to_dir(v1), vec_to_dir(v2))
@@ -71,8 +71,22 @@ class GenThruSurf (plotocc):
             self.display.DisplayShape(poly)
         api.Build()
         self.display.DisplayShape(api.Shape())
+        write_step_file(api.Shape(), "./tmp/ThruPipe_Hex.stp")
 
-        write_step_file(api.Shape(), "./tmp/ThruPipe.stp")
+        api = BRepOffsetAPI_ThruSections()
+        # api.SetSmoothing(True)
+        p1, v1, v2 = gp_Pnt(), gp_Vec(), gp_Vec()
+        for idx, pt in enumerate(np.linspace(0.55, 1.0, 20)):
+            GeomLProp_CurveTool.D2(self.curv, pt, p1, v1, v2)
+            v3 = v1.Crossed(v2)
+            axis = gp_Ax3(p1, vec_to_dir(v1), vec_to_dir(v2))
+            shft = 90 * pt
+            poly = self.make_Ellip(rxy=[15, 10], shft=shft, axs=axis)
+            api.AddWire(poly)
+            self.display.DisplayShape(poly)
+        api.Build()
+        self.display.DisplayShape(api.Shape())
+        write_step_file(api.Shape(), "./tmp/ThruPipe_Ellip.stp")
 
     def make_Thru(self, num=50):
         api = BRepOffsetAPI_ThruSections()
@@ -97,6 +111,23 @@ class GenThruSurf (plotocc):
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
         poly.Location(set_loc(gp_Ax3(), axs))
+        return poly
+
+    def make_Ellip(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3()):
+        rx, ry = rxy
+        if rx > ry:
+            major_radi = rx
+            minor_radi = ry
+            axis = axs.Ax2()
+            axis.SetXDirection(axs.XDirection())
+        else:
+            major_radi = ry
+            minor_radi = rx
+            axis = axs.Ax2()
+            axis.SetXDirection(axs.YDirection())
+        axis.Rotate(axs.Axis(), np.deg2rad(shft))
+        elip = make_edge(gp_Elips(axis, major_radi, minor_radi))
+        poly = make_wire(elip)
         return poly
 
     def export_file(self):
