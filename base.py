@@ -182,8 +182,6 @@ def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
 
 
 def spl_face(px, py, pz, axs=gp_Ax3()):
-    loc = set_loc(gp_Ax3(), axs)
-
     nx, ny = px.shape
     pnt_2d = TColgp_Array2OfPnt(1, nx, 1, ny)
     for row in range(pnt_2d.LowerRow(), pnt_2d.UpperRow() + 1):
@@ -198,7 +196,7 @@ def spl_face(px, py, pz, axs=gp_Ax3()):
     #surface = BRepBuilderAPI_MakeFace(curve, 1e-6)
     # return surface.Face()
     face = BRepBuilderAPI_MakeFace(api.Surface(), 1e-6).Face()
-    face.Location(loc)
+    face.Location(set_loc(gp_Ax3(), axs))
     return face
 
 
@@ -237,6 +235,7 @@ class GenCompound (object):
 class plotocc (object):
 
     def __init__(self):
+        self.base_axs = gp_Ax3()
         self.display, self.start_display, self.add_menu, self.add_functionto_menu = init_display()
 
     def show_box(self, axs=gp_Ax3(), lxyz=[100, 100, 100]):
@@ -304,16 +303,17 @@ class plotocc (object):
         if rx > ry:
             major_radi = rx
             minor_radi = ry
-            axis = axs.Ax2()
-            axis.SetXDirection(axs.XDirection())
+            axis = gp_Ax2()
+            axis.SetXDirection(axis.XDirection())
         else:
             major_radi = ry
             minor_radi = rx
-            axis = axs.Ax2()
-            axis.SetXDirection(axs.YDirection())
-        axis.Rotate(axs.Axis(), np.deg2rad(shft))
+            axis = gp_Ax2()
+            axis.SetXDirection(axis.YDirection())
+        axis.Rotate(axis.Axis(), np.deg2rad(shft))
         elip = make_edge(gp_Elips(axis, major_radi, minor_radi))
         poly = make_wire(elip)
+        poly.Location(set_loc(gp_Ax3(), axs))
         return poly
 
     def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3()):
@@ -326,7 +326,7 @@ class plotocc (object):
             pnts.append(gp_Pnt(x, y, 0))
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
-        poly.Location(set_loc(axs, gp_Ax3()))
+        poly.Location(set_loc(gp_Ax3(), axs))
         return poly
 
     def show(self):
