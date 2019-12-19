@@ -11,7 +11,7 @@ from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_XYZ
-from OCC.Core.gp import gp_Lin
+from OCC.Core.gp import gp_Lin, gp_Elips
 from OCC.Core.gp import gp_Mat, gp_GTrsf, gp_Trsf
 from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound
 from OCC.Core.TopLoc import TopLoc_Location
@@ -298,6 +298,36 @@ class plotocc (object):
         vec = dir_to_vec(axs.Direction())
         pln = make_plane(pnt, vec, -scale, scale, -scale, scale)
         self.display.DisplayShape(pln)
+
+    def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3()):
+        rx, ry = rxy
+        if rx > ry:
+            major_radi = rx
+            minor_radi = ry
+            axis = axs.Ax2()
+            axis.SetXDirection(axs.XDirection())
+        else:
+            major_radi = ry
+            minor_radi = rx
+            axis = axs.Ax2()
+            axis.SetXDirection(axs.YDirection())
+        axis.Rotate(axs.Axis(), np.deg2rad(shft))
+        elip = make_edge(gp_Elips(axis, major_radi, minor_radi))
+        poly = make_wire(elip)
+        return poly
+
+    def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3()):
+        lxy = radi
+        pnts = []
+        angl = 360 / num
+        for i in range(num):
+            thet = np.deg2rad(i * angl) + np.deg2rad(shft)
+            x, y = radi * np.sin(thet), radi * np.cos(thet)
+            pnts.append(gp_Pnt(x, y, 0))
+        pnts.append(pnts[0])
+        poly = make_polygon(pnts)
+        poly.Location(set_loc(axs, gp_Ax3()))
+        return poly
 
     def show(self):
         self.display.FitAll()
