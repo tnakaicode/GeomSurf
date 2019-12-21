@@ -1,29 +1,30 @@
-##Copyright 2019 Thomas Paviot (tpaviot@gmail.com)
-##
-##This file is part of pythonOCC.
-##
-##pythonOCC is free software: you can redistribute it and/or modify
-##it under the terms of the GNU Lesser General Public License as published by
-##the Free Software Foundation, either version 3 of the License, or
-##(at your option) any later version.
-##
-##pythonOCC is distributed in the hope that it will be useful,
-##but WITHOUT ANY WARRANTY; without even the implied warranty of
-##MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##GNU Lesser General Public License for more details.
-##
-##You should have received a copy of the GNU Lesser General Public License
-##along with pythonOCC.  If not, see <http://www.gnu.org/licenses/>.
-
-from OCC.Core.gp import gp_Pnt
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
-from OCC.Core.TColgp import TColgp_Array2OfPnt
-from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
-from OCC.Core.GeomAbs import GeomAbs_C2
-from OCC.Core.ShapeAnalysis import ShapeAnalysis_Surface, shapeanalysis_GetFaceUVBounds
+import numpy as np
+import matplotlib.pyplot as plt
+import sys
 
 from OCC.Display.SimpleGui import init_display
-display, start_display, add_menu, add_function_to_menu = init_display()
+from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
+from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_Lin, gp_Sphere
+from OCC.Core.BRep import BRep_Tool, BRep_Builder
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse, BRepAlgoAPI_Section
+from OCC.Core.Geom import Geom_ToroidalSurface
+from OCC.Core.Geom import Geom_Line
+from OCC.Core.GeomAPI import GeomAPI_IntCS
+from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
+from OCC.Core.GeomAbs import GeomAbs_C2
+from OCC.Core.GeomLProp import GeomLProp_SurfaceTool
+from OCC.Core.TopoDS import TopoDS_Compound
+from OCC.Core.ShapeAnalysis import ShapeAnalysis_Surface, shapeanalysis_GetFaceUVBounds
+from OCC.Extend.DataExchange import read_step_file, write_step_file
+from OCCUtils.Construct import make_n_sided, make_n_sections
+from OCCUtils.Construct import make_edge, make_polygon
+from OCCUtils.Construct import vec_to_dir, dir_to_vec
+from OCCUtils.Topology import Topo
+from OCC.Core.TColgp import TColgp_Array2OfPnt
+
+from base import plotocc, gen_ellipsoid
 
 
 def build_surf():
@@ -44,6 +45,7 @@ def build_surf():
     bspl_surf = GeomAPI_PointsToBSplineSurface(array, 3, 8, GeomAbs_C2,
                                                0.001).Surface()
     return bspl_surf
+
 
 def build_points_network(bspl_srf):
     """ Creates a list of gp_Pnt points from a bspline surface
@@ -68,11 +70,16 @@ def build_points_network(bspl_srf):
         u += 0.1
     return pnts
 
+
+# https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_shape_analysis___surface.html
 if __name__ == '__main__':
     surf = build_surf()
-    display.DisplayShape(surf, update=True)
+
+    obj = plotocc()
+    obj.display.DisplayShape(surf, update=True)
     pts = build_points_network(surf)
     for pt in pts:
-        display.DisplayShape(pt, update=False)
-    display.Repaint()
-    start_display()
+        obj.display.DisplayShape(pt, update=False)
+    obj.display.Repaint()
+    obj.show_axs_pln()
+    obj.show()
