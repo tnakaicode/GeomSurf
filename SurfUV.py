@@ -27,59 +27,69 @@ from OCC.Core.TColgp import TColgp_Array2OfPnt
 from base import plotocc, gen_ellipsoid
 
 
-def build_surf():
-    p1 = gp_Pnt(-15, 200, 10)
-    p2 = gp_Pnt(5, 204, 0)
-    p3 = gp_Pnt(15, 200, 0)
-    p4 = gp_Pnt(-15, 20, 15)
-    p5 = gp_Pnt(-5, 20, 0)
-    p6 = gp_Pnt(15, 20, 35)
+class SurfUV (plotocc):
 
-    array = TColgp_Array2OfPnt(1, 3, 1, 2)
-    array.SetValue(1, 1, p1)
-    array.SetValue(2, 1, p2)
-    array.SetValue(3, 1, p3)
-    array.SetValue(1, 2, p4)
-    array.SetValue(2, 2, p5)
-    array.SetValue(3, 2, p6)
-    bspl_surf = GeomAPI_PointsToBSplineSurface(array, 3, 8, GeomAbs_C2,
-                                               0.001).Surface()
-    return bspl_surf
+    def __init__(self):
+        plotocc.__init__(self)
+        self.build_surf()
+        write_step_file(self.bspl_face, "./tmp/SurfUV.stp")
 
+    def build_surf(self):
+        p1 = gp_Pnt(-15, 200, 10)
+        p2 = gp_Pnt(5, 204, 0)
+        p3 = gp_Pnt(15, 200, 0)
+        p4 = gp_Pnt(-15, 20, 15)
+        p5 = gp_Pnt(-5, 20, 0)
+        p6 = gp_Pnt(15, 20, 35)
+        self.display.DisplayShape(p1, color="RED")
+        self.display.DisplayShape(p2, color="RED")
+        self.display.DisplayShape(p3, color="RED")
+        self.display.DisplayShape(p4, color="RED")
+        self.display.DisplayShape(p5, color="RED")
+        self.display.DisplayShape(p6, color="RED")
 
-def build_points_network(bspl_srf):
-    """ Creates a list of gp_Pnt points from a bspline surface
-    """
-    # first create a face
-    face = BRepBuilderAPI_MakeFace(bspl_srf, 1e-6).Face()
-    # get face uv bounds
-    umin, umax, vmin, vmax = shapeanalysis_GetFaceUVBounds(face)
-    print(umin, umax, vmin, vmax)
+        array = TColgp_Array2OfPnt(1, 3, 1, 2)
+        array.SetValue(1, 1, p1)
+        array.SetValue(2, 1, p2)
+        array.SetValue(3, 1, p3)
+        array.SetValue(1, 2, p4)
+        array.SetValue(2, 2, p5)
+        array.SetValue(3, 2, p6)
+        self.bspl_surf = GeomAPI_PointsToBSplineSurface(array, 3, 8, GeomAbs_C2,
+                                                        0.001).Surface()
+        self.bspl_face = BRepBuilderAPI_MakeFace(self.bspl_surf, 1e-6).Face()
 
-    pnts = []
-    sas = ShapeAnalysis_Surface(bspl_srf)
+    def build_points_network(self):
+        """ Creates a list of gp_Pnt points from a bspline surface
+        """
+        # get face uv bounds
+        umin, umax, vmin, vmax = shapeanalysis_GetFaceUVBounds(self.bspl_face)
+        print(umin, umax, vmin, vmax)
 
-    u = umin
-    while u < umax:
-        v = vmin
-        while v < vmax:
-            p = sas.Value(u, v)
-            print("u=", u, " v=", v, "->X=", p.X(), " Y=", p.Y(), " Z=", p.Z())
-            pnts.append(p)
-            v += 0.1
-        u += 0.1
-    return pnts
+        pnts = []
+        sas = ShapeAnalysis_Surface(self.bspl_surf)
+
+        u = umin
+        while u < umax:
+            v = vmin
+            while v < vmax:
+                p = sas.Value(u, v)
+                print("u=", u, " v=", v, "->X=", p.X(),
+                      " Y=", p.Y(), " Z=", p.Z())
+                self.display.DisplayShape(p, update=False)
+                pnts.append(p)
+                v += 0.1
+            u += 0.1
+
+    def show_object(self):
+        self.display.DisplayShape(self.bspl_surf, update=True)
+        self.display.Repaint()
+        self.show_axs_pln()
+        self.show()
 
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_shape_analysis___surface.html
 if __name__ == '__main__':
-    surf = build_surf()
-
-    obj = plotocc()
-    obj.display.DisplayShape(surf, update=True)
-    pts = build_points_network(surf)
-    for pt in pts:
-        obj.display.DisplayShape(pt, update=False)
-    obj.display.Repaint()
-    obj.show_axs_pln()
-    obj.show()
+    obj = SurfUV()
+    obj.build_points_network()
+    obj.show_object()
