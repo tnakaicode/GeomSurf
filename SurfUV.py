@@ -7,6 +7,7 @@ from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Lin, gp_Sphere
 from OCC.Core.BRep import BRep_Tool, BRep_Builder
+from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse, BRepAlgoAPI_Section
 from OCC.Core.Geom import Geom_ToroidalSurface
@@ -15,6 +16,8 @@ from OCC.Core.GeomAPI import GeomAPI_IntCS
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.Core.GeomAbs import GeomAbs_C2
 from OCC.Core.GeomLProp import GeomLProp_SurfaceTool
+from OCC.Core.ProjLib import ProjLib_ProjectOnSurface
+from OCC.Core.GeomProjLib import geomprojlib
 from OCC.Core.TopoDS import TopoDS_Compound
 from OCC.Core.ShapeAnalysis import ShapeAnalysis_Surface, shapeanalysis_GetFaceUVBounds
 from OCC.Extend.DataExchange import read_step_file, write_step_file
@@ -89,6 +92,7 @@ class SurfUV (plotocc):
 
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_shape_analysis___surface.html
+# https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_proj___projection.html
 if __name__ == '__main__':
     obj = SurfUV()
     obj.build_points_network()
