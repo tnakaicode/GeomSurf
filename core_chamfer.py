@@ -1,46 +1,3 @@
-"""
-#include <TopoDS_Shape.hxx> 
-#include <TopoDS.hxx> 
-#include <BRepPrimAPI_MakeBox.hxx> 
-#include <TopoDS_Solid.hxx> 
-#include <BRepFilletAPI_MakeFillet.hxx> 
-#include <TopExp_Explorer.hxx> 
-TopoDS_Shape FilletedBox(const Standard_Real a, 
-                        const Standard_Real  b, 
-                        const Standard_Real  c, 
-                        const Standard_Real  r) 
-{ 
-    TopoDS_Solid Box =  BRepPrimAPI_MakeBox(a,b,c); 
-    BRepFilletAPI_MakeFillet  MF(Box); 
-    
-    // add all the edges  to fillet 
-    TopExp_Explorer  ex(Box,TopAbs_EDGE); 
-    while (ex.More()) 
-    { 
-    MF.Add(r,TopoDS::Edge(ex.Current())); 
-    ex.Next(); 
-    } 
-    return MF.Shape(); 
-} 
-void CSampleTopologicalOperationsDoc::OnEvolvedblend1() 
-{ 
-    TopoDS_Shape theBox  = BRepPrimAPI_MakeBox(200,200,200); 
-    BRepFilletAPI_MakeFillet  Rake(theBox); 
-    ChFi3d_FilletShape  FSh = ChFi3d_Rational; 
-    Rake.SetFilletShape(FSh); 
-    TColgp_Array1OfPnt2d  ParAndRad(1, 6); 
-    ParAndRad(1).SetCoord(0.,  10.); 
-    ParAndRad(1).SetCoord(50.,  20.); 
-    ParAndRad(1).SetCoord(70.,  20.); 
-    ParAndRad(1).SetCoord(130.,  60.); 
-    ParAndRad(1).SetCoord(160.,  30.); 
-    ParAndRad(1).SetCoord(200.,  20.); 
-    TopExp_Explorer  ex(theBox,TopAbs_EDGE); 
-    Rake.Add(ParAndRad, TopoDS::Edge(ex.Current())); 
-    TopoDS_Shape  evolvedBox = Rake.Shape(); 
-} 
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
@@ -56,8 +13,13 @@ from optparse import OptionParser
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_Pnt2d
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
 from OCC.Core.BRepFilletAPI import BRepFilletAPI_MakeChamfer, BRepFilletAPI_MakeFillet
+from OCC.Core.ChFi3d import ChFi3d_Rational
+from OCC.Core.TColgp import TColgp_Array1OfPnt2d
+from OCC.Core.TopExp import TopExp_Explorer
+from OCC.Core.TopAbs import TopAbs_EDGE
 from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
@@ -90,11 +52,30 @@ if __name__ == '__main__':
     #
 
     axs = gp_Ax3()
-    box = make_box(100, 100, 100)
+    box = make_box(200, 200, 200)
+    chf = BRepFilletAPI_MakeChamfer(box)
+    # chf.Build()
+    fil = BRepFilletAPI_MakeFillet(box)
+    fil.SetFilletShape(ChFi3d_Rational)
+    par = TColgp_Array1OfPnt2d(1, 6)
+    par.SetValue(1, gp_Pnt2d(0, 10))
+    par.SetValue(2, gp_Pnt2d(50, 20))
+    par.SetValue(3, gp_Pnt2d(70, 20))
+    par.SetValue(4, gp_Pnt2d(130, 60))
+    par.SetValue(5, gp_Pnt2d(160, 30))
+    par.SetValue(6, gp_Pnt2d(200, 20))
+    top = TopExp_Explorer(box, TopAbs_EDGE)
+
+    fil.Add(par, top.Current())
+    top.Next()
+    fil.Add(par, top.Current())
+
+    write_step_file(box, tmpdir + "box.stp")
+    write_step_file(fil.Shape(), tmpdir + "box_fillet.stp", "AP214IS")
 
     display, start_display, add_menu, add_functionto_menu = init_display()
 
-    display.DisplayShape(box)
+    display.DisplayShape(fil.Shape())
     display.DisplayShape(axs.Location())
 
     display.FitAll()
