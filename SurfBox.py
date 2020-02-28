@@ -36,7 +36,7 @@ class SurfBox (plotocc):
 
     def __init__(self):
         plotocc.__init__(self)
-        self.shell = read_step_file(self.tmpdir + "ThruSurf_4.stp")
+        self.shell = read_step_file(self.tmpdir + "SurfUV.stp")
         print(self.shell)
         top = TopExp_Explorer(self.shell, TopAbs_FACE)
         self.face = top.Current()
@@ -53,9 +53,9 @@ class SurfBox (plotocc):
         print(sas.Value(u1, v1))
 
         u = u0
-        while u < u1:
+        while u <= u1:
             v = v0
-            while v < v1:
+            while v <= v1:
                 p = sas.Value(u, v)
                 self.display.DisplayShape(p, update=False)
                 v += 1 / 3
