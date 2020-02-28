@@ -50,7 +50,8 @@ class GenThruSurf (plotocc):
             self.base = self.make_Thru(50)
             self.display.DisplayShape(
                 self.base, transparency=0.7, color="BLUE")
-            write_step_file(self.base, "./tmp/ThruSurf_{:d}.stp".format(num))
+            write_step_file(self.base, self.tmpdir +
+                            "ThruSurf_{:d}.stp".format(num))
 
     def make_Thru(self, num=50):
         api = BRepOffsetAPI_ThruSections()
@@ -81,7 +82,7 @@ class GenThruSurf (plotocc):
         builder = BRep_Builder()
         compound = TopoDS_Compound()
         builder.MakeCompound(compound)
-        write_step_file(compound, "./tmp/ThruSurf.stp")
+        write_step_file(compound, self.tmpdir + "ThruSurf.stp")
 
     def display_object(self):
         self.display.DisplayShape(self.poly)

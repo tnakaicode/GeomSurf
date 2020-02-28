@@ -35,7 +35,7 @@ class SurfUV (plotocc):
     def __init__(self):
         plotocc.__init__(self)
         self.build_surf()
-        write_step_file(self.bspl_face, "./tmp/SurfUV.stp")
+        write_step_file(self.bspl_face, self.tmpdir + "SurfUV.stp")
 
     def build_surf(self):
         p1 = gp_Pnt(-15, 200, 10)

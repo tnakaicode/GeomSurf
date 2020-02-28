@@ -1,8 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+import json
 import sys
+import time
+import os
+import glob
+import shutil
+import datetime
 import pickle
+from optparse import OptionParser
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
@@ -235,8 +242,22 @@ class GenCompound (object):
 class plotocc (object):
 
     def __init__(self):
+        self.create_tempdir()
         self.base_axs = gp_Ax3()
         self.display, self.start_display, self.add_menu, self.add_functionto_menu = init_display()
+
+    def create_tempdir(self, flag=1):
+        print(datetime.date.today())
+        datenm = "{0:%Y%m%d}".format(datetime.date.today())
+        dirnum = len(glob.glob("./temp_" + datenm + "*/"))
+        if flag == -1 or dirnum == 0:
+            self.tmpdir = "./temp_{}{:03}/".format(datenm, dirnum)
+            os.makedirs(self.tmpdir)
+            fp = open(self.tmpdir + "not_ignore.txt", "w")
+            fp.close()
+        else:
+            self.tmpdir = "./temp_{}{:03}/".format(datenm, dirnum - 1)
+        print(self.tmpdir)
 
     def show_box(self, axs=gp_Ax3(), lxyz=[100, 100, 100]):
         box = make_box(*lxyz)
