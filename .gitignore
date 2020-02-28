@@ -11,3 +11,5 @@ __pycache__/
 
 # Tmp
 tmp/*
+temp_*/*
+*/temp_*/*

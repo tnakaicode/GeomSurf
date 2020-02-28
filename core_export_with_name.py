@@ -36,7 +36,7 @@ class ExportCAFMethod (object):
         self.doc = TDocStd_Document(
             TCollection_ExtendedString("pythonocc-doc"))
         #self.x_app = XCAFApp_Application.GetApplication()
-        #self.x_app.NewDocument(
+        # self.x_app.NewDocument(
         #    TCollection_ExtendedString("MDTV-CAF"), self.doc)
         self.shape_tool = XCAFDoc_DocumentTool_ShapeTool(self.doc.Main())
         Interface_Static_SetCVal("write.step.schema", "AP214")
