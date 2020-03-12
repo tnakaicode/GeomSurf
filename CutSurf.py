@@ -64,7 +64,7 @@ if __name__ == '__main__':
     obj.display.DisplayShape(bound_poly_2)
     obj.display.DisplayShape(bound_poly)
 
-    write_step_file(face, "./tmp/CutSurf_org.stp")
-    write_step_file(bound_face, "./tmp/CutSurf.stp")
+    write_step_file(face, obj.tempname + "_org.stp")
+    write_step_file(bound_face, obj.tempname + ".stp")
 
     obj.show()

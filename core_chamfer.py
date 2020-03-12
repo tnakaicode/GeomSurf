@@ -25,19 +25,7 @@ from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
 
-def create_tempdir(flag=1):
-    print(datetime.date.today())
-    datenm = "{0:%Y%m%d}".format(datetime.date.today())
-    dirnum = len(glob.glob("./temp_" + datenm + "*/"))
-    if flag == -1 or dirnum == 0:
-        tmpdir = "./temp_{}{:03}/".format(datenm, dirnum)
-        os.makedirs(tmpdir)
-        fp = open(tmpdir + "not_ignore.txt", "w")
-        fp.close()
-    else:
-        tmpdir = "./temp_{}{:03}/".format(datenm, dirnum - 1)
-    print(tmpdir)
-    return tmpdir
+from base import plotocc, create_tempdir
 
 
 if __name__ == '__main__':
@@ -45,11 +33,13 @@ if __name__ == '__main__':
     parser = OptionParser()
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
-    tmpdir = create_tempdir(1)
 
     #
     # https://www.opencascade.com/doc/occt-6.9.1/overview/html/occt_user_guides__modeling_algos.html#occt_modalg_6
     #
+
+    obj = plotocc()
+    obj.SaveMenu()
 
     axs = gp_Ax3()
     box = make_box(200, 200, 200)
@@ -68,13 +58,9 @@ if __name__ == '__main__':
     top.Next()
     fil.Add(par, top.Current())
 
-    write_step_file(box, tmpdir + "box.stp")
-    write_step_file(fil.Shape(), tmpdir + "box_fillet.stp", "AP214IS")
+    write_step_file(box, obj.tmpdir + "box.stp")
+    write_step_file(fil.Shape(), obj.tmpdir + "box_fillet.stp", "AP214IS")
 
-    display, start_display, add_menu, add_functionto_menu = init_display()
-
-    display.DisplayShape(fil.Shape())
-    display.DisplayShape(axs.Location())
-
-    display.FitAll()
-    start_display()
+    obj.display.DisplayShape(fil.Shape())
+    obj.display.DisplayShape(axs.Location())
+    obj.show()

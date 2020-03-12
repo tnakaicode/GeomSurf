@@ -125,7 +125,7 @@ class DBall (plotocc):
         builder.Add(compound, self.b1)
         builder.Add(compound, self.b2)
         builder.Add(compound, make_polygon(self.pts))
-        write_step_file(compound, "./tmp/test.stp")
+        write_step_file(compound, self.tempname + ".stp")
 
     def display_ball(self):
         #self.show_vec(self.beam, scale=50)

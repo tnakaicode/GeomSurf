@@ -137,7 +137,7 @@ class HexPlane (plotocc):
         return face
 
     def export_file(self):
-        write_step_file(self.compound, "./tmp/HexPlane.stp")
+        write_step_file(self.compound, self.tempname + ".stp")
 
     def display_Plane(self):
         self.display.DisplayShape(self.beam_line)

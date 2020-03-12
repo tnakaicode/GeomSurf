@@ -1,14 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
-import json
 import sys
+import pickle
+import json
 import time
 import os
 import glob
 import shutil
 import datetime
-import pickle
+import platform
 from optparse import OptionParser
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -38,6 +39,7 @@ from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.Core.GeomFill import GeomFill_BoundWithSurf
 from OCC.Core.GeomFill import GeomFill_BSplineCurves
 from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
+from OCC.Core.AIS import AIS_Manipulator
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
@@ -47,24 +49,108 @@ import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 
-class plot2d (object):
+def create_tempdir(flag=1):
+    print(datetime.date.today())
+    datenm = "{0:%Y%m%d}".format(datetime.date.today())
+    dirnum = len(glob.glob("./temp_" + datenm + "*/"))
+    if flag == -1 or dirnum == 0:
+        tmpdir = "./temp_{}{:03}/".format(datenm, dirnum)
+        os.makedirs(tmpdir)
+        fp = open(tmpdir + "not_ignore.txt", "w")
+        fp.close()
+    else:
+        tmpdir = "./temp_{}{:03}/".format(datenm, dirnum - 1)
+    print(tmpdir)
+    return tmpdir
+
+
+def create_tempnum(name, tmpdir="./", ext=".tar.gz"):
+    num = len(glob.glob(tmpdir + name + "*" + ext)) + 1
+    filename = '{}{}_{:03}{}'.format(tmpdir, name, num, ext)
+    #print(num, filename)
+    return filename
+
+
+class SetDir (object):
 
     def __init__(self):
+        self.tempname = ""
+        self.rootname = ""
+        self.create_tempdir()
+
+        pyfile = sys.argv[0]
+        self.filename = os.path.basename(pyfile)
+        self.rootname, ext_name = os.path.splitext(self.filename)
+        self.tempname = self.tmpdir + self.rootname
+        print(self.rootname)
+
+    def create_tempdir(self, flag=1):
+        print(datetime.date.today())
+        self.datenm = "{0:%Y%m%d}".format(datetime.date.today())
+        self.dirnum = len(glob.glob("./temp_" + self.datenm + "*/"))
+        if flag == -1 or self.dirnum == 0:
+            self.tmpdir = "./temp_{}{:03}/".format(self.datenm, self.dirnum)
+            os.makedirs(self.tmpdir)
+            fp = open(self.tmpdir + "not_ignore.txt", "w")
+            fp.close()
+        else:
+            self.tmpdir = "./temp_{}{:03}/".format(
+                self.datenm, self.dirnum - 1)
+        print(self.tmpdir)
+
+
+class plot2d (SetDir):
+
+    def __init__(self, aspect="equal"):
+        SetDir.__init__(self)
+        self.new_fig(aspect)
+
+    def new_fig(self, aspect="equal"):
         self.fig, self.axs = plt.subplots()
-        self.axs.set_aspect('equal')
+        self.axs.set_aspect(aspect)
         self.axs.xaxis.grid()
         self.axs.yaxis.grid()
 
+    def add_axs(self, row=1, col=1, num=1, aspect="auto"):
+        self.axs.set_axis_off()
+        axs = self.fig.add_subplot(row, col, num)
+        axs.set_aspect(aspect)
+        axs.xaxis.grid()
+        axs.yaxis.grid()
+        return axs
+
     def div_axs(self):
         self.div = make_axes_locatable(self.axs)
-        self.axs.set_aspect('equal')
+        # self.axs.set_aspect('equal')
 
         self.ax_x = self.div.append_axes(
             "bottom", 1.0, pad=0.5, sharex=self.axs)
-        self.ax_x.grid()
+        self.ax_x.xaxis.grid(True, zorder=0)
+        self.ax_x.yaxis.grid(True, zorder=0)
+
         self.ax_y = self.div.append_axes(
             "right", 1.0, pad=0.5, sharey=self.axs)
-        self.ax_y.grid()
+        self.ax_y.xaxis.grid(True, zorder=0)
+        self.ax_y.yaxis.grid(True, zorder=0)
+
+    def contourf_sub(self, mesh, func, sxy=[0, 0]):
+        self.new_fig()
+        self.div_axs()
+        nx, ny = mesh[0].shape
+        sx, sy = sxy
+        xs, xe = mesh[0][0, 0], mesh[0][0, -1]
+        ys, ye = mesh[1][0, 0], mesh[1][-1, 0]
+        mx = np.searchsorted(mesh[0][0, :], sx) - 1
+        my = np.searchsorted(mesh[1][:, 0], sy) - 1
+
+    def contourf_tri(self, x, y, z):
+        self.new_fig()
+        self.axs.tricontourf(x, y, z, cmap="jet")
+
+    def SavePng(self, pngname=None):
+        if pngname == None:
+            pngname = self.tmpdir + self.rootname + ".png"
+        self.fig.savefig(pngname)
 
     def Show(self):
         try:
@@ -73,9 +159,10 @@ class plot2d (object):
             pass
 
 
-class plot3d (object):
+class plot3d (SetDir):
 
     def __init__(self):
+        SetDir.__init__(self)
         self.fig = plt.figure()
         self.axs = self.fig.add_subplot(111, projection='3d')
         #self.axs = self.fig.gca(projection='3d')
@@ -239,25 +326,12 @@ class GenCompound (object):
         self.builder.MakeCompound(compound)
 
 
-class plotocc (object):
+class plotocc (SetDir):
 
     def __init__(self):
-        self.create_tempdir()
+        self.display, self.start_display, self.add_menu, self.add_function = init_display()
         self.base_axs = gp_Ax3()
-        self.display, self.start_display, self.add_menu, self.add_functionto_menu = init_display()
-
-    def create_tempdir(self, flag=1):
-        print(datetime.date.today())
-        datenm = "{0:%Y%m%d}".format(datetime.date.today())
-        dirnum = len(glob.glob("./temp_" + datenm + "*/"))
-        if flag == -1 or dirnum == 0:
-            self.tmpdir = "./temp_{}{:03}/".format(datenm, dirnum)
-            os.makedirs(self.tmpdir)
-            fp = open(self.tmpdir + "not_ignore.txt", "w")
-            fp.close()
-        else:
-            self.tmpdir = "./temp_{}{:03}/".format(datenm, dirnum - 1)
-        print(self.tmpdir)
+        SetDir.__init__(self)
 
     def show_box(self, axs=gp_Ax3(), lxyz=[100, 100, 100]):
         box = make_box(*lxyz)
@@ -350,8 +424,25 @@ class plotocc (object):
         poly.Location(set_loc(gp_Ax3(), axs))
         return poly
 
+    def AddManipulator(self):
+        self.manip = AIS_Manipulator(self.base_axs.Ax2())
+        ais_shp = self.display.DisplayShape(
+            self.base_axs.Location(),
+            update=True
+        )
+        self.manip.Attach(ais_shp)
+
+    def SaveMenu(self):
+        self.add_menu("File")
+        self.add_function("File", self.export_cap)
+
+    def export_cap(self):
+        pngname = create_tempnum(self.rootname, self.tmpdir, ".png")
+        self.display.View.Dump(pngname)
+
     def show(self):
         self.display.FitAll()
+        self.display.View.Dump(self.tempname + ".png")
         self.start_display()
 
 
