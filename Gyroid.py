@@ -138,6 +138,8 @@ class Gyroid (plotocc):
         #display.DisplayShape(aShape, update=True)
         #write_step_file(aShape, "./tmp/gyroid.stp")
 
+        self.export_stp(solid.Shape())
+
 
 if __name__ == '__main__':
     obj = Gyroid()

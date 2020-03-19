@@ -15,6 +15,9 @@ from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
+import logging
+logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -40,13 +43,11 @@ from OCC.Core.GeomFill import GeomFill_BoundWithSurf
 from OCC.Core.GeomFill import GeomFill_BSplineCurves
 from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCC.Core.AIS import AIS_Manipulator
+from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
-
-import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 
 def create_tempdir(flag=1):
@@ -439,6 +440,10 @@ class plotocc (SetDir):
     def export_cap(self):
         pngname = create_tempnum(self.rootname, self.tmpdir, ".png")
         self.display.View.Dump(pngname)
+    
+    def export_stp(self, shp):
+        stpname = create_tempnum(self.rootname, self.tmpdir, ".stp")
+        write_step_file(shp, stpname)
 
     def show(self):
         self.display.FitAll()

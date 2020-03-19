@@ -78,7 +78,7 @@ class Cap (plotocc):
     def display_Plane(self):
         self.show_axs_pln(scale=200.0)
         self.export_capture()
-        # self.start_display()
+        self.start_display()
 
 
 if __name__ == '__main__':
