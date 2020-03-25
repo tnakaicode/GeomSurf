@@ -55,6 +55,30 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 
+def pnt_to_xyz(p):
+    return p.X(), p.Y(), p.Z()
+
+
+def float_to_string(number):
+    if number == 0 or abs(np.log10(abs(number))) < 100:
+        return ' {: 0.10E}'.format(number)
+    else:
+        return ' {: 0.10E}'.format(number).replace('E', '')
+
+
+def occ_to_grasp_cor(axs, name="name", filename="pln.cor"):
+    pnt = axs.Location()
+    v_x = axs.XDirection()
+    v_y = axs.YDirection()
+    fp = open(filename, "w")
+    fp.write(' {:s}\n'.format(name))
+    fp.write(' {:s}\n'.format("mm"))
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(pnt)]) + '\n')
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_x)]) + '\n')
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_y)]) + '\n')
+    fp.close()
+
+
 def create_tempdir(flag=1):
     print(datetime.date.today())
     datenm = "{0:%Y%m%d}".format(datetime.date.today())
@@ -80,6 +104,7 @@ def create_tempnum(name, tmpdir="./", ext=".tar.gz"):
 class SetDir (object):
 
     def __init__(self):
+        self.root_dir = os.getcwd()
         self.tempname = ""
         self.rootname = ""
         self.create_tempdir()
@@ -490,6 +515,11 @@ class plotocc (SetDir):
 
     def export_stp(self, shp):
         stpname = create_tempnum(self.rootname, self.tmpdir, ".stp")
+        write_step_file(shp, stpname)
+
+    def export_stp_with_cor(self, shp):
+        stpname = create_tempnum(self.rootname, self.tmpdir, ".stp")
+        rootname, ext_name = os.path.splitext(stpname)
         write_step_file(shp, stpname)
 
     def show(self):
