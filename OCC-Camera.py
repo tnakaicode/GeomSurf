@@ -54,7 +54,7 @@ class Cap (plotocc):
 
     def export_capture(self):
         self.display.FitAll()
-        self.display.View.Dump("./tmp/cap.png")
+        self.display.View.Dump(self.tmpdir + "cap.png")
 
         self.camera.OrthogonalizeUp()
         self.camera.SetUp(gp_Dir(0, 0, 1))
@@ -63,17 +63,17 @@ class Cap (plotocc):
         self.camera.SetDirection(gp_Dir(-1, 0, 0))
         print(self.camera.Scale(), self.camera.Eye(), self.camera.Center())
         self.display.View.SetCamera(self.camera)
-        self.display.View.Dump("./tmp/cap_x.png")
+        self.display.View.Dump(self.tmpdir + "cap_x.png")
 
         self.camera.SetDirection(gp_Dir(0, -1, 0))
         print(self.camera.Scale(), self.camera.Eye(), self.camera.Center())
         self.display.View.SetCamera(self.camera)
-        self.display.View.Dump("./tmp/cap_y.png")
+        self.display.View.Dump(self.tmpdir + "cap_y.png")
 
         self.camera.SetDirection(gp_Dir(0, 0, -1))
         print(self.camera.Scale(), self.camera.Eye(), self.camera.Center())
         self.display.View.SetCamera(self.camera)
-        self.display.View.Dump("./tmp/cap_z.png")
+        self.display.View.Dump(self.tmpdir + "cap_z.png")
 
     def display_Plane(self):
         self.show_axs_pln(scale=200.0)
