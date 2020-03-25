@@ -29,6 +29,9 @@ from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
 from OCC.Core.BRep import BRep_Builder
+from OCC.Core.BRepFill import BRepFill_Filling
+from OCC.Core.BRepFill import BRepFill_CurveConstraint
+from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin, BRepOffset_Interval
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeWire
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
@@ -39,11 +42,13 @@ from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
 from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
+from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
 from OCC.Core.GeomFill import GeomFill_BoundWithSurf
 from OCC.Core.GeomFill import GeomFill_BSplineCurves
 from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCC.Core.AIS import AIS_Manipulator
 from OCC.Extend.DataExchange import write_step_file, read_step_file
+from OCCUtils.Topology import Topo
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
@@ -412,7 +417,7 @@ class plotocc (SetDir):
         poly.Location(set_loc(gp_Ax3(), axs))
         return poly
 
-    def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3()):
+    def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3(), skin=None):
         lxy = radi
         pnts = []
         angl = 360 / num
@@ -423,7 +428,49 @@ class plotocc (SetDir):
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
         poly.Location(set_loc(gp_Ax3(), axs))
-        return poly
+
+        n_sided = BRepFill_Filling()
+        for e in Topo(poly).edges():
+            n_sided.Add(e, GeomAbs_C0)
+        n_sided.Build()
+        face = n_sided.Face()
+        if skin == None:
+            return poly
+        elif skin == 0:
+            return face
+        else:
+            solid = BRepOffset_MakeOffset(
+                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+            return solid.Shape()
+
+    def make_StarWire(self, num=5, radi=[2.0, 1.0], shft=0.0, axs=gp_Ax3(), skin=None):
+        lxy = radi
+        pnts = []
+        angl = 360 / num
+        for i in range(num):
+            a_thet = np.deg2rad(i * angl) + np.deg2rad(shft)
+            ax, ay = radi[0] * np.sin(a_thet), radi[0] * np.cos(a_thet)
+            pnts.append(gp_Pnt(ax, ay, 0))
+            b_thet = a_thet + np.deg2rad(angl) / 2
+            bx, by = radi[1] * np.sin(b_thet), radi[1] * np.cos(b_thet)
+            pnts.append(gp_Pnt(bx, by, 0))
+        pnts.append(pnts[0])
+        poly = make_polygon(pnts)
+        poly.Location(set_loc(gp_Ax3(), axs))
+
+        n_sided = BRepFill_Filling()
+        for e in Topo(poly).edges():
+            n_sided.Add(e, GeomAbs_C0)
+        n_sided.Build()
+        face = n_sided.Face()
+        if skin == None:
+            return poly
+        elif skin == 0:
+            return face
+        else:
+            solid = BRepOffset_MakeOffset(
+                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+            return solid.Shape()
 
     def AddManipulator(self):
         self.manip = AIS_Manipulator(self.base_axs.Ax2())
@@ -440,7 +487,7 @@ class plotocc (SetDir):
     def export_cap(self):
         pngname = create_tempnum(self.rootname, self.tmpdir, ".png")
         self.display.View.Dump(pngname)
-    
+
     def export_stp(self, shp):
         stpname = create_tempnum(self.rootname, self.tmpdir, ".stp")
         write_step_file(shp, stpname)
