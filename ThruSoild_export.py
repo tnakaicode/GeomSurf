@@ -48,16 +48,17 @@ class MakeSoild (plotocc):
         print(shp, shp.Location().Transformation())
 
         axs = gp_Ax3(gp_Pnt(0, 0, 5), gp_Dir(0, 1, 1))
-        shp = self.make_StarWire(num=15, skin=1, axs=axs, radi=[0.9, 1.0])
+        shp = self.make_StarWire(num=15, skin=0, axs=axs, radi=[0.9, 1.0])
         print(shp, shp.Location())
 
         self.export_stp(shp)
-        print(shp, shp.Location().Transformation())
+        print(shp)
         loc = shp.Location()
         loc_inv = loc.Inverted()
         shp = shp.Located(loc_inv)
-        print(shp, shp.Location().Transformation())
-        self.export_stp(shp)
+        print(loc.Transformation())
+        print(loc_inv.Transformation())
+        self.export_stp(shp.Reversed())
 
 
 if __name__ == '__main__':
