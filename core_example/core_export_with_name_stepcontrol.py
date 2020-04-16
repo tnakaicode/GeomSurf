@@ -22,6 +22,7 @@ from OCCUtils.Construct import make_plane, make_vertex, make_circle
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_t_collection___extended_string.html
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_x_c_a_f_app___application.html
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_t_doc_std___document.html
+
 class ExportCAFMethod (object):
 
     def __init__(self, name="name", tol=1.0E-10):
