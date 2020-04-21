@@ -52,13 +52,14 @@ if __name__ == '__main__':
     z_delta = abs(xyz_min_max[2] - xyz_min_max[5])
     for z in np.linspace(xyz_min_max[2], xyz_min_max[5], 5):
         print(z)
-        plane = gp_Pln(gp_Pnt(0., 0., z), gp_Dir(0., 0.5, 1.))
+        plane = gp_Pln(gp_Pnt(0., 0., z), gp_Dir(0., 0.0, 1.))
         face = BRepBuilderAPI_MakeFace(plane).Shape()
         # Computes Shape/Plane intersection
         section = BRepAlgoAPI_Section(shp, face)
         section.Build()
         if section.IsDone():
             obj.display.DisplayShape(section.Shape(), color="BLUE")
+            obj.export_stp(section.Shape())
 
     obj.show_axs_pln(scale=75)
     obj.show()
