@@ -15,6 +15,22 @@ from OCC.Extend.DataExchange import write_step_file
 from base import plotocc
 
 
+def vectorized_slicer(li):
+    # Create Plane defined by a point and the perpendicular direction
+    z_values, shape = li
+    _slices = []
+    for z in z_values:
+        # print 'slicing index:', z, 'sliced by process:', os.getpid()
+        plane = gp_Pln(gp_Pnt(0., 0., z), gp_Dir(0., 0.01, 1.))
+        face = BRepBuilderAPI_MakeFace(plane).Shape()
+        # Computes Shape/Plane intersection
+        section = BRepAlgoAPI_Section(shape, face)
+        section.Build()
+        if section.IsDone():
+            _slices.append(section.Shape())
+    return _slices
+
+
 def get_brep():
     cylinder_head = TopoDS_Shape()
     builder = BRep_Builder()
@@ -32,5 +48,17 @@ if __name__ == '__main__':
     obj = plotocc()
     obj.display.DisplayShape(box, transparency=0.9)
     obj.display.DisplayShape(shp)
+
+    z_delta = abs(xyz_min_max[2] - xyz_min_max[5])
+    for z in np.linspace(xyz_min_max[2], xyz_min_max[5], 5):
+        print(z)
+        plane = gp_Pln(gp_Pnt(0., 0., z), gp_Dir(0., 0.5, 1.))
+        face = BRepBuilderAPI_MakeFace(plane).Shape()
+        # Computes Shape/Plane intersection
+        section = BRepAlgoAPI_Section(shp, face)
+        section.Build()
+        if section.IsDone():
+            obj.display.DisplayShape(section.Shape(), color="BLUE")
+
     obj.show_axs_pln(scale=75)
     obj.show()
