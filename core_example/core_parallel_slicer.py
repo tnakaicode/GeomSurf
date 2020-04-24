@@ -67,7 +67,7 @@ def vectorized_slicer(li):
     _slices = []
     for z in z_values:
         # print 'slicing index:', z, 'sliced by process:', os.getpid()
-        plane = gp_Pln(gp_Pnt(0., 0., z), gp_Dir(0., 0., 1.))
+        plane = gp_Pln(gp_Pnt(0., 0., z), gp_Dir(0., 0.1, 1.))
         face = BRepBuilderAPI_MakeFace(plane).Shape()
         # Computes Shape/Plane intersection
         section = BRepAlgoAPI_Section(shape, face)
@@ -142,8 +142,9 @@ def run(n_procs, compare_by_number_of_processors=False):
 
     # Display result
     obj = plotocc()
+    obj.create_tempdir(flag=-1)
     print('displaying original shape')
-    obj.display.DisplayShape(shape, update=True)
+    obj.display.DisplayShape(shape)
     obj.display.DisplayShape(gp_Pnt(x_min, y_min, z_min))
     obj.display.DisplayShape(gp_Pnt(x_min, y_min, z_max))
     obj.display.DisplayShape(gp_Pnt(x_min, y_max, z_min))
@@ -154,7 +155,7 @@ def run(n_procs, compare_by_number_of_processors=False):
     obj.display.DisplayShape(gp_Pnt(x_max, y_max, z_max))
     for n, result_shp in enumerate(_results):
         print('displaying results from process {0}'.format(n))
-        obj.display.DisplayShape(result_shp, update=True)
+        obj.display.DisplayShape(result_shp)
         print(result_shp)
         obj.export_stp(result_shp[0])
 
