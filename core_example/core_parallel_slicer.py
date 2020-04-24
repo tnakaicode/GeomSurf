@@ -19,7 +19,11 @@
 
 import time
 import sys
+import os
 import multiprocessing
+
+import logging
+logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.BRepTools import breptools_Read
@@ -33,6 +37,9 @@ from OCC.Display.SimpleGui import init_display
 
 from OCC.Extend.ShapeFactory import get_boundingbox
 from OCC.Extend.DataExchange import write_step_file
+
+sys.path.append(os.path.join('../'))
+from base import plotocc
 
 
 def drange(start, stop, step):
@@ -134,30 +141,29 @@ def run(n_procs, compare_by_number_of_processors=False):
     print('\n\n\n done slicing on %i cores \n\n\n' % nprocs)
 
     # Display result
-    display, start_display, add_menu, add_function_to_menu = init_display()
+    obj = plotocc()
     print('displaying original shape')
-    display.DisplayShape(shape, update=True)
-    display.DisplayShape(gp_Pnt(x_min, y_min, z_min))
-    display.DisplayShape(gp_Pnt(x_min, y_min, z_max))
-    display.DisplayShape(gp_Pnt(x_min, y_max, z_min))
-    display.DisplayShape(gp_Pnt(x_min, y_max, z_max))
-    display.DisplayShape(gp_Pnt(x_max, y_min, z_min))
-    display.DisplayShape(gp_Pnt(x_max, y_min, z_max))
-    display.DisplayShape(gp_Pnt(x_max, y_max, z_min))
-    display.DisplayShape(gp_Pnt(x_max, y_max, z_max))
+    obj.display.DisplayShape(shape, update=True)
+    obj.display.DisplayShape(gp_Pnt(x_min, y_min, z_min))
+    obj.display.DisplayShape(gp_Pnt(x_min, y_min, z_max))
+    obj.display.DisplayShape(gp_Pnt(x_min, y_max, z_min))
+    obj.display.DisplayShape(gp_Pnt(x_min, y_max, z_max))
+    obj.display.DisplayShape(gp_Pnt(x_max, y_min, z_min))
+    obj.display.DisplayShape(gp_Pnt(x_max, y_min, z_max))
+    obj.display.DisplayShape(gp_Pnt(x_max, y_max, z_min))
+    obj.display.DisplayShape(gp_Pnt(x_max, y_max, z_max))
     for n, result_shp in enumerate(_results):
         print('displaying results from process {0}'.format(n))
-        display.DisplayShape(result_shp, update=True)
+        obj.display.DisplayShape(result_shp, update=True)
         print(result_shp)
-        write_step_file(
-            result_shp[0], "./core_parallel_slicer_{:d}.stp".format(n))
+        obj.export_stp(result_shp[0])
 
     # update viewer when all is added:
-    display.Repaint()
+    obj.display.Repaint()
     total_time = time.time() - init_time
     print("%s necessary to perform slice with %s processor(s)." %
           (total_time, n_procs))
-    start_display()
+    obj.show()
 
 
 if __name__ == '__main__':
