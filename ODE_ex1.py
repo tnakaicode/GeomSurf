@@ -20,6 +20,9 @@ from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Builder, TopoDS_Face, TopoDS
 from OCC.Core.math import math_Vector, math_Matrix, math_Jacobi
 from OCC.Core.math import math_NewtonMinimum, math_BracketMinimum
 from OCC.Core.math import math_GaussMultipleIntegration
+from OCC.Core.math import math_MultipleVarFunctionWithHessian
+from OCC.Core.math import math_MultipleVarFunctionWithGradient
+from OCC.Core.math import math_TrigonometricEquationFunction
 from OCC.Core.FEmTool import FEmTool_Curve
 from OCC.Core.FairCurve import FairCurve_Newton
 from OCC.Extend.DataExchange import read_step_file, write_step_file
