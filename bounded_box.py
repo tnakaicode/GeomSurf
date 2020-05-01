@@ -9,8 +9,9 @@ from OCC.Core.BRepBndLib import brepbndlib_Add
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
-from OCC.Extend.ShapeFactory import get_boundingbox, make_box
+from OCC.Extend.ShapeFactory import get_boundingbox
 from OCC.Extend.DataExchange import write_step_file
+from OCCUtils.Construct import make_box
 
 from base import plotocc
 
