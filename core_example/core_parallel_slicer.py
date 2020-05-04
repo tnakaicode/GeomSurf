@@ -30,16 +30,63 @@ from OCC.Core.BRepTools import breptools_Read
 from OCC.Core.TopoDS import TopoDS_Shape
 from OCC.Core.gp import gp_Pln, gp_Dir, gp_Pnt
 from OCC.Core.Bnd import Bnd_Box
+from OCC.Core.BRepBndLib import brepbndlib_Add, brepbndlib_AddOptimal
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Section
+from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 
 from OCC.Display.SimpleGui import init_display
 
-from OCC.Extend.ShapeFactory import get_boundingbox
+from OCC.Extend.ShapeFactory import get_aligned_boundingbox, midpoint
 from OCC.Extend.DataExchange import write_step_file
 
 sys.path.append(os.path.join('../'))
 from base import plotocc
+
+
+def get_boundingbox(shape, tol=1e-6, optimal_BB=True):
+    """ return the bounding box of the TopoDS_Shape `shape`
+
+    Parameters
+    ----------
+
+    shape : TopoDS_Shape or a subclass such as TopoDS_Face
+        the shape to compute the bounding box from
+
+    tol: float
+        tolerance of the computed boundingbox
+
+    use_triangulation : bool, True by default
+        This makes the computation more accurate
+
+    Returns
+    -------
+        if `as_pnt` is True, return a tuple of gp_Pnt instances
+         for the lower and another for the upper X,Y,Z values representing the bounding box
+
+        if `as_pnt` is False, return a tuple of lower and then upper X,Y,Z values
+         representing the bounding box
+    """
+    bbox = Bnd_Box()
+    bbox.SetGap(tol)
+
+    # note: useTriangulation is True by default, we set it explicitely, but t's not necessary
+    if optimal_BB:
+        use_triangulation = True
+        use_shapetolerance = True
+        brepbndlib_AddOptimal(
+            shape, bbox, use_triangulation, use_shapetolerance)
+    else:
+        brepbndlib_Add(shape, bbox)
+    xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+    corner1 = gp_Pnt(xmin, ymin, zmin)
+    corner2 = gp_Pnt(xmax, ymax, zmax)
+    center = midpoint(corner1, corner2)
+    dx = xmax - xmin
+    dy = ymax - ymin
+    dz = zmax - zmin
+    box_shp = BRepPrimAPI_MakeBox(corner1, corner2).Shape()
+    return xmin, ymin, zmin, xmax, ymax, zmax
 
 
 def drange(start, stop, step):
