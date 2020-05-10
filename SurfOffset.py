@@ -28,6 +28,7 @@ face = obj.make_FaceByOrder(pts)
 #sold = BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, 2)).Shape()
 sold = BRepOffset_MakeOffset(face, 1.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True).Shape()
 
+obj.display.DisplayShape(face, color="red")
 obj.display.DisplayShape(sold)
 obj.export_stp(sold)
 obj.show()
