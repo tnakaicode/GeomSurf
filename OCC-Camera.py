@@ -70,10 +70,10 @@ class Cap (plotocc):
         self.display.View.SetCamera(self.camera)
         self.display.View.Dump(self.tmpdir + "cap_y.png")
 
-        self.camera.SetDirection(gp_Dir(0, 0, -1))
-        print(self.camera.Scale(), self.camera.Eye(), self.camera.Center())
-        self.display.View.SetCamera(self.camera)
-        self.display.View.Dump(self.tmpdir + "cap_z.png")
+        #self.camera.SetDirection(gp_Dir(0, 0, 1))
+        #print(self.camera.Scale(), self.camera.Eye(), self.camera.Center())
+        #self.display.View.SetCamera(self.camera)
+        #self.display.View.Dump(self.tmpdir + "cap_z.png")
 
     def display_Plane(self):
         self.show_axs_pln(scale=200.0)

@@ -80,18 +80,23 @@ def occ_to_grasp_cor(axs, name="name", filename="pln.cor"):
     fp.close()
 
 
-def create_tempdir(flag=1):
+def split_filename(filename="./temp_20200408000/not_ignore.txt"):
+    name = os.path.basename(filename)
+    rootname, ext_name = os.path.splitext(name)
+    return name, rootname
+
+
+def create_tempdir(name="temp", flag=1):
     print(datetime.date.today())
     datenm = "{0:%Y%m%d}".format(datetime.date.today())
-    dirnum = len(glob.glob("./temp_" + datenm + "*/"))
+    dirnum = len(glob.glob("./{}_{}*/".format(name, datenm)))
     if flag == -1 or dirnum == 0:
-        tmpdir = "./temp_{}{:03}/".format(datenm, dirnum)
+        tmpdir = "./{}_{}{:03}/".format(name, datenm, dirnum)
         os.makedirs(tmpdir)
         fp = open(tmpdir + "not_ignore.txt", "w")
         fp.close()
     else:
-        tmpdir = "./temp_{}{:03}/".format(datenm, dirnum - 1)
-    print(tmpdir)
+        tmpdir = "./{}_{}{:03}/".format(name, datenm, dirnum - 1)
     return tmpdir
 
 
@@ -116,20 +121,26 @@ class SetDir (object):
         self.tempname = self.tmpdir + self.rootname
         print(self.rootname)
 
-    def create_tempdir(self, flag=1):
-        print(datetime.date.today())
-        self.datenm = "{0:%Y%m%d}".format(datetime.date.today())
-        self.dirnum = len(glob.glob("./temp_" + self.datenm + "*/"))
-        if flag == -1 or self.dirnum == 0:
-            self.tmpdir = "./temp_{}{:03}/".format(self.datenm, self.dirnum)
-            os.makedirs(self.tmpdir)
-            fp = open(self.tmpdir + "not_ignore.txt", "w")
-            fp.close()
-        else:
-            self.tmpdir = "./temp_{}{:03}/".format(
-                self.datenm, self.dirnum - 1)
+    def init(self):
+        self.tempname = self.tmpdir + self.rootname
+
+    def create_tempdir(self, name="temp", flag=1):
+        self.tmpdir = create_tempdir(name, flag)
         self.tempname = self.tmpdir + self.rootname
         print(self.tmpdir)
+
+    def add_dir(self, name="temp"):
+        dirnum = len(glob.glob("{}/{}/".format(self.tmpdir, name)))
+        if dirnum == 0:
+            tmpdir = "{}/{}/".format(self.tmpdir, name)
+            os.makedirs(tmpdir)
+            fp = open(tmpdir + "not_ignore.txt", "w")
+            fp.close()
+            print("make {}".format(tmpdir))
+        else:
+            tmpdir = "{}/{}/".format(self.tmpdir, name)
+            print("already exist {}".format(tmpdir))
+        return tmpdir
 
 
 class PlotBase(SetDir):
@@ -154,6 +165,7 @@ class PlotBase(SetDir):
         self.axs.set_aspect(aspect)
         self.axs.xaxis.grid()
         self.axs.yaxis.grid()
+        return self.fig, self.axs
 
     def new_3Dfig(self, aspect="equal"):
         self.fig = plt.figure()
@@ -168,10 +180,11 @@ class PlotBase(SetDir):
         self.axs.xaxis.grid()
         self.axs.yaxis.grid()
         self.axs.zaxis.grid()
+        return self.fig, self.axs
 
     def SavePng(self, pngname=None):
         if pngname == None:
-            pngname = self.tmpdir + self.rootname + ".png"
+            pngname = self.tempname + ".png"
         self.fig.savefig(pngname)
 
     def SavePng_Serial(self, pngname=None):
@@ -239,7 +252,10 @@ class plot2d (PlotBase):
         im = self.axs.contourf(*mesh, func, cmap="jet")
         self.fig.colorbar(im, ax=self.axs, shrink=0.9)
         self.fig.tight_layout()
-        self.SavePng(pngname)
+        if pngname == None:
+            self.SavePng_Serial(pngname)
+        else:
+            self.SavePng(pngname)
 
     def contourf_tri(self, x, y, z):
         self.new_fig()
@@ -293,6 +309,35 @@ class plot2d (PlotBase):
 
         plt.tight_layout()
         plt.savefig(pngname + ".png")
+
+
+class plotpolar (plot2d):
+
+    def __init__(self, aspect="equal"):
+        plot2d.__init__(self)
+        self.dim = 2
+        self.new_polar(aspect)
+
+    def new_polar(self, aspect="equal"):
+        self.new_fig(aspect=aspect)
+        self.axs.set_axis_off()
+        self.axs = self.fig.add_subplot(111, projection='polar')
+
+    def plot_polar(self, px, py, arrow=True, **kwargs):
+        plt.polar(px, py, **kwargs)
+
+        if arrow == True:
+            num = np.linspace(1, len(px) - 1, 6)
+            for idx, n in enumerate(num):
+                n = int(n)
+                plt.arrow(
+                    px[-n], py[-n],
+                    (px[-n + 1] - px[-n]) / 100.,
+                    (py[-n + 1] - py[-n]) / 100.,
+                    head_width=0.1,
+                    head_length=0.2,
+                )
+                plt.text(px[-n], py[-n], "n={:d}".format(idx))
 
 
 class plot3d (PlotBase):
@@ -513,18 +558,6 @@ class plotocc (SetDir):
         pln = make_plane(pnt, vec, -scale, scale, -scale, scale)
         self.display.DisplayShape(pln)
 
-    def show_wire(self, pts=[], axs=gp_Ax3()):
-        poly = make_polygon(pts)
-        poly.Location(set_loc(gp_Ax3(), axs))
-
-        n_sided = BRepFill_Filling()
-        for e in Topo(poly).edges():
-            n_sided.Add(e, GeomAbs_C0)
-        #n_sided.Build()
-        #face = n_sided.Face()
-        self.display.DisplayShape(poly)
-        return poly
-
     def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3()):
         rx, ry = rxy
         if rx > ry:
@@ -542,7 +575,6 @@ class plotocc (SetDir):
         poly = make_wire(elip)
         poly.Location(set_loc(gp_Ax3(), axs))
         return poly
-    
 
     def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3(), skin=None):
         lxy = radi
@@ -608,10 +640,10 @@ class plotocc (SetDir):
         cov = ConvexHull(pnt, qhull_options='QJ')
 
         #pts_ord = []
-        #print(cov)
-        #print(cov.simplices)
-        #print(cov.vertices)
-        #for idx in cov.vertices:
+        # print(cov)
+        # print(cov.simplices)
+        # print(cov.vertices)
+        # for idx in cov.vertices:
         #    print(idx, pnt[idx])
         #    pts_ord.append(gp_Pnt(*pnt[idx]))
 
@@ -757,4 +789,11 @@ class LineDrawer(object):
 
 
 if __name__ == '__main__':
-    create_tempdir(-1)
+    obj = SetDir()
+    obj.create_tempdir(flag=-1)
+    # for i in range(5):
+    #    name = "temp{:d}".format(i)
+    #    obj.add_dir(name)
+    # obj.add_dir(name)
+    # obj.tmpdir = obj.add_dir("temp")
+    # obj.add_dir("./temp/{}/".format(name))
