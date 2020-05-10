@@ -15,6 +15,7 @@ from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2, GeomAbs_C3
 from OCC.Core.GeomAPI import GeomAPI_IntCS, GeomAPI_IntSS
 from OCC.Core.GeomLProp import GeomLProp_SurfaceTool
+from OCC.Core.Graphic3d import Graphic3d_Camera
 from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Builder, TopoDS_Face, TopoDS_Shell
 from OCC.Core.math import math_NewtonMinimum
 from OCC.Extend.DataExchange import read_step_file, write_step_file
@@ -48,6 +49,7 @@ class Cap (plotocc):
             gp_Ax2(gp_Pnt(500, 0, 0), gp_Dir(0, 0, 1)), 100, 200, 300).Shape()
         self.display.DisplayShape(con)
 
+        # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_graphic3d___camera.html
         self.camera = self.display.View.Camera()
         print(self.camera.Scale(), dir_to_vec(self.camera.OrthogonalizedUp()))
         print(self.camera.ViewDimensions())
@@ -70,10 +72,10 @@ class Cap (plotocc):
         self.display.View.SetCamera(self.camera)
         self.display.View.Dump(self.tmpdir + "cap_y.png")
 
-        #self.camera.SetDirection(gp_Dir(0, 0, 1))
-        #print(self.camera.Scale(), self.camera.Eye(), self.camera.Center())
-        #self.display.View.SetCamera(self.camera)
-        #self.display.View.Dump(self.tmpdir + "cap_z.png")
+        self.camera.SetDirection(gp_Dir(0.001, 0, -1))
+        print(self.camera.Scale(), self.camera.Eye(), self.camera.Center())
+        self.display.View.SetCamera(self.camera)
+        self.display.View.Dump(self.tmpdir + "cap_z.png")
 
     def display_Plane(self):
         self.show_axs_pln(scale=200.0)
