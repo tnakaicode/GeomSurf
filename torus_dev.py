@@ -33,7 +33,7 @@ class Torus (plotocc):
         super().__init__()
         self.axs = gp_Ax3()
         self.radi = [500, 200]
-        self.rxyz = [100, 200, 200]
+        self.rxyz = [1.0, 1.1, 1.1]
         mat = gp_Mat(
             self.rxyz[0], 0, 0,
             0, self.rxyz[1], 0,
@@ -42,7 +42,7 @@ class Torus (plotocc):
         gtrf = gp_GTrsf(mat, gp_XYZ(0, 0, 0))
         self.t = Geom_ToroidalSurface(self.axs, *self.radi)
         self.face = BRepBuilderAPI_MakeFace(self.t, 1e-6).Face()
-        self.face = ellips = BRepBuilderAPI_GTransform(self.face, gtrf).Shape()
+        self.face = BRepBuilderAPI_GTransform(self.face, gtrf).Shape()
         self.surf = BRep_Tool.Surface(self.face)
         self.prop = GeomLProp_SLProps(self.surf, 0.0, 0.0, 1, 1.0)
         self.export_stp(self.face)
@@ -52,7 +52,7 @@ class Torus (plotocc):
         u, v = uv
         u1, v1 = 2 * np.pi * u, 2 * np.pi * v
         p, vu, vv = gp_Pnt(), gp_Vec(), gp_Vec()
-        self.t.D1(u1, v1, p, vu, vv)
+        self.surf.D1(u1, v1, p, vu, vv)
         self.prop.SetParameters(u1, v1)
         vx = vu.Normalized()
         vy = vv.Normalized()
@@ -62,16 +62,17 @@ class Torus (plotocc):
         print(vx)
         print(vy)
         print(vz)
-        # print(self.prop.GaussianCurvature())
-        # print(self.prop.MaxCurvature())
-        # print(self.prop.MinCurvature())
-        # print(self.prop.MeanCurvature())
+        print(self.prop.GaussianCurvature())
+        print(self.prop.MaxCurvature())
+        print(self.prop.MinCurvature())
+        print(self.prop.MeanCurvature())
         self.display.DisplayShape(p)
         self.display.DisplayVector(vz.Scaled(20), p)
         return p, vu, vv, vz
 
     def ShowTorus(self):
         self.display.DisplayShape(self.face, transparency=0.7)
+        self.show_axs_pln(scale=100)
         self.show()
 
 
