@@ -7,7 +7,7 @@ from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
 from base import plotocc
-from rnd_sample import cube01_sample
+from rnd_sample import cube01_sample, ball01_sample
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
@@ -33,14 +33,19 @@ if __name__ == '__main__':
     dat, seed = cube01_sample(2, 100, -1)
     dat = dat.T
     for xy in dat:
-        pnt = gp_Pnt(*xy, xy[0]**2+xy[1]**2)
+        pnt = gp_Pnt(*xy, xy[0]**2 + xy[1]**2)
         obj.display.DisplayShape(pnt)
+
+    dat, seed = ball01_sample(1000, -1)
+    dat = dat.T
+    for xyz in dat:
+        pnt = gp_Pnt(*xyz)
+        obj.display.DisplayShape(pnt, color="RED")
     obj.show_axs_pln(scale=1.0)
     obj.show()
 
-    #for idx, x in enumerate (dat[0,:]):
+    # for idx, x in enumerate (dat[0,:]):
     #    pnt = gp_Pnt(dat[0,idx], dat[1, idx], dat[2,idx])
     #    v = make_vertex(pnt)
     #    tol = 1.0 * 10e-06
     #    brp.NewPoint(v, pnt)
-    
