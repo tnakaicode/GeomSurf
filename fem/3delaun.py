@@ -368,6 +368,244 @@ def poly(ktj, kte, ip, iv, kv, nelm, mtj, jac, vx, vy, vz, rv, x, y, z, mmap, er
             nelm = nelm - 1
 
 
+def qsorti(k, n, list, key):
+    # ==
+    #     ------   subroutine qsorti   -------------------------------------
+    #     purpose : quick sorting
+    #     last modified :  21 Nov 2005
+    #     maxstk: maximum stack size
+
+    ll = 1
+    lr = n
+    istk = 0
+    if (ll < lr):
+        nl = ll
+        nr = lr
+        lm = (ll + lr) / 2
+        iguess = key(list(lm))
+
+        # --  find keys for exchange
+        if (key(list(nl)) < iguess):
+            nl = nl + 1
+
+        if (iguess < key(list(nr))):
+            nr = nr - 1
+
+        if (nl < (nr - 1)):
+            ltemp = list(nl)
+            list(nl) = list(nr)
+            list(nr) = ltemp
+            nl = nl + 1
+            nr = nr - 1
+
+        # --  deal with crossing of pointers
+
+        if (nl <= nr):
+            if (nl <= nr):
+                ltemp = list(nl)
+                list(nl) = list(nr)
+                list(nr) = ltemp
+            nl = nl + 1
+            nr = nr - 1
+
+        # --  select sub-list to be processed next
+        istk = istk + 1
+        if (nr < lm):
+            ilst(istk) = nl
+            irst(istk) = lr
+            lr = nr
+        else:
+            ilst(istk) = ll
+            irst(istk) = nr
+            ll = nl
+
+        # --  process any stacked sub-lists
+        if (istk != 0):
+            ll = ilst(istk)
+            lr = irst(istk)
+            istk = istk - 1
+
+
+def volume(ia, ib, ic, ip, x, y, z):
+    # ==
+    #     ------   function volume   -------------------------------------
+    #     purpose : computation of volume of tetrahedron
+    #     last modified : 05 Sep 2005
+    xa = x(ia)
+    ya = y(ia)
+    za = z(ia)
+    xb = x(ib)
+    yb = y(ib)
+    zb = z(ib)
+    xc = x(ic)
+    yc = y(ic)
+    zc = z(ic)
+    xp = x(ip)
+    yp = y(ip)
+    zp = z(ip)
+
+    va = xb * yc * zp + xa * ya * zp + xb * ya * za + xa * yc * za - \
+        (xb * yc * za + xa * ya * za + xb * ya * zp + xa * yc * zp)
+    vb = yb * zc * xp + ya * za * xp + yb * za * xa + ya * zc * xa - \
+        (yb * zc * xa + ya * za * xa + yb * za * xp + ya * zc * xp)
+    vc = zb * xc * yp + za * xa * yp + zb * xa * ya + za * xc * ya - \
+        (zb * xc * ya + za * xa * ya + zb * xa * yp + za * xc * yp)
+
+    wa = xb * zc * ya + xa * za * ya + xb * za * yp + xa * zc * yp - \
+        (xb * zc * yp + xa * za * yp + xb * za * ya + xa * zc * ya)
+    wb = yb * xc * za + ya * xa * za + yb * xa * zp + ya * xc * zp - \
+        (yb * xc * zp + ya * xa * zp + yb * xa * za + ya * xc * za)
+    wc = zb * yc * xa + za * ya * xa + zb * ya * xp + za * yc * xp - \
+        (zb * yc * xp + za * ya * xp + zb * ya * xa + za * yc * xa)
+
+    volume = va + vb + vc + wa + wb + wc
+
+
+def sphere(ia, ib, ic, ip, determ, x, y, z, xv, yv, zv, rr):
+    # ==
+    #     ------   subroutine sphere   -----------------------------------
+    #     purpose : computation of circumsphere of tetrahedron
+    #     last modified : 05 Sep 2005
+    xa = x(ia)
+    ya = y(ia)
+    za = z(ia)
+    xb = x(ib)
+    yb = y(ib)
+    zb = z(ib)
+    xc = x(ic)
+    yc = y(ic)
+    zc = z(ic)
+    xp = x(ip)
+    yp = y(ip)
+    zp = z(ip)
+
+    #  -- cofactor
+
+    p11 = yc * zp + ya * za + yp * za + ya * zc - \
+        (yc * za + ya * zp + yp * zc + ya * za)
+    p12 = xp * zc + xa * za + xc * za + xa * zp - \
+        (xp * za + xa * zc + xc * zp + xa * za)
+    p13 = xc * yp + xa * ya + xp * ya + xa * yc - \
+        (xc * ya + xa * yp + xp * yc + xa * ya)
+    p21 = yp * zb + ya * za + yb * za + ya * zp - \
+        (yp * za + ya * zb + yb * zp + ya * za)
+    p22 = xb * zp + xa * za + xp * za + xa * zb - \
+        (xb * za + xa * zp + xp * zb + xa * za)
+    p23 = xp * yb + xa * ya + xb * ya + xa * yp - \
+        (xp * ya + xa * yb + xb * yp + xa * ya)
+    p31 = yb * zc + ya * za + yc * za + ya * zb - \
+        (yb * za + ya * zc + yc * zb + ya * za)
+    p32 = xc * zb + xa * za + xb * za + xa * zc - \
+        (xc * za + xa * zb + xb * zc + xa * za)
+    p33 = xb * yc + xa * ya + xc * ya + xa * yb - \
+        (xb * ya + xa * yc + xc * yb + xa * ya)
+
+    xyza = xa * xa + ya * ya + za * za
+    aa = 0.50 * (xb * xb + yb * yb + zb * zb - xyza)
+    bb = 0.50 * (xc * xc + yc * yc + zc * zc - xyza)
+    cc = 0.50 * (xp * xp + yp * yp + zp * zp - xyza)
+    xx = p11 * aa + p21 * bb + p31 * cc
+    yy = p12 * aa + p22 * bb + p32 * cc
+    zz = p13 * aa + p23 * bb + p33 * cc
+    xv = xx / determ
+    yv = yy / determ
+    zv = zz / determ
+
+    rr = xa * xa + xv * xv + ya * ya + yv * yv + za * za + \
+        zv * zv - 2.0 * (xa * xx + ya * yy + za * zz) / determ
+
+
+def remove(kte, iv, kv, nelm, mtj, jac, vx, vy, vz, rv, mmap):
+    # ==
+    #     ------   subroutine remove   -----------------------------------
+    #     purpose : remove unnecessary tetrahedra
+    #     last modified :  31 Aug 2005
+
+    #  -- initialization
+
+    m = 0
+    n = 0
+    for i in range(1, nelm):
+        mmap(i) = 1
+    for i in range(1, iv):
+        mmap(kv(i)) = 0
+
+    for i in range(1, nelm):
+        if (map(i) != 0):
+            m = m + 1
+            mmap(i) = m
+
+    for i in range(1, nelm):
+        if (mmap(i) != 0):
+            n = n + 1
+            vx(n) = vx(i)
+            vy(n) = vy(i)
+            vz(n) = vz(i)
+            rv(n) = rv(i)
+            for ia in range(1, 4):
+                mtj(n, ia) = mtj(i, ia)
+                if (jac(i, ia) == 0):
+                    jac(n, ia) = 0
+                else:
+                    jac(n, ia) = map(jac(i, ia))
+
+    for i in range(n + 1, nelm):
+        vx(i) = 0.0
+        vy(i) = 0.0
+        vz(i) = 0.0
+        rv(i) = 0.0
+        for ia in range(1, 4):
+            mtj(i, ia) = 0
+            jac(i, ia) = 0
+        nelm = nelm - iv
+
+
+def fill(kte, nelm, mtj, jac):
+    # ==
+    #     ------   subroutine fill   -------------------------------------
+    #     purpose : check if the domain is filled by tetrahedra
+    #     last modified : 29 Aug 2005
+    for i in range(1, nelm):
+        ielm = i
+        for j in range(1, 4):
+            ia = mtj(ielm, mod(j, 4) + 1)
+            ib = mtj(ielm, 4 - (j - 1) / 2 * 2)
+            ic = mtj(ielm, 3 - mod(j / 2, 2) * 2)
+            jelm = jac(ielm, j)
+            if (jelm != 0 and ielm < jelm):
+                k = iface(kte, jelm, ielm, jac)
+                ja = mtj(jelm, mod(k, 4) + 1)
+                jb = mtj(jelm, 4 - (k - 1) / 2 * 2)
+                jc = mtj(jelm, 3 - mod(k / 2, 2) * 2)
+                if (ia == jc and ib == jb and ic == ja):
+                    break
+                if (ib == jc and ic == jb and ia == ja):
+                    break
+                if (ic == jc and ia == jb and ib == ja):
+                    break
+
+
+def iface(kte, l, k, jac):
+    # ==
+    #     ------   function iface   --------------------------------------
+    #     purpose : find surface in tet(l) which is adjacent to tet(k)
+    #     last modified : 29 Aug 2005
+    for i in range(1, 4):
+        if (jac(l, i) == k):
+            iface = i
+            break
+
+
+def data(kte, nelm, node, mtj, jac, x, y, z):
+    # ==
+    #     ------   subroutine data   ---------------------------------------
+    #     purpose : print results on data file
+    #     last modified : 21 Dec 2005
+    fp = open(fname, "a")
+    for i in range(1, nelm):
+        fp.write(i, (mtj(i, j), j=1, 4), (jac(i, j), j=1, 4))
+
+
 if __name__ == '__main__':
     print("3delaun")
     fname = "3delaun.input.txt"
