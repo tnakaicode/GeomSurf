@@ -503,6 +503,64 @@ def trf_axs(axs=gp_Ax3(), pxyz=[0, 0, 0], rxyz=[0, 0, 0]):
     axs.SetLocation(gp_Pnt(*pxyz))
 
 
+class Viewer (object):
+
+    def __init__(self):
+        from OCC.Display.qtDisplay import qtViewer3d
+        self.app = self.get_app()
+        self.wi = self.app.topLevelWidgets()[0]
+        self.vi = self.wi.findChild(qtViewer3d, "qt_viewer_3d")
+        self.selected_shape = []
+
+    def get_app(self):
+        app = QApplication.instance()
+        #app = qApp
+        # checks if QApplication already exists
+        if not app:
+            app = QApplication(sys.argv)
+        return app
+
+    def on_select(self):
+        self.vi.sig_topods_selected.connect(self._on_select)
+
+    def clear_selected(self):
+        self.selected_shape = []
+
+    def _on_select(self, shapes):
+        """
+        Parameters
+        ----------
+        shape : TopoDS_Shape
+        """
+        print()
+        for shape in shapes:
+            self.selected_shape.append(shape)
+            self.DumpTop(shape)
+        print()
+
+    def DumpTop(self, shape, level=0):
+        """
+        Print the details of an object from the top down
+        """
+        brt = BRep_Tool()
+        s = shape.ShapeType()
+        if s == TopAbs_VERTEX:
+            pnt = brt.Pnt(topods_Vertex(shape))
+            dmp = " " * level
+            dmp += "%s - " % shapeTypeString(shape)
+            dmp += "%.5e %.5e %.5e" % (pnt.X(), pnt.Y(), pnt.Z())
+            print(dmp)
+        else:
+            dmp = " " * level
+            dmp += shapeTypeString(shape)
+            print(dmp)
+        it = TopoDS_Iterator(shape)
+        while it.More():
+            shp = it.Value()
+            it.Next()
+            self.DumpTop(shp, level + 1)
+
+
 class GenCompound (object):
 
     def __init__(self):
@@ -511,12 +569,19 @@ class GenCompound (object):
         self.builder.MakeCompound(self.compound)
 
 
-class plotocc (SetDir):
+class plotocc (SetDir, Viewer):
 
-    def __init__(self):
+    def __init__(self, touch=False):
+        SetDir.__init__(self)
         self.display, self.start_display, self.add_menu, self.add_function = init_display()
         self.base_axs = gp_Ax3()
-        SetDir.__init__(self)
+        self.touch = touch
+        if touch == True:
+            Viewer.__init__(self)
+            self.on_select()
+        self.SaveMenu()
+        self.colors = ["BLUE", "RED", "GREEN",
+                       "YELLOW", "BLACK", "WHITE", "BROWN"]
 
     def show_box(self, axs=gp_Ax3(), lxyz=[100, 100, 100]):
         box = make_box(*lxyz)
@@ -578,7 +643,7 @@ class plotocc (SetDir):
         pln = make_plane(pnt, vec, -scale, scale, -scale, scale)
         self.display.DisplayShape(pln)
 
-    def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3()):
+    def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, skin=None, axs=gp_Ax3()):
         rx, ry = rxy
         if rx > ry:
             major_radi = rx
@@ -594,7 +659,20 @@ class plotocc (SetDir):
         elip = make_edge(gp_Elips(axis, major_radi, minor_radi))
         poly = make_wire(elip)
         poly.Location(set_loc(gp_Ax3(), axs))
-        return poly
+        if skin == None:
+            return poly
+        else:
+            n_sided = BRepFill_Filling()
+            for e in Topo(poly).edges():
+                n_sided.Add(e, GeomAbs_C0)
+            n_sided.Build()
+            face = n_sided.Face()
+            if skin == 0:
+                return face
+            else:
+                solid = BRepOffset_MakeOffset(
+                    face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                return solid.Shape()
 
     def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3(), skin=None):
         lxy = radi
@@ -651,25 +729,6 @@ class plotocc (SetDir):
                 face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
             return solid.Shape()
 
-    def make_plate(self, pts=[], axs=gp_Ax3(), skin=None):
-        poly = make_polygon(pts)
-        poly.Location(set_loc(gp_Ax3(), axs))
-
-        if skin == None:
-            return poly
-        else:
-            n_sided = BRepFill_Filling()
-            for e in Topo(poly).edges():
-                n_sided.Add(e, GeomAbs_C0)
-            n_sided.Build()
-            face = n_sided.Face()
-            if skin == 0:
-                return face
-            else:
-                solid = BRepOffset_MakeOffset(
-                    face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-                return solid.Shape()
-
     def make_FaceByOrder(self, pts=[]):
         pnt = []
         for p in pts:
@@ -706,6 +765,9 @@ class plotocc (SetDir):
     def SaveMenu(self):
         self.add_menu("File")
         self.add_function("File", self.export_cap)
+        if self.touch == True:
+            self.add_function("File", self.export_stp_selected)
+            self.add_function("File", self.clear_selected)
 
     def export_cap(self):
         pngname = create_tempnum(self.rootname, self.tmpdir, ".png")
@@ -714,6 +776,16 @@ class plotocc (SetDir):
     def export_stp(self, shp):
         stpname = create_tempnum(self.rootname, self.tmpdir, ".stp")
         write_step_file(shp, stpname)
+
+    def export_stp_selected(self):
+        if self.touch == True:
+            builder = BRep_Builder()
+            compound = TopoDS_Compound()
+            builder.MakeCompound(compound)
+            for shp in self.selected_shape:
+                print(shp)
+                builder.Add(compound, shp)
+            self.export_stp(compound)
 
     def show(self):
         self.display.FitAll()
