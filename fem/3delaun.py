@@ -596,14 +596,14 @@ def iface(kte, l, k, jac):
             break
 
 
-def data(kte, nelm, node, mtj, jac, x, y, z):
+def data_output(kte, nelm, node, mtj, jac, x, y, z):
     # ==
     #     ------   subroutine data   ---------------------------------------
     #     purpose : print results on data file
     #     last modified : 21 Dec 2005
     fp = open(fname, "a")
     for i in range(1, nelm):
-        fp.write(i, (mtj(i, j), j=1, 4), (jac(i, j), j=1, 4))
+        fp.write(i, (mtj(i, 1), 1, 4), (jac(i, 1), 1, 4))
 
 
 if __name__ == '__main__':
@@ -612,3 +612,9 @@ if __name__ == '__main__':
     node = int(getline(fname, 1).split()[0])
     data = np.loadtxt(fname, skiprows=1, delimiter=",")
     x, y, z = data[0, :], data[1, :], data[2, :]
+    ktj = 50
+    kte = 200
+    err = 1.e-14
+
+    tetgen(ktj, node, x, y, z, kte, nelm, mtj, jac,
+           vx, vy, vz, rv, kv, istack, map, err)
