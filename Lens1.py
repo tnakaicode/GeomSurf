@@ -39,11 +39,11 @@ if __name__ == '__main__':
     py = np.linspace(-1, 1, 200) * 110 / 2
     mesh = np.meshgrid(px, py)
 
-    obj = plotocc()
+    obj = plotocc(view=False)
     axs = gp_Ax3()
     ax1 = gp_Ax3(gp_Pnt(0, 0, -10), axs.Direction())
     vec = gp_Vec(gp_Pnt(0, 0, -10), gp_Pnt(0, 0, 10))
-    face = obj.make_EllipWire(rxy=[50.0, 50.0], axs=ax1, skin=0)
+    face = plotocc.make_EllipWire(plotocc, rxy=[50.0, 50.0], axs=ax1, skin=0)
     body = BRepPrimAPI_MakePrism(face, vec).Shape()
     data1 = (mesh[0]**2 / 750 + mesh[1]**2 / 750) + 6.0
     data2 = (mesh[0]**2 / 1000 + mesh[1]**2 / 1000) - 6.0
@@ -64,10 +64,4 @@ if __name__ == '__main__':
         shp.append(exp.Current())
         exp.Next()
 
-    obj.show_axs_pln(axs, scale=20)
-    obj.display.DisplayShape(face1, transparency=0.9, color="RED")
-    obj.display.DisplayShape(face2, transparency=0.9, color="BLUE")
-    obj.display.DisplayShape(shp[1])
-    # obj.display.DisplayShape(splitter.Shape())
-    # obj.display.DisplayShape(sol)
-    obj.show()
+    obj.export_stp(shp[0])

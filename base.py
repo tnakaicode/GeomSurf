@@ -19,6 +19,9 @@ from mpl_toolkits.mplot3d import Axes3D
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
+from PyQt5.QtWidgets import QApplication, qApp
+from PyQt5.QtWidgets import QDialog, QCheckBox
+
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -27,8 +30,11 @@ from OCC.Core.gp import gp_Lin, gp_Elips
 from OCC.Core.gp import gp_Mat, gp_GTrsf, gp_Trsf
 from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound
 from OCC.Core.TopLoc import TopLoc_Location
+from OCC.Core.TopAbs import TopAbs_VERTEX
+from OCC.Core.TopoDS import TopoDS_Iterator, topods_Vertex
 from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.BRepFill import BRepFill_Filling
 from OCC.Core.BRepFill import BRepFill_CurveConstraint
@@ -50,6 +56,7 @@ from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFi
 from OCC.Core.AIS import AIS_Manipulator
 from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCCUtils.Topology import Topo
+from OCCUtils.Topology import shapeTypeString, dumpTopology
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
@@ -571,15 +578,17 @@ class GenCompound (object):
 
 class plotocc (SetDir, Viewer):
 
-    def __init__(self, touch=False):
+    def __init__(self, view=True, touch=False):
         SetDir.__init__(self)
-        self.display, self.start_display, self.add_menu, self.add_function = init_display()
+        if view == True:
+            self.display, self.start_display, self.add_menu, self.add_function = init_display()
         self.base_axs = gp_Ax3()
         self.touch = touch
         if touch == True:
             Viewer.__init__(self)
             self.on_select()
-        self.SaveMenu()
+        if view == True:
+            self.SaveMenu()
         self.colors = ["BLUE", "RED", "GREEN",
                        "YELLOW", "BLACK", "WHITE", "BROWN"]
 

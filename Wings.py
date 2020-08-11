@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import time
+import urllib.request as urllib2  # Python3
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
@@ -26,6 +27,18 @@ from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
+def uiuc_dae_data (name="dae51"):
+    foil_dat_url = 'http://m-selig.ae.illinois.edu/ads/coord_seligFmt/{}.dat'.format(name)
+    
+    data = []
+    fp = urllib2.urlopen(foil_dat_url)
+    fp_lines = fp.readlines()
+    for idx, line in enumerate (fp_lines[1:]):
+        print(line.split())
+        data.append([float(v) for v in line.split()])
+    return np.array(data)
+
+
 if __name__ == '__main__':
     argvs = sys.argv
     parser = OptionParser()
@@ -38,6 +51,7 @@ if __name__ == '__main__':
     px = np.linspace(-1, 1, 100) * 110 / 2
     py = np.linspace(-1, 1, 200) * 110 / 2
     mesh = np.meshgrid(px, py)
+    dae_data = uiuc_dae_data()
 
     obj = plotocc()
     axs = gp_Ax3()
