@@ -1,0 +1,44 @@
+{
+    "dae": {
+        "dat": [
+            "dae11",
+            "dae51",
+            "geminism"
+        ]
+    },
+    "naca": {
+        "dat": [
+            "naca0006",
+            "naca0008",
+            "naca001034a08cli0.2",
+            "naca747a315"
+        ]
+    },
+    "naca747": {
+        "dat": [
+            "naca747a315",
+            "naca747a415"
+        ]
+    },
+    "naca6-a": {
+        "dat": [
+            "naca63a210",
+            "naca64a010",
+            "naca64a210",
+            "naca64a410",
+            "naca66-018",
+            "naca632a015"
+        ]
+    },
+    "usa": {
+        "dat": [
+            "usa5",
+            "usa22",
+            "usa25",
+            "usa26",
+            "usa27",
+            "usa27m2"
+        ]
+    }
+
+}
