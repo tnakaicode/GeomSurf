@@ -43,6 +43,22 @@ def make_lens(body, face1, face2):
         exp.Next()
     return shp
 
+def make_lens1(body, face1, face2, face3):
+    splitter = BOPAlgo_Splitter()
+    splitter.AddArgument(body)
+    splitter.AddTool(face1)
+    splitter.AddTool(face2)
+    splitter.AddTool(face3)
+    splitter.Perform()
+    print(splitter.Arguments())
+    print(splitter.ShapesSD())
+    exp = TopExp_Explorer(splitter.Shape(), TopAbs_SOLID)
+    shp = []
+    while exp.More():
+        print(exp.Current())
+        shp.append(exp.Current())
+        exp.Next()
+    return shp
 
 if __name__ == '__main__':
     argvs = sys.argv
