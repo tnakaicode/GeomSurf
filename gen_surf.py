@@ -31,6 +31,8 @@ if __name__ == '__main__':
     print(opt, argc)
 
     obj = plotocc(view=False)
+    if opt.dir != None:
+        obj.tmpdir = "./stp_surf/"
     px = np.linspace(-1, 1, 200) * 150
     py = np.linspace(-1, 1, 200) * 150
     mesh = np.meshgrid(px, py)
