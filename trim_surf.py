@@ -54,9 +54,6 @@ if __name__ == '__main__':
 
     lens = make_lens(body, face1, face2)
     obj.create_tempdir(flag=-1)
-    obj.export_stp(lens[0])
-    obj.export_stp(lens[1])
-    obj.export_stp(lens[2])
 
     wire1 = obj.make_PolyWire(radi=50, num=6, axs=axis1)
     proj = BRepProj_Projection(wire1, face1, axis1.Direction())
@@ -69,4 +66,3 @@ if __name__ == '__main__':
     api = BRepBuilderAPI_MakeFace(face1_1)
     api.Add(proj_wire)
     obj.export_stp(api.Face())
-

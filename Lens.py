@@ -6,7 +6,8 @@ import time
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from base import plot2d, plotocc, spl_face, set_loc
+from base import plot2d, plotocc, set_loc
+from src.MakeLens import make_lens
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
@@ -20,6 +21,7 @@ from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.TopAbs import TopAbs_EDGE, TopAbs_FACE, TopAbs_SHAPE, TopAbs_SHELL, TopAbs_SOLID
 from OCC.Core.TopExp import TopExp_Explorer
+from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Topology import Topo
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
@@ -35,39 +37,24 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    px = np.linspace(-1, 1, 100) * 110 / 2
-    py = np.linspace(-1, 1, 200) * 110 / 2
-    mesh = np.meshgrid(px, py)
+    obj = plotocc(view=False)
 
-    obj = plotocc()
+    face1 = read_step_file("./stp_surf/gen_surf_001.stp")
+    axis1 = gp_Ax3(gp_Pnt(0, 0, 1), gp_Dir(0, 0, 1))
+    face1.Location(set_loc(gp_Ax3(), axis1))
+
+    face2 = read_step_file("./stp_surf/gen_surf_030.stp")
+    axis2 = gp_Ax3(gp_Pnt(0, 0, 2), gp_Dir(0, 0, 1))
+    face2.Location(set_loc(gp_Ax3(), axis2))
+
     axs = gp_Ax3()
     ax1 = gp_Ax3(gp_Pnt(0, 0, -10), axs.Direction())
     vec = gp_Vec(gp_Pnt(0, 0, -10), gp_Pnt(0, 0, 10))
     face = obj.make_EllipWire(rxy=[50.0, 50.0], axs=ax1, skin=0)
     body = BRepPrimAPI_MakePrism(face, vec).Shape()
-    data1 = (mesh[0]**2 / 750 + mesh[1]**2 / 750) + 6.0
-    data2 = (mesh[0]**2 / 1000 + mesh[1]**2 / 1000) - 6.0
-    face1 = spl_face(*mesh, data1, axs=axs)
-    face2 = spl_face(*mesh, data2, axs=axs)
 
-    splitter = BOPAlgo_Splitter()
-    splitter.AddArgument(body)
-    splitter.AddTool(face1)
-    splitter.AddTool(face2)
-    splitter.Perform()
-    print(splitter.Arguments())
-    print(splitter.ShapesSD())
-    exp = TopExp_Explorer(splitter.Shape(), TopAbs_SOLID)
-    shp = []
-    while exp.More():
-        print(exp.Current())
-        shp.append(exp.Current())
-        exp.Next()
-
-    obj.show_axs_pln(axs, scale=20)
-    obj.display.DisplayShape(face1, transparency=0.9, color="RED")
-    obj.display.DisplayShape(face2, transparency=0.9, color="BLUE")
-    obj.display.DisplayShape(shp[1])
-    # obj.display.DisplayShape(splitter.Shape())
-    # obj.display.DisplayShape(sol)
-    obj.show()
+    lens = make_lens(body, face1, face2)
+    obj.create_tempdir(flag=-1)
+    obj.export_stp(lens[0])
+    obj.export_stp(lens[1])
+    obj.export_stp(lens[2])
