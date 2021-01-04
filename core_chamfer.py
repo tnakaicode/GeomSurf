@@ -39,7 +39,6 @@ if __name__ == '__main__':
     #
 
     obj = plotocc()
-    obj.SaveMenu()
 
     axs = gp_Ax3()
     box = make_box(200, 200, 200)

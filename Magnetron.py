@@ -44,9 +44,9 @@ if __name__ == '__main__':
     py = np.linspace(-1, 1, 200) * 100 - 50
     mesh = np.meshgrid(px, py)
 
-    obj = plotocc()
-    r0 = 20.0
-    r1 = 15.0
+    obj = plotocc(touch=True)
+    r0 = 25.0
+    r1 = 10.0
     r2 = 2.5
     wth = 0.1
     sft = 0.5

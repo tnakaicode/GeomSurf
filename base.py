@@ -652,6 +652,25 @@ class plotocc (SetDir, Viewer):
         pln = make_plane(pnt, vec, -scale, scale, -scale, scale)
         self.display.DisplayShape(pln)
 
+    def make_plate(self, pts=[], axs=gp_Ax3(), skin=None):
+        poly = make_polygon(pts)
+        poly.Location(set_loc(gp_Ax3(), axs))
+
+        if skin == None:
+            return poly
+        else:
+            n_sided = BRepFill_Filling()
+            for e in Topo(poly).edges():
+                n_sided.Add(e, GeomAbs_C0)
+            n_sided.Build()
+            face = n_sided.Face()
+            if skin == 0:
+                return face
+            else:
+                solid = BRepOffset_MakeOffset(
+                    face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                return solid.Shape()
+
     def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, skin=None, axs=gp_Ax3()):
         rx, ry = rxy
         if rx > ry:
