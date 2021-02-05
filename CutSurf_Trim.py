@@ -79,7 +79,7 @@ def bez_face(px, py, pz, axs=gp_Ax3()):
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = plotocc(touch=True)
     obj.show_axs_pln(obj.base_axs, scale=1)
 
     # OCCT dev
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
     face1_holl = BRepBuilderAPI_MakeFace(face1, poly1_proj).Face()
     print(face1_holl)
-    api = BRepAlgo_Section(face1, face1_holl)
+    api = BRepAlgo_Cut(face1, face1_holl)
     api.Build()
     face1_trim = api.Shape()
     print(face1_trim)
@@ -155,11 +155,11 @@ if __name__ == '__main__':
     mesh.Perform()
     face3_mesh = mesh.Shape()
 
-    #obj.display.DisplayShape(surf1, color="BLUE", transparency=0.9)
+    obj.display.DisplayShape(surf1, color="BLUE", transparency=0.5)
     obj.display.DisplayShape(poly1)
     obj.display.DisplayShape(poly1_proj)
-    #obj.display.DisplayShape(face1_holl, color="GREEN", transparency=0.5)
-    obj.display.DisplayShape(face1_trim, color="BLACK", transparency=0.5)
+    obj.display.DisplayShape(face1_holl, color="GREEN", transparency=0.5)
+    #obj.display.DisplayShape(face1_trim, color="BLACK", transparency=0.5)
     obj.display.DisplayShape(surf2, color="RED", transparency=0.9)
     obj.display.DisplayShape(poly2)
     obj.display.DisplayShape(poly2_proj)
