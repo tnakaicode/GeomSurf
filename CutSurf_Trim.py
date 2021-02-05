@@ -20,12 +20,15 @@ from OCC.Core.GeomProjLib import geomprojlib_ProjectOnPlane
 from OCC.Core.ShapeExtend import ShapeExtend_CompositeSurface
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepProj import BRepProj_Projection
+from OCC.Core.BRepOffset import BRepOffset_Analyse
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.GeomPlate import GeomPlate_MakeApprox, GeomPlate_BuildPlateSurface
 from OCC.Core.GeomToStep import GeomToStep_MakeBoundedSurface
 from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.Core.BRepFill import BRepFill_CurveConstraint
-from OCC.Core.BOPAlgo import BOPAlgo_Tools
+from OCC.Core.BRepFeat import BRepFeat_SplitShape
+from OCC.Core.BRepAlgo import BRepAlgo_Cut, BRepAlgo_Section, BRepAlgo_Common
+from OCC.Core.BOPAlgo import BOPAlgo_Tools, BOPAlgo_Builder
 from OCC.Core.BOPTools import BOPTools_AlgoTools
 from OCC.Core.STEPControl import STEPControl_Reader, STEPControl_Writer, STEPControl_AsIs
 from OCC.Core.Interface import Interface_Static_SetCVal
@@ -51,10 +54,9 @@ def spl_face(px, py, pz, axs=gp_Ax3()):
     #surface = BRepBuilderAPI_MakeFace(curve, 1e-6)
     # return surface.Face()
     surf = api.Surface()
-    face = BRepBuilderAPI_MakeFace(surf, 1e-6).Face()
-    face.Location(set_loc(gp_Ax3(), axs))
     surf.Transform(set_trf(gp_Ax3(), axs))
-    return surf
+    face = BRepBuilderAPI_MakeFace(surf, 1e-6).Face()
+    return surf, face
 
 
 def bez_face(px, py, pz, axs=gp_Ax3()):
@@ -68,14 +70,12 @@ def bez_face(px, py, pz, axs=gp_Ax3()):
             #print (i, j, px[i, j], py[i, j], pz[i, j])
 
     surf = Geom_BezierSurface(pnt_2d)
+    surf.Transform(set_trf(gp_Ax3(), axs))
     # api.Interpolate(pnt_2d)
     #surface = BRepBuilderAPI_MakeFace(curve, 1e-6)
     # return surface.Face()
     face = BRepBuilderAPI_MakeFace(surf, 1e-6).Face()
-    face.Location(set_loc(gp_Ax3(), axs))
-    surf.Transform(set_trf(gp_Ax3(), axs))
-    return surf
-
+    return surf, face
 
 
 if __name__ == '__main__':
@@ -92,49 +92,79 @@ if __name__ == '__main__':
     # https://old.opencascade.com/doc/occt-7.5.0/refman/html/class_geom___bezier_surface.html#details
     # the degree for a Geom_BezierSurface is limited to a value of (25) which is defined and controlled by the system
 
+    px = np.linspace(-1, 1, 100) * 300
+    py = np.linspace(-1, 1, 100) * 300
+    mesh = np.meshgrid(px, py)
+    data1 = mesh[0]**2 / 2000 + mesh[1]**2 / 1000
+
     px = np.linspace(-1, 1, 25) * 150
     py = np.linspace(-1, 1, 25) * 150
     mesh = np.meshgrid(px, py)
-    data = mesh[0]**2 / 1000 + mesh[1]**2 / 2000
-    
+    data2 = mesh[0]**2 / 1000 + mesh[1]**2 / 2000
+
     pts = []
     pts.append(gp_Pnt(-50, -60, 0))
-    pts.append(gp_Pnt(+60, -70, 0))
+    pts.append(gp_Pnt(-60, +70, 0))
     pts.append(gp_Pnt(+70, +80, 0))
-    pts.append(gp_Pnt(-80, +90, 0))
-    poly = make_polygon()
+    pts.append(gp_Pnt(+80, -90, 0))
+    poly = make_polygon(pts, closed=True)
 
-    axis1 = gp_Ax3(gp_Pnt(-100, +50.0, 0.0), gp_Dir(0, 0, 1))
-    face1 = spl_face(*mesh, data, axs=axis1)
+    axis1 = gp_Ax3(gp_Pnt(-150, +50.0, 0.0), gp_Dir(0, 0, 1))
+    surf1, face1 = spl_face(*mesh, data1, axs=axis1)
+    poly1 = poly.Located(set_loc(gp_Ax3(), axis1))
+    poly1_proj = obj.proj_rim_pln(poly1, face1, axis1)
     print(face1)
 
+    #split = BRepFeat_SplitShape(face1)
+    #split.Add(poly1_proj, face1)
+    # split.Build()
+    #surf1_trim1 = split.Left()
+    #surf1_trim2 = split.DirectLeft()
+    # print(split.Check())
+    #print(surf1_trim1.Size(), surf1_trim2.Size())
+
+    face1_holl = BRepBuilderAPI_MakeFace(face1, poly1_proj).Face()
+    print(face1_holl)
+    api = BRepAlgo_Section(face1, face1_holl)
+    api.Build()
+    face1_trim = api.Shape()
+    print(face1_trim)
+
     axis2 = gp_Ax3(gp_Pnt(+100, -50.0, 0.0), gp_Dir(0, 0, 1))
-    face2 = bez_face(*mesh, data, axs=axis2)
-    u0, u1, v0, v1 = face2.Bounds()
-    face2_uiso = face2.UIso(0.5)
-    face2_viso = face2.VIso(0.5)
+    surf2, face2 = bez_face(*mesh, data2, axs=axis2)
+    u0, u1, v0, v1 = surf2.Bounds()
+    surf2_uiso = surf2.UIso(0.5)
+    surf2_viso = surf2.VIso(0.5)
+    poly2 = poly.Located(set_loc(gp_Ax3(), axis2))
+    poly2_proj = obj.proj_rim_pln(poly2, face2, axis1)
     print(face2, u0, u0, v0, v1)
-    face2_stl = BRepBuilderAPI_MakeFace(face2, 1e-6).Face()
     # write_stl_file(face2_stl, obj.tempname + "_face2_001.stp",
     #               linear_deflection=0.1, angular_deflection=0.1)
     # write_stl_file(face2_stl, obj.tempname + "_face2_002.stp",
     #               linear_deflection=0.001, angular_deflection=0.001)
-    
-    face2_trim = Geom_RectangularTrimmedSurface(face2, 0.1, 0.8, 0.5, 0.7, True, True)
+
+    surf2_trim = Geom_RectangularTrimmedSurface(
+        surf2, 0.1, 0.8, 0.5, 0.7, True, True)
 
     face3 = read_step_file("surf1.step")
     print(face3)
     #surf3 = BRep_Tool.Surface(face3)
     # print(surf3)
 
-    mesh = BRepMesh_IncrementalMesh(face2_stl, 0.01, True, 0.01, True)
+    mesh = BRepMesh_IncrementalMesh(face2, 0.01, True, 0.01, True)
     mesh.Perform()
     face3_mesh = mesh.Shape()
 
-    obj.display.DisplayShape(face1, color="BLUE", transparency=0.9)
-    obj.display.DisplayShape(face2, color="RED", transparency=0.9)
+    #obj.display.DisplayShape(surf1, color="BLUE", transparency=0.9)
+    obj.display.DisplayShape(poly1)
+    obj.display.DisplayShape(poly1_proj)
+    #obj.display.DisplayShape(face1_holl, color="GREEN", transparency=0.5)
+    obj.display.DisplayShape(face1_trim, color="BLACK", transparency=0.5)
+    obj.display.DisplayShape(surf2, color="RED", transparency=0.9)
+    obj.display.DisplayShape(poly2)
+    obj.display.DisplayShape(poly2_proj)
     obj.display.DisplayShape(face3, color="YELLOW", transparency=0.9)
-    obj.display.DisplayShape(face2_trim, color="RED", transparency=0.5)
-    obj.display.DisplayShape(face2_uiso)
-    obj.display.DisplayShape(face2_viso)
+    obj.display.DisplayShape(surf2_trim, color="RED", transparency=0.5)
+    obj.display.DisplayShape(surf2_uiso)
+    obj.display.DisplayShape(surf2_viso)
     obj.show()

@@ -38,12 +38,14 @@ from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.BRepFill import BRepFill_Filling
 from OCC.Core.BRepFill import BRepFill_CurveConstraint
+from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin, BRepOffset_Interval
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeWire
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
-from OCC.Core.GeomAPI import geomapi
+from OCC.Core.Geom import Geom_Line
+from OCC.Core.GeomAPI import geomapi, GeomAPI_IntCS
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
@@ -651,6 +653,15 @@ class plotocc (SetDir, Viewer):
         vec = dir_to_vec(axs.Direction())
         pln = make_plane(pnt, vec, -scale, scale, -scale, scale)
         self.display.DisplayShape(pln)
+    
+    def proj_rim_pln(self, wire, surf, axs=gp_Ax3()):
+        proj = BRepProj_Projection(wire, surf, axs.Direction())
+        return proj.Current()
+
+    def proj_pnt_pln(self, pnt, surf, axs=gp_Ax3()):
+        lin = gp_Lin(pnt, axs.Direction())
+        sxy = GeomAPI_IntCS(Geom_Line(lin), surf).Point(1)
+        return sxy
 
     def make_plate(self, pts=[], axs=gp_Ax3(), skin=None):
         poly = make_polygon(pts)
