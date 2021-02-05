@@ -1071,7 +1071,7 @@ class plotocc (SetDir, OCCViewer):
                 builder.Add(compound, shp)
             self.export_stp(compound)
 
-    def export_stl_selected(self, *args, **kwargs):
+    def export_stl_selected(self):
         if self.touch == True:
             builder = BRep_Builder()
             compound = TopoDS_Compound()
@@ -1080,7 +1080,7 @@ class plotocc (SetDir, OCCViewer):
                 print(shp)
                 builder.Add(compound, shp)
             stlname = create_tempnum(self.rootname, self.tmpdir, ".stl")
-            write_stl_file(compound, stlname, *args, **kwargs)
+            write_stl_file(compound, stlname)
 
     def export_igs_selected(self):
         if self.touch == True:

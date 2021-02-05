@@ -91,7 +91,7 @@ def gen_ellipsoid_geom(axs=gp_Ax3(), rxyz=[10, 20, 30]):
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = plotocc(touch=True)
     # obj.show_axs_pln(scale=20)
     # obj.show_ball()
 

@@ -42,8 +42,8 @@ if __name__ == '__main__':
     obj = plotocc(touch=True)
     obj.show_axs_pln(scale=5)
 
-    px = np.linspace(-1, 1, 10) * 2 * np.pi
-    py = np.linspace(-1, 1, 15) * 2 * np.pi
+    px = np.linspace(-1, 1, 100) * 2 * np.pi * 2.5
+    py = np.linspace(-1, 1, 150) * 2 * np.pi * 2.5
     mesh = np.meshgrid(px, py)
     surf1 = np.sin(mesh[0] / 4) * 0.5
     surf2 = np.sin(mesh[1] / 2)
