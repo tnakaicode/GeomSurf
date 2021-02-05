@@ -39,7 +39,7 @@ def trsf_scale(axs=gp_Ax3(), scale=1):
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = plotocc(touch=True)
     obj.show_axs_pln(scale=5)
 
     px = np.linspace(-1, 1, 10) * 2 * np.pi

@@ -15,7 +15,7 @@ from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
 sys.path.append(os.path.join('./'))
 from base import plotocc
 
-obj = plotocc()
+obj = plotocc(touch=True)
 
 pts = []
 pts.append(gp_Pnt(0, 0, 0))
@@ -30,5 +30,4 @@ sold = BRepOffset_MakeOffset(face, 1.0, 1.0E-5, BRepOffset_Skin, False, True, Ge
 
 obj.display.DisplayShape(face, color="red")
 obj.display.DisplayShape(sold)
-obj.export_stp(sold)
 obj.show()

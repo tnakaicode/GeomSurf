@@ -33,7 +33,7 @@ if __name__ == '__main__':
         dat1, dat2 = uiuc_database(dat_name)
     else:
         dat1, dat2 = coord_database(dat_name)
-    print(dat_name)
+    print(dat_name, dat1.shape)
     obj.axs.plot(dat1[:, 0], dat1[:, 1])
     obj.axs.plot(dat2[:, 0], dat2[:, 1])
     obj.axs.set_title(dat_name)
