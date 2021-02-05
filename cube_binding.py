@@ -40,9 +40,7 @@ def main():
             wire.Add(edge.Edge())
 
         oFace = BRepBuilderAPI_MakeFace(wire.Wire())
-
         builder.Add(shell, oFace.Shape())
-
     write_stl_file(shell, "./cube_binding.stl")
 
 

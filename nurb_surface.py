@@ -27,7 +27,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = plotocc()
+    obj = plotocc(touch=True)
     brp = BRepTools_NurbsConvertModification()
 
     dat, seed = cube01_sample(2, 100, -1)

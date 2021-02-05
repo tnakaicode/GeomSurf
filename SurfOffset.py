@@ -30,4 +30,5 @@ sold = BRepOffset_MakeOffset(face, 1.0, 1.0E-5, BRepOffset_Skin, False, True, Ge
 
 obj.display.DisplayShape(face, color="red")
 obj.display.DisplayShape(sold)
+obj.export_stl(sold, linear_deflection=0.01, angular_deflection=0.01)
 obj.show()

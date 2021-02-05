@@ -65,7 +65,5 @@ if __name__ == '__main__':
     api.Build()
     shp = api.Shape()
     obj.display.DisplayShape(shp)
-    obj.export_stp(shp)
-
-    obj.SaveMenu()
+    #obj.export_stp(shp)
     obj.show()
