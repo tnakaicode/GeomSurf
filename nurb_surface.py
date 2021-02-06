@@ -6,7 +6,7 @@ import time
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from base import plotocc
+from src.base import plotocc
 from rnd_sample import cube01_sample, ball01_sample
 
 import logging

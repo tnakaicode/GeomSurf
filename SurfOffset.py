@@ -13,7 +13,7 @@ from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
 
 sys.path.append(os.path.join('./'))
-from base import plotocc
+from src.base import plotocc
 
 obj = plotocc(touch=True)
 

@@ -25,7 +25,7 @@ from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFi
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from base import plotocc
+from src.base import plotocc
 
 
 def trsf_scale(axs=gp_Ax3(), scale=1):

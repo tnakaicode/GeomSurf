@@ -7,7 +7,7 @@ from linecache import getline, clearcache
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from base import plotocc, set_trf
+from src.base import plotocc, set_trf
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

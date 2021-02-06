@@ -4,7 +4,7 @@ import sys
 import time
 import os
 
-from base import plotocc
+from src.base import plotocc
 
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt

@@ -10,7 +10,7 @@ from OCC.Core.Geom import Geom_ToroidalSurface
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from base import plotocc
+from src.base import plotocc
 
 
 if __name__ == '__main__':

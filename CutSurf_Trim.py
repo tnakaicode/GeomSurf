@@ -36,7 +36,7 @@ from OCC.Core.IFSelect import IFSelect_RetDone, IFSelect_ItemsByEntity
 from OCC.Extend.DataExchange import write_step_file, read_step_file, write_stl_file
 from OCCUtils.Construct import make_edge, make_polygon
 
-from base import plotocc, set_loc, set_trf
+from src.base import plotocc, set_loc, set_trf
 
 
 def spl_face(px, py, pz, axs=gp_Ax3()):

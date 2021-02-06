@@ -9,7 +9,7 @@ import urllib.request as urllib2
 from optparse import OptionParser
 
 sys.path.append(os.path.join("../"))
-from base import plot2d, plot3d
+from src.base import plot2d, plot3d
 from AirFoil.selig import coord_database, uiuc_database
 
 import logging

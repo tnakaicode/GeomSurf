@@ -17,7 +17,7 @@ from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Topology import Topo
 
-from base import plotocc
+from src.base import plotocc
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_fill___filling.html
 # N-Side Filling This algorithm avoids to build a face from:

@@ -41,7 +41,7 @@ from OCC.Extend.ShapeFactory import get_aligned_boundingbox, midpoint
 from OCC.Extend.DataExchange import write_step_file
 
 sys.path.append(os.path.join('../'))
-from base import plotocc
+from src.base import plotocc
 
 
 def get_boundingbox(shape, tol=1e-6, optimal_BB=True):

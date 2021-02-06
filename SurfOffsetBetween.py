@@ -16,7 +16,7 @@ from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
 from OCCUtils.Construct import make_polygon
 
 sys.path.append(os.path.join('./'))
-from base import plotocc, occ_to_grasp_cor, set_loc
+from src.base import plotocc, occ_to_grasp_cor, set_loc
 
 
 def make_offsetface(dat, axs=gp_Ax3()):

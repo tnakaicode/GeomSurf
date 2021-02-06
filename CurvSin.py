@@ -29,7 +29,7 @@ from OCC.Core.GeomLProp import GeomLProp_CLProps, GeomLProp_CurveTool
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from base import plotocc, spl_face
+from src.base import plotocc, spl_face
 
 
 def trsf_scale(axs=gp_Ax3(), scale=1):

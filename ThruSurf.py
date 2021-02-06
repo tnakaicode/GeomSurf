@@ -30,7 +30,7 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 from OCCUtils.Topology import Topo
 
-from base import plotocc, set_loc
+from src.base import plotocc, set_loc
 
 
 class GenThruSurf (plotocc):

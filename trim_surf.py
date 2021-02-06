@@ -7,7 +7,7 @@ import time
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from base import plot2d, plotocc, set_loc
+from src.base import plot2d, plotocc, set_loc
 from src.MakeLens import make_lens
 
 import logging

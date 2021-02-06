@@ -22,7 +22,7 @@ from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Topology import Topo
 
-from base import plotocc
+from src.base import plotocc
 
 
 class MakeSoild (plotocc):

@@ -13,7 +13,7 @@ from OCC.Extend.ShapeFactory import get_boundingbox
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_box
 
-from base import plotocc
+from src.base import plotocc
 
 
 def vectorized_slicer(li):

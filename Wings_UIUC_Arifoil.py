@@ -7,7 +7,7 @@ import urllib.request as urllib2  # Python3
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from base import plot2d, plotocc, spl_face, set_loc
+from src.base import plot2d, plotocc, spl_face, set_loc
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

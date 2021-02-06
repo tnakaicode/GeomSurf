@@ -78,7 +78,7 @@ def load_section_from_iges(file):
     return make_face.Shape()
 
 
-from base import plotocc, gen_ellipsoid, set_loc, spl_face
+from src.base import plotocc, gen_ellipsoid, set_loc, spl_face
 
 from OCC.Extend.DataExchange import write_iges_file, read_iges_file
 box = read_iges_file("./box.iges")

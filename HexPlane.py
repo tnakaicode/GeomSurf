@@ -27,7 +27,7 @@ from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Topology import Topo, dumpTopology
 
-from base import plotocc, gen_ellipsoid, set_loc, spl_face
+from src.base import plotocc, gen_ellipsoid, set_loc, spl_face
 
 
 def line_from_axs(axs=gp_Ax3(), length=100):

@@ -25,7 +25,7 @@ from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
 
-from base import plotocc, create_tempdir
+from src.base import plotocc, create_tempdir
 
 
 if __name__ == '__main__':

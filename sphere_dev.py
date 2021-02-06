@@ -6,7 +6,7 @@ import time
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from base import plot2d, plotocc
+from src.base import plot2d, plotocc
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

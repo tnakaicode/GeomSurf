@@ -36,7 +36,7 @@ from OCC.Core.ShapeAnalysis import ShapeAnalysis_ShapeTolerance
 from OCC.Core.BRepTools import breptools_UVBounds
 from OCC.Core.BRep import BRep_Tool_Surface
 
-from base import plotocc
+from src.base import plotocc
 
 
 def set_trf(ax1=gp_Ax3(), ax2=gp_Ax3()):

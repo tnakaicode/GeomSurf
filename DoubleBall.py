@@ -18,7 +18,7 @@ from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 
-from base import plotocc, gen_ellipsoid
+from src.base import plotocc, gen_ellipsoid
 
 
 class DBall (plotocc):

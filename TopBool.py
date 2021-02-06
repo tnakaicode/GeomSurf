@@ -20,7 +20,7 @@ from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from base import plotocc, gen_ellipsoid
+from src.base import plotocc, gen_ellipsoid
 
 
 if __name__ == '__main__':
