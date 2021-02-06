@@ -20,12 +20,11 @@ from OCC.Core.ChFi3d import ChFi3d_Rational
 from OCC.Core.TColgp import TColgp_Array1OfPnt2d
 from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.TopAbs import TopAbs_EDGE
-from OCC.Extend.DataExchange import read_step_file, write_step_file
+from OCC.Extend.DataExchange import read_step_file, write_step_file, write_stl_file
 from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
-
-from src.base import plotocc, create_tempdir
+from src.base import plotocc, write_stl_file_mesh1, write_stl_file_mesh2
 
 
 if __name__ == '__main__':
@@ -34,11 +33,11 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    #
-    # https://www.opencascade.com/doc/occt-6.9.1/overview/html/occt_user_guides__modeling_algos.html#occt_modalg_6
-    #
-
     obj = plotocc()
+    #
+    # https://www.opencascade.com/doc/occt-7.4.0/overview/html/occt_user_guides__modeling_algos.html#occt_modalg_6
+    # https://www.opencascade.com/doc/occt-7.5.0/overview/html/occt_user_guides__modeling_algos.html#occt_modalg_6
+    #
 
     axs = gp_Ax3()
     box = make_box(200, 200, 200)
@@ -59,6 +58,11 @@ if __name__ == '__main__':
 
     write_step_file(box, obj.tmpdir + "box.stp")
     write_step_file(fil.Shape(), obj.tmpdir + "box_fillet.stp", "AP214IS")
+    write_stl_file(fil.Shape(), obj.tmpdir + "box_fillet.stl")
+    write_stl_file_mesh1(fil.Shape(), obj.tmpdir + "box_fillet_mesh1.stl",
+                         linear_deflection=0.1E-1, angular_deflection=0.1E-1)
+    write_stl_file_mesh2(fil.Shape(), obj.tmpdir + "box_fillet_mesh2.stl",
+                         linear_deflection=0.1E-1, angular_deflection=0.1E-1)
 
     obj.display.DisplayShape(fil.Shape())
     obj.display.DisplayShape(axs.Location())
