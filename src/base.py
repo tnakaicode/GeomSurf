@@ -117,7 +117,7 @@ class SetDir (object):
         else:
             subprocess.run('explorer.exe {}'.format(path))
 
-    def open_tempir(self):
+    def open_tempdir(self):
         path = os.path.abspath(self.tmpdir)
         self.open_filemanager(path)
 
