@@ -88,5 +88,5 @@ if __name__ == '__main__':
     obj.display.DisplayShape(solid, color="GREEN", transparency=0.9)
     obj.display.DisplayShape(intss_curv1)
     obj.export_stp(solid)
-    obj.export_stl(solid, linear_deflection=0.1, angular_deflection=0.1)
+    #obj.export_stl(solid, linear_deflection=0.1, angular_deflection=0.1)
     obj.show_occ()

@@ -30,7 +30,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = dispocc(view=False)
+    obj = dispocc(disp=False)
     if opt.dir != None:
         obj.tmpdir = "./stp_surf/"
     px = np.linspace(-1, 1, 200) * 150

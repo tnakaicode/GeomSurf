@@ -154,6 +154,26 @@ def trsf_scale(axs=gp_Ax3(), scale=1):
     return trf
 
 
+def rotate_axs(axs=gp_Ax3(), deg=0.0, idx="x"):
+    ax = axs.Axis()
+    if idx == "x":
+        ax.SetDirection(axs.XDirection())
+    elif idx == "y":
+        ax.SetDirection(axs.YDirection())
+    elif idx == "z":
+        ax.SetDirection(axs.Direction())
+    else:
+        ax.SetDirection(axs.Direction())
+    axs.Rotate(ax, np.deg2rad(deg))
+
+
+def trf_axs(axs=gp_Ax3(), pxyz=[0, 0, 0], rxyz=[0, 0, 0]):
+    rotate_axs(axs, rxyz[0], "x")
+    rotate_axs(axs, rxyz[1], "y")
+    rotate_axs(axs, rxyz[2], "z")
+    axs.SetLocation(gp_Pnt(*pxyz))
+
+
 def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
     sphere = BRepPrimAPI_MakeSphere(gp_Ax2(), 1).Solid()
     loc = set_loc(gp_Ax3(), axs)
