@@ -12,7 +12,7 @@ from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 
-from src.base import dispocc, gen_ellipsoid
+from src.base_occ import dispocc, gen_ellipsoid
 
 # BRepMesh_DelaunayDeflectionControlMeshAlgo
 # https://dev.opencascade.org/doc/refman/html/class_b_rep_mesh___delaunay_base_mesh_algo.html

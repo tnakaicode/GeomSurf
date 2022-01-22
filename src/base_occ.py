@@ -914,6 +914,25 @@ class dispocc (OCCApp):
             vec = dir_to_vec(axs.Direction()).Scaled(scale)
         return axs.Translated(vec)
 
+    def make_plate(self, pts=[], axs=gp_Ax3(), skin=None):
+        poly = make_polygon(pts)
+        poly.Location(set_loc(gp_Ax3(), axs))
+
+        if skin == None:
+            return poly
+        else:
+            n_sided = BRepFill_Filling()
+            for e in Topo(poly).edges():
+                n_sided.Add(e, GeomAbs_C0)
+            n_sided.Build()
+            face = n_sided.Face()
+            if skin == 0:
+                return face
+            else:
+                solid = BRepOffset_MakeOffset(
+                    face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                return solid.Shape()
+
     def make_plane_axs(self, axs=gp_Ax3(), rx=[0, 500], ry=[0, 500]):
         pln = BRepBuilderAPI_MakeFace(
             gp_Pln(axs),

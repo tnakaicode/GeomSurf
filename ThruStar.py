@@ -30,13 +30,13 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 from OCCUtils.Topology import Topo
 
-from src.base import dispocc, set_loc, trf_axs
+from src.base_occ import dispocc, set_loc, trf_axs
 
 
-class GenThruSurf (plotocc):
+class GenThruSurf (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         self.axs = gp_Ax3()
 
         self.circle = Geom_Circle(gp_Circ(self.axs.Ax2(), 100))
@@ -88,7 +88,7 @@ class GenThruSurf (plotocc):
         self.display.DisplayShape(self.poly)
         self.display.DisplayShape(self.circle)
         self.show_axs_pln(self.axs, scale=100)
-        self.show()
+        self.show_occ()
 
 
 if __name__ == '__main__':

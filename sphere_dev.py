@@ -6,7 +6,7 @@ import time
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from src.base import plot2d, plotocc
+from src.base_occ import dispocc
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
@@ -28,7 +28,7 @@ from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
 
-class Torus (plotocc):
+class Torus (dispocc):
 
     def __init__(self):
         super().__init__()
@@ -75,7 +75,7 @@ class Torus (plotocc):
     def ShowTorus(self):
         self.display.DisplayShape(self.face, transparency=0.7)
         self.show_axs_pln(scale=100)
-        self.show()
+        self.show_occ()
 
 
 if __name__ == '__main__':

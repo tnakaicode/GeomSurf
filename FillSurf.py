@@ -16,7 +16,7 @@ from OCC.Core.GeomFill import GeomFill_Filling
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 
-from src.base import dispocc
+from src.base_occ import dispocc
 
 
 def fill_surface():

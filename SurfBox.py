@@ -29,13 +29,13 @@ from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 from OCC.Core.TColgp import TColgp_Array2OfPnt
 
-from src.base import dispocc, gen_ellipsoid
+from src.base_occ import dispocc, gen_ellipsoid
 
 
-class SurfBox (plotocc):
+class SurfBox (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         self.shell = read_step_file(self.tmpdir + "SurfUV.stp")
         print(self.shell)
         top = TopExp_Explorer(self.shell, TopAbs_FACE)
@@ -65,7 +65,7 @@ class SurfBox (plotocc):
         self.display.DisplayShape(self.face, update=True)
         self.display.Repaint()
         self.show_axs_pln()
-        self.show()
+        self.show_occ()
 
 
 if __name__ == '__main__':

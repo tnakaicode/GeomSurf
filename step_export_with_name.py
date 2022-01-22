@@ -20,10 +20,10 @@ from OCC.Core.BRep import BRep_Builder
 from OCC.Extend.ShapeFactory import make_vertex
 from OCC.Extend.DataExchange import read_step_file_with_names_colors
 
-from src.base import dispocc, spl_face
+from src.base_occ import dispocc, spl_face
 
 
-class Model (plotocc):
+class Model (dispocc):
 
     def __init__(self):
         super().__init__()

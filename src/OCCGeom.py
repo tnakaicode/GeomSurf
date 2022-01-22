@@ -35,13 +35,13 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 from OCCUtils.Topology import Topo
 
-from src.base import dispocc, set_loc
+from src.base_occ import dispocc, set_loc
 
 
-class GenThruSurf (plotocc):
+class GenThruSurf (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         self.axs = gp_Ax3()
 
         p_array = TColgp_Array1OfPnt(1, 100)
@@ -139,7 +139,7 @@ class GenThruSurf (plotocc):
     def display_object(self):
         self.display.DisplayShape(self.curv)
         self.show_axs_pln(self.axs, scale=100)
-        self.show()
+        self.show_occ()
 
 
 if __name__ == '__main__':

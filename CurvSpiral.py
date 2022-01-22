@@ -29,7 +29,7 @@ from OCC.Core.GeomLProp import GeomLProp_CLProps, GeomLProp_CurveTool
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import dispocc, spl_curv_pts
+from src.base_occ import dispocc, spl_curv_pts
 
 
 if __name__ == '__main__':

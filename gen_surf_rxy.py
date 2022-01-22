@@ -6,7 +6,7 @@ import time
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from src.base import plot2d, plotocc, spl_face
+from src.base_occ import dispocc, spl_face
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = dispocc(view=False)
+    obj = dispocc(disp=False)
     if opt.dir != None:
         obj.tmpdir = "./stp_surf/"
     px = np.linspace(-1, 1, opt.nxy[0]) * opt.lxy[0] / 2

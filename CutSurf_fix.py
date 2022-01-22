@@ -25,7 +25,7 @@ from OCC.Core.BOPTools import BOPTools_AlgoTools
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 
-from src.base import dispocc, spl_face, set_loc
+from src.base_occ import dispocc, spl_face, set_loc
 
 
 def bez_face(px, py, pz, axs=gp_Ax3()):

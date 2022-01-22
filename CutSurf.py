@@ -13,7 +13,7 @@ from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 
-from src.base import dispocc, spl_face
+from src.base_occ import dispocc, spl_face
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_builder_a_p_i___make_face.html
 if __name__ == '__main__':

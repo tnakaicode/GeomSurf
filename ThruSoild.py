@@ -20,13 +20,13 @@ from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Topology import Topo
 
-from src.base import dispocc
+from src.base_occ import dispocc
 
 
-class MakeSoild (plotocc):
+class MakeSoild (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         axs = gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1))
         shp = self.make_PolyWire(num=15, skin=None, axs=axs)
         self.display.DisplayShape(shp)

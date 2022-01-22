@@ -8,7 +8,7 @@ from linecache import getline, clearcache
 from optparse import OptionParser
 
 sys.path.append(os.path.join("../"))
-from src.base import plot2d, plot3d, plotocc
+from src.base_occ import dispocc
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

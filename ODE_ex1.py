@@ -32,13 +32,13 @@ from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Topology import Topo, dumpTopology
 
-from src.base import dispocc
+from src.base_occ import dispocc
 
 
-class ODE1 (plotocc):
+class ODE1 (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         self.compound = TopoDS_Compound()
         self.builder = BRep_Builder()
         self.builder.MakeCompound(self.compound)
@@ -56,7 +56,7 @@ class ODE1 (plotocc):
 
     def display_Plane(self):
         self.show_axs_pln(scale=1.0)
-        self.show()
+        self.show_occ()
 
 
 if __name__ == '__main__':

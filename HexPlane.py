@@ -27,7 +27,7 @@ from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Topology import Topo, dumpTopology
 
-from src.base import dispocc, gen_ellipsoid, set_loc, spl_face
+from src.base_occ import dispocc, gen_ellipsoid, set_loc, spl_face
 
 
 def line_from_axs(axs=gp_Ax3(), length=100):
@@ -36,10 +36,10 @@ def line_from_axs(axs=gp_Ax3(), length=100):
     return make_edge(axs.Location(), vector_to_point(vec))
 
 
-class HexPlane (plotocc):
+class HexPlane (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         self.compound = TopoDS_Compound()
         self.builder = BRep_Builder()
         self.builder.MakeCompound(self.compound)
@@ -143,7 +143,7 @@ class HexPlane (plotocc):
         self.display.DisplayShape(self.beam_line)
         self.display.DisplayShape(self.compound)
         self.show_axs_pln(scale=1.0)
-        self.show()
+        self.show_occ()
 
 
 if __name__ == '__main__':

@@ -16,14 +16,14 @@ from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
 from OCCUtils.Construct import make_polygon
 
 sys.path.append(os.path.join('./'))
-from src.base import dispocc, occ_to_grasp_cor, set_loc
+from src.base_occ import dispocc, occ_to_grasp_cor, set_loc
 
 
 def make_offsetface(dat, axs=gp_Ax3()):
     pts = []
     for xyz in dat + [pts[0]]:
         pts.append(gp_Pnt(*xyz))
-    face = plotocc.make_FaceByOrder(pts)
+    face = dispocc.make_FaceByOrder(pts)
 
 
 if __name__ == '__main__':

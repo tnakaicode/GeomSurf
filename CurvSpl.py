@@ -25,7 +25,7 @@ from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFi
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import dispocc
+from src.base_occ import dispocc
 
 
 def trsf_scale(axs=gp_Ax3(), scale=1):
@@ -78,11 +78,11 @@ def spl_curv(px, py, pz):
     return p_array, api.Curve()
 
 
-class CurvDEMO (plotocc):
+class CurvDEMO (dispocc):
 
     def __init__(self, show=None):
         if show != None:
-            plotocc.__init__(self)
+            dispocc.__init__(self)
         self.pt = np.linspace(0, 2 * np.pi, 100)
 
         self.hz = 15.0

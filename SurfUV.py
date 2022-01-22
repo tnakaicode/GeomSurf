@@ -27,13 +27,13 @@ from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 from OCC.Core.TColgp import TColgp_Array2OfPnt
 
-from src.base import dispocc, gen_ellipsoid
+from src.base_occ import dispocc, gen_ellipsoid
 
 
-class SurfUV (plotocc):
+class SurfUV (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         self.build_surf()
         write_step_file(self.bspl_face, self.tmpdir + "SurfUV.stp")
 
@@ -88,7 +88,7 @@ class SurfUV (plotocc):
         self.display.DisplayShape(self.bspl_surf, update=True)
         self.display.Repaint()
         self.show_axs_pln()
-        self.show()
+        self.show_occ()
 
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_shape_analysis___surface.html

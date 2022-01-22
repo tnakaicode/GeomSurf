@@ -9,7 +9,7 @@ from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Pnt2d, gp_Pln, gp_Dir
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism
 
 sys.path.append(os.path.join('../'))
-from src.base import dispocc
+from src.base_occ import dispocc
 
 obj = dispocc()
 

@@ -24,7 +24,7 @@ from OCC.Extend.DataExchange import read_step_file, write_step_file, write_stl_f
 from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
-from src.base import dispocc, write_stl_file_mesh1, write_stl_file_mesh2
+from src.base_occ import dispocc, write_stl_file_mesh1, write_stl_file_mesh2
 
 
 if __name__ == '__main__':

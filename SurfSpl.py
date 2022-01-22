@@ -23,7 +23,7 @@ from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import dispocc
+from src.base_occ import dispocc
 
 
 def trsf_scale(axs=gp_Ax3(), scale=1):

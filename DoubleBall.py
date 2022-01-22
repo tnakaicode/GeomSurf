@@ -18,13 +18,13 @@ from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 
-from src.base import dispocc, gen_ellipsoid
+from src.base_occ import dispocc, gen_ellipsoid
 
 
-class DBall (plotocc):
+class DBall (dispocc):
 
     def __init__(self):
-        plotocc.__init__(self)
+        dispocc.__init__(self)
         self.b1 = self.get_face(gen_ellipsoid(rxyz=[100, 100, 105]))
         self.b2 = self.get_face(gen_ellipsoid(rxyz=[210, 210, 210]))
         self.beam = gp_Ax3(gp_Pnt(0, 150, 0), gp_Dir(1, 1.5, 0))
@@ -135,7 +135,7 @@ class DBall (plotocc):
         self.show_axs_pln(scale=100)
         self.show_axs_pln(self.beam, scale=10)
         self.show_pts(self.pts)
-        self.show()
+        self.show_occ()
         self.export_file()
 
 
