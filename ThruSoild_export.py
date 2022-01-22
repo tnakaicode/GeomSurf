@@ -22,7 +22,7 @@ from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Topology import Topo
 
-from src.base import plotocc
+from src.base import dispocc
 
 
 class MakeSoild (plotocc):
@@ -64,4 +64,4 @@ class MakeSoild (plotocc):
 if __name__ == '__main__':
     obj = MakeSoild()
     obj.show_axs_pln(scale=1.0)
-    # obj.show()
+    # obj.show_occ()

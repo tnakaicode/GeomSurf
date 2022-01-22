@@ -19,7 +19,7 @@ from OCC.Core.IMeshTools import IMeshTools_MeshAlgoFactory
 from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
-from src.base import plotocc, write_stl_file_mesh1, write_stl_file_mesh2
+from src.base import dispocc, write_stl_file_mesh1, write_stl_file_mesh2
 
 
 if __name__ == '__main__':
@@ -28,9 +28,9 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = plotocc()
+    obj = dispocc()
     axs = gp_Ax3()
     box = make_box(axs.Ax2(), 200, 200, 200)
     obj.display.DisplayShape(box)
     obj.show_axs_pln(axs, scale=250)
-    obj.show()
+    obj.show_occ()

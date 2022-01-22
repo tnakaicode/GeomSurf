@@ -29,11 +29,11 @@ from OCC.Core.GeomLProp import GeomLProp_CLProps, GeomLProp_CurveTool
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc, spl_curv_pts
+from src.base import dispocc, spl_curv_pts
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
     obj.show_axs_pln(scale=1)
 
     pt = np.linspace(0, 1, 100)
@@ -63,4 +63,4 @@ if __name__ == '__main__':
     for pnt in pts[::10]:
         obj.display.DisplayShape(pnt)
 
-    obj.show()
+    obj.show_occ()

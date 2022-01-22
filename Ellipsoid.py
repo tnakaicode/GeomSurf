@@ -36,7 +36,7 @@ from OCC.Core.ShapeAnalysis import ShapeAnalysis_ShapeTolerance
 from OCC.Core.BRepTools import breptools_UVBounds
 from OCC.Core.BRep import BRep_Tool_Surface
 
-from src.base import plotocc
+from src.base_occ import dispocc
 
 
 def set_trf(ax1=gp_Ax3(), ax2=gp_Ax3()):
@@ -91,18 +91,18 @@ def gen_ellipsoid_geom(axs=gp_Ax3(), rxyz=[10, 20, 30]):
 
 
 if __name__ == '__main__':
-    obj = plotocc(touch=True)
+    obj = dispocc(touch=True)
     # obj.show_axs_pln(scale=20)
     # obj.show_ball()
 
     axs = gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(1, 1, 1))
     elp = gen_ellipsoid(axs, [10, 20, 30])
-    obj.display.DisplayShape(elp, transparency=0.7, color="BLUE")
+    obj.display.DisplayShape(elp, transparency=0.7, color="BLUE1")
     obj.show_axs_pln(axs, scale=20)
 
     axs = gp_Ax3(gp_Pnt(30, 0, 0), gp_Dir(1, 1, 0))
     elp = gen_ellipsoid(axs, [10, 20, 30])
-    obj.display.DisplayShape(elp, transparency=0.7, color="BLUE")
+    obj.display.DisplayShape(elp, transparency=0.7, color="BLUE1")
     obj.show_axs_pln(axs, scale=20)
 
     #elp = gen_ellipsoid_geom(axs, [10, 20, 30])
@@ -122,4 +122,4 @@ if __name__ == '__main__':
     print(api.Point(1))
     print(api.Point(2))
 
-    obj.show()
+    obj.show_occ()

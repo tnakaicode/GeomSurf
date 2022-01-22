@@ -29,7 +29,7 @@ from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 from OCC.Core.TColgp import TColgp_Array2OfPnt
 
-from src.base import plotocc, gen_ellipsoid
+from src.base import dispocc, gen_ellipsoid
 
 
 class SurfBox (plotocc):

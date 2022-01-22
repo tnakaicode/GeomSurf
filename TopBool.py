@@ -20,11 +20,11 @@ from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc, gen_ellipsoid
+from src.base import dispocc, gen_ellipsoid
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
     obj.show_axs_pln(scale=20)
 
     elli1 = gen_ellipsoid(axs=gp_Ax3(gp_Pnt(-90, 0, 0),
@@ -34,4 +34,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(elli1)
     obj.display.DisplayShape(Wedge)
 
-    obj.show()
+    obj.show_occ()

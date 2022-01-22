@@ -13,7 +13,7 @@ from OCC.Extend.ShapeFactory import get_boundingbox
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_box
 
-from src.base import plotocc
+from src.base import dispocc
 
 
 def vectorized_slicer(li):
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     p2 = gp_Pnt(*xyz_min_max[3:])
     box = make_box(p1, p2)
 
-    obj = plotocc()
+    obj = dispocc()
     obj.display.DisplayShape(box, transparency=0.9)
     obj.display.DisplayShape(shp)
 
@@ -59,8 +59,8 @@ if __name__ == '__main__':
         section = BRepAlgoAPI_Section(shp, face)
         section.Build()
         if section.IsDone():
-            obj.display.DisplayShape(section.Shape(), color="BLUE")
+            obj.display.DisplayShape(section.Shape(), color="BLUE1")
             obj.export_stp(section.Shape())
 
     obj.show_axs_pln(scale=75)
-    obj.show()
+    obj.show_occ()

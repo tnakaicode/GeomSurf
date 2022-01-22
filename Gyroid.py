@@ -17,7 +17,7 @@ from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Topology import Topo
 
-from src.base import plotocc
+from src.base import dispocc
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_fill___filling.html
 # N-Side Filling This algorithm avoids to build a face from:
@@ -144,4 +144,4 @@ class Gyroid (plotocc):
 if __name__ == '__main__':
     obj = Gyroid()
     obj.show_axs_pln(scale=1.0)
-    obj.show()
+    obj.show_occ()

@@ -23,7 +23,7 @@ from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc
+from src.base import dispocc
 
 
 def trsf_scale(axs=gp_Ax3(), scale=1):
@@ -62,7 +62,7 @@ def spl_face(px, py, pz):
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
     obj.show_axs_pln(scale=20)
     # obj.show_ball()
 
@@ -103,4 +103,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(api.Curve())
 
     obj.show_axs_pln(axs, scale=20)
-    obj.show()
+    obj.show_occ()

@@ -25,7 +25,7 @@ from OCC.Core.BOPTools import BOPTools_AlgoTools
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc, spl_face, set_loc
+from src.base import dispocc, spl_face, set_loc
 
 
 def bez_face(px, py, pz, axs=gp_Ax3()):
@@ -49,7 +49,7 @@ def bez_face(px, py, pz, axs=gp_Ax3()):
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_builder_a_p_i___make_face.html
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
     obj.show_axs_pln(obj.base_axs, scale=1)
 
     px = np.linspace(-1, 1, 10) * 5
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     #bound_face = api.Face()
 
     print(face.Location().Transformation())
-    obj.display.DisplayShape(face, color="BLUE", transparency=0.9)
+    obj.display.DisplayShape(face, color="BLUE1", transparency=0.9)
     obj.display.DisplayShape(bound_face, color="RED", transparency=0.9)
     obj.display.DisplayShape(poly_0)
     obj.display.DisplayShape(poly_1)
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     #write_step_file(face, obj.tempname + "_org.stp")
     #write_step_file(bound_face, obj.tempname + ".stp")
 
-    obj.show()
+    obj.show_occ()
 
     # ハンドルされない例外が 0x00007FFA7A40E8AF (TKSTEP.dll) で発生しました(python.exe 内): 0xC0000005: 場所 0x0000000000000000 の読み取り中にアクセス違反が発生しました。
     # 00007FFA7A40E8AF  mov         rax,qword ptr [rcx]

@@ -7,7 +7,7 @@ from linecache import getline, clearcache
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from src.base import plotocc, set_trf
+from src.base import dispocc, set_trf
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
@@ -80,13 +80,13 @@ if __name__ == '__main__':
     print(intss.NbLines())
     intss_curv1 = intss.Line(1)
 
-    obj = plotocc(touch=True)
+    obj = dispocc(touch=True)
     obj.show_axs_pln(axis1, scale=50, name="Axis1")
     obj.show_axs_pln(axis2, scale=50, name="Axis2")
     obj.display.DisplayShape(surf1, color="RED", transparency=0.9)
-    obj.display.DisplayShape(surf2, color="BLUE", transparency=0.9)
+    obj.display.DisplayShape(surf2, color="BLUE1", transparency=0.9)
     obj.display.DisplayShape(solid, color="GREEN", transparency=0.9)
     obj.display.DisplayShape(intss_curv1)
     obj.export_stp(solid)
     obj.export_stl(solid, linear_deflection=0.1, angular_deflection=0.1)
-    obj.show()
+    obj.show_occ()

@@ -24,9 +24,11 @@ from PyQt5.QtWidgets import QApplication, qApp
 from PyQt5.QtWidgets import QDialog, QCheckBox
 from PyQt5.QtWidgets import QFileDialog
 # pip install PyQt5
+# pip install --upgrade --force-reinstall PyQt5
 
 sys.path.append(os.path.join("../"))
-from src.base import SetDir, which, create_tempnum
+from src.base import SetDir, plot2d, which, create_tempnum
+from src.base_qtOCC import init_QDisplay
 from src.OCCGui import init_qtdisplay
 
 from OCC.Display.SimpleGui import init_display
@@ -60,8 +62,9 @@ from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
 from OCC.Core.BRepBndLib import brepbndlib, brepbndlib_Add, brepbndlib_AddOBB, brepbndlib_AddOptimal
 from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.Core.Bnd import Bnd_Box, Bnd_OBB
-from OCC.Core.Geom import Geom_Plane, Geom_Surface, Geom_BSplineSurface, Geom_ToroidalSurface
-from OCC.Core.Geom import Geom_Curve, Geom_Line, Geom_Ellipse
+from OCC.Core.Geom import Geom_Plane, Geom_Surface, Geom_BSplineSurface
+from OCC.Core.Geom import Geom_Curve, Geom_Line, Geom_Ellipse, Geom_Circle
+from OCC.Core.Geom import Geom_RectangularTrimmedSurface, Geom_ToroidalSurface
 from OCC.Core.GeomAPI import geomapi
 from OCC.Core.GeomAPI import GeomAPI_IntCS, GeomAPI_IntSS
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
@@ -74,7 +77,7 @@ from OCC.Core.GeomFill import GeomFill_BoundWithSurf
 from OCC.Core.GeomFill import GeomFill_BSplineCurves
 from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
 from OCC.Core.AIS import AIS_Manipulator
-from OCC.Core.V3d import V3d_SpotLight, V3d_XnegYnegZpos
+from OCC.Core.V3d import V3d_SpotLight, V3d_XnegYnegZpos, V3d_XposYposZpos
 from OCC.Core.Graphic3d import Graphic3d_NOM_ALUMINIUM, Graphic3d_NOM_COPPER, Graphic3d_NOM_BRASS
 from OCC.Core.Quantity import Quantity_Color, Quantity_NOC_WHITE, Quantity_NOC_CORAL2, Quantity_NOC_BROWN
 from OCC.Core.BRepTools import breptools_Write
@@ -206,6 +209,59 @@ def spl_curv_pts(pts=[gp_Pnt()]):
         p_array.SetValue(idx + 1, pnt)
     api = GeomAPI_PointsToBSpline(p_array)
     return p_array, api.Curve()
+
+
+def get_boundxyz_pts(pts, axs=gp_Ax3()):
+    poly = make_polygon(pts, closed=True)
+    poly.Location(set_loc(gp_Ax3(), axs))
+    n_sided = BRepFill_Filling()
+    for e in Topo(poly).edges():
+        n_sided.Add(e, GeomAbs_C0)
+    n_sided.Build()
+
+    face = n_sided.Face()
+    solid = BRepOffset_MakeOffset(
+        face, 10.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+    shape = solid.Shape()
+
+    bbox = Bnd_Box()
+    bbox.Set(axs.Location(), axs.Direction())
+    brepbndlib_Add(shape, bbox)
+
+    xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+    return [xmin, ymin, zmin, xmax, ymax, zmax]
+
+
+def get_boundxyz_rim(rim, axs=gp_Ax3()):
+    n_sided = BRepFill_Filling()
+    for e in Topo(rim).edges():
+        n_sided.Add(e, GeomAbs_C0)
+    n_sided.Build()
+
+    face = n_sided.Face()
+    solid = BRepOffset_MakeOffset(
+        face, 10.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+    shape = solid.Shape()
+
+    bbox = Bnd_Box()
+    bbox.Set(axs.Location(), axs.Direction())
+    brepbndlib_Add(shape, bbox)
+
+    xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+    return [xmin, ymin, zmin, xmax, ymax, zmax]
+
+
+def get_boundxyz_face(face, axs=gp_Ax3()):
+    solid = BRepOffset_MakeOffset(
+        face, 10.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+    shape = solid.Shape()
+
+    bbox = Bnd_Box()
+    bbox.Set(axs.Location(), axs.XDirection())
+    brepbndlib_Add(shape, bbox)
+
+    xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+    return [xmin, ymin, zmin, xmax, ymax, zmax]
 
 
 def get_aligned_boundingbox_ratio(shape, tol=1e-6, optimal_BB=True, ratio=1):
@@ -350,17 +406,22 @@ def face_mesh_triangle(comp=TopoDS_Shape(), isR=0.1, thA=0.1):
         for i in range(1, facing.NbTriangles() + 1):
             trian = tri.Value(i)
             index1, index2, index3 = trian.Get()
-            for j in range(1, 4):
-                if j == 1:
-                    m = index1
-                    n = index2
-                elif j == 2:
-                    n = index3
-                elif j == 3:
-                    m = index2
-                me = BRepBuilderAPI_MakeEdge(tab.Value(m), tab.Value(n))
-                if me.IsDone():
-                    bild1.Add(comp1, me.Edge())
+            pnts = [tab.Value(index1), tab.Value(index2), tab.Value(index3)]
+            poly = make_polygon(pnts, closed=True)
+            ftri = make_face(poly, True)
+            bild1.Add(comp1, poly)
+            bild1.Add(comp1, ftri)
+            # for j in range(1, 4):
+            #    if j == 1:
+            #        m = index1
+            #        n = index2
+            #    elif j == 2:
+            #        n = index3
+            #    elif j == 3:
+            #        m = index2
+            #    me = BRepBuilderAPI_MakeEdge(tab.Value(m), tab.Value(n))
+            #    if me.IsDone():
+            #        bild1.Add(comp1, me.Edge())
         ex.Next()
     return comp1
 
@@ -384,7 +445,8 @@ class Viewer (object):
             from OCC.Display.qtDisplay import qtViewer3d
             #self.app = self.get_app()
             #self.wi = self.app.topLevelWidgets()[0]
-            self.vi = self.wi.findChild(qtViewer3d, "qt_viewer_3d")
+            self.vi = self.findChild(qtViewer3d, "qt_viewer_3d")
+            #self.vi = self.wi.findChild(qtViewer3d, "qt_viewer_3d")
         self.selected_shape = []
 
     def get_app(self):
@@ -410,6 +472,7 @@ class Viewer (object):
         for shape in shapes:
             print()
             print(shape.Location().Transformation())
+            # print(shape.Location().Transformation().TranslationPart().Coord())
             self.selected_shape.append(shape)
             self.DumpTop(shape)
 
@@ -421,6 +484,12 @@ class Viewer (object):
             print(shp)
             bild.Add(comp, shp)
         return comp
+
+    def DumpJson(self, shp):
+        jsonname = create_tempnum(self.rootname, self.tmpdir, ".json")
+        fp = open(jsonname, "w")
+        shp.DumpJson(fp)
+        fp.close()
 
     def DumpTop(self, shape, level=0):
         """
@@ -445,19 +514,20 @@ class Viewer (object):
             self.DumpTop(shp, level + 1)
 
 
-class OCCApp(SetDir, Viewer):
+class OCCApp(plot2d, init_QDisplay, Viewer):
 
-    def __init__(self, disp=True, touch=False):
-        SetDir.__init__(self)
+    def __init__(self, temp=True, disp=True, touch=False):
+        plot2d.__init__(self, temp=temp)
         self.base_axs = gp_Ax3()
         self.disp = disp
         self.touch = touch
-        self.colors = ["BLUE1", "RED", "GREEN", "YELLOW",
-                       "ORANGE", "BLACK", "WHITE"]
+        self.colors = ["BLUE1", "RED", "GREEN",
+                       "YELLOW", "BLACK", "WHITE", "BROWN"]
 
         # OCC Viewer
         if disp == True:
-            self.display, self.start_display, self.add_menu, self.add_function, self.wi = init_qtdisplay()
+            #self.display, self.start_display, self.add_menu, self.add_function, self.wi = init_qtdisplay()
+            init_QDisplay.__init__(self)
             if touch == True:
                 Viewer.__init__(self, disp=True)
                 self.on_select()
@@ -490,8 +560,8 @@ class OCCApp(SetDir, Viewer):
             self.add_function("File", self.export_igs_selected)
             self.add_function("File", self.export_brep_selected)
             self.add_function("File", self.clear_selected)
-        self.add_function("File", self.open_newtempir)
-        self.add_function("File", self.open_tempir)
+        self.add_function("File", self.open_newtempdir)
+        self.add_function("File", self.open_tempdir)
         self.add_function("File", self.exit_win)
 
     def ViewMenu(self):
@@ -545,7 +615,7 @@ class OCCApp(SetDir, Viewer):
         self.export_cap()
         comp = self.make_comp_selcted()
         mesh = face_mesh_triangle(comp, 0.1, 0.1)
-        self.display.DisplayShape(mesh, update=True)
+        self.display.DisplayShape(mesh, update=True, transparency=0.9)
         self.export_cap()
 
     def gen_aligned_bounded_box(self):
@@ -612,8 +682,16 @@ class OCCApp(SetDir, Viewer):
         os.chdir(self.root_dir)
         return stl_name
 
-    def read_cadfile(self, fileName, disp=True):
-        print(fileName)
+    def read_cadfile_axs(self, fileName, axs=gp_Ax1()):
+        surf = self.read_cadfile(fileName, disp=False)
+        trf = gp_Trsf()
+        trf.SetTransformation(axs, gp_Ax3())
+        surf.Location(TopLoc_Location(trf))
+        return surf
+
+    def read_cadfile(self, fileName, disp=True, col=None, trs=None):
+        filesize = os.path.getsize(fileName)
+        print(fileName, filesize / 1000, " kB")
         base_dir = os.path.dirname(fileName)
         basename = os.path.basename(fileName)
         rootname, extname = os.path.splitext(fileName)
@@ -635,26 +713,43 @@ class OCCApp(SetDir, Viewer):
             # sys.exit(0)
 
         if disp == True:
-            self.display.DisplayShape(shpe, update=True)
+            self.display.DisplayShape(
+                shpe, update=True, color=col, transparency=trs)
         return shpe
 
     def import_cadfile(self):
         options = QFileDialog.Options()
-        fileNames, _ = QFileDialog.getOpenFileNames(self.wi, 'QFileDialog.getOpenFileName()', '',
+        fileNames, _ = QFileDialog.getOpenFileNames(self, 'QFileDialog.getOpenFileName()', '',
                                                     'CAD files (*.stp *.step *.stl *.igs *.iges, *.brep. *.geo)',
                                                     options=options)
         for fileName in fileNames:
             print(fileName)
-            self.read_cadfile(fileName, disp=True)
+            self.read_cadfile(fileName, disp=True, trs=None)
             self.export_cap()
+
+    def export_stl(self, shp, filename=None):
+        if filename == None:
+            filename = create_tempnum(self.rootname, self.tmpdir, ".stl")
+        write_stl_file(shp, filename)
+
+    def export_stp(self, shp, filename=None):
+        if filename == None:
+            filename = create_tempnum(self.rootname, self.tmpdir, ".stp")
+        write_step_file(shp, filename)
+
+    def export_igs(self, shp, filename=None):
+        if filename == None:
+            filename = create_tempnum(self.rootname, self.tmpdir, ".igs")
+        write_iges_file(shp, filename)
+
+    def export_cap_name(self, pngname=None):
+        if pngname == None:
+            pngname = create_tempnum(self.rootname, self.tmpdir, ".png")
+        self.display.View.Dump(pngname)
 
     def export_cap(self):
         pngname = create_tempnum(self.rootname, self.tmpdir, ".png")
         self.display.View.Dump(pngname)
-
-    def export_stp(self, shp):
-        stpname = create_tempnum(self.rootname, self.tmpdir, ".stp")
-        write_step_file(shp, stpname)
 
     def export_stp_selected(self):
         comp = self.make_comp_selcted()
@@ -667,7 +762,7 @@ class OCCApp(SetDir, Viewer):
 
     def export_igs_selected(self):
         comp = self.make_comp_selcted()
-        igsname = create_tempnum(self.rootname, self.tmpdir, ".stl")
+        igsname = create_tempnum(self.rootname, self.tmpdir, ".igs")
         write_iges_file(comp, igsname)
 
     def export_brep_selected(self):
@@ -675,10 +770,27 @@ class OCCApp(SetDir, Viewer):
         brepname = create_tempnum(self.rootname, self.tmpdir, ".brep")
         breptools_Write(comp, brepname)
 
-    def exit_win(self):
-        self.wi.close()
+    def save_view(self, num="0"):
+        self.display.View_Top()
+        self.display.FitAll()
+        self.display.View.Dump(self.tempname + "_XY" + num + ".png")
 
-    def show(self):
+        self.display.View_Rear()
+        self.display.FitAll()
+        self.display.View.Dump(self.tempname + "_XZ" + num + ".png")
+
+        self.display.View_Right()
+        self.display.FitAll()
+        self.display.View.Dump(self.tempname + "_YZ" + num + ".png")
+
+        self.display.View.SetProj(V3d_XposYposZpos)
+        self.display.FitAll()
+        self.display.View.Dump(self.tempname + "_XYZ" + num + ".png")
+
+    def exit_win(self):
+        self.close()
+
+    def show_occ(self):
         self.display.FitAll()
         self.display.View.Dump(self.tempname + ".png")
         self.start_display()
@@ -686,8 +798,8 @@ class OCCApp(SetDir, Viewer):
 
 class dispocc (OCCApp):
 
-    def __init__(self, disp=True, touch=False):
-        OCCApp.__init__(self, disp, touch)
+    def __init__(self, temp=True, disp=True, touch=False):
+        OCCApp.__init__(self, temp, disp, touch)
 
         # self._key_map = {ord('W'): self._display.SetModeWireFrame,
         #                  ord('S'): self._display.SetModeShaded,
@@ -706,8 +818,8 @@ class dispocc (OCCApp):
         #     else:
         #         log.info('key: code %i not mapped to any function' % code)
 
-    def reload_app(self, disp=True, touch=False):
-        OCCApp.__init__(self, disp=disp, touch=touch)
+    def reload_app(self, temp=True, disp=True, touch=False):
+        OCCApp.__init__(self, temp, disp, touch)
 
     def show_box(self, axs=gp_Ax3(), lxyz=[100, 100, 100]):
         box = make_box(*lxyz)
@@ -746,6 +858,11 @@ class dispocc (OCCApp):
         self.display.DisplayShape(shape, transparency=trans, color="BLUE1")
         return shape
 
+    def show_axs_vec(self, beam=gp_Ax3(), scale=1.0):
+        pnt = beam.Location()
+        vec = dir_to_vec(beam.Direction()).Scaled(scale)
+        self.display.DisplayVector(vec, pnt)
+
     def show_axs_pln(self, axs=gp_Ax3(), scale=100, name=None):
         pnt = axs.Location()
         dx = axs.XDirection()
@@ -758,18 +875,33 @@ class dispocc (OCCApp):
         pnt_x = pnt_trf_vec(pnt, vx)
         pnt_y = pnt_trf_vec(pnt, vy)
         pnt_z = pnt_trf_vec(pnt, vz)
+        lx, ly, lz = make_line(pnt, pnt_x), make_line(
+            pnt, pnt_y), make_line(pnt, pnt_z)
         self.display.DisplayShape(pnt)
-        self.display.DisplayShape(make_line(pnt, pnt_x), color="RED")
-        self.display.DisplayShape(make_line(pnt, pnt_y), color="GREEN")
-        self.display.DisplayShape(make_line(pnt, pnt_z), color="BLUE1")
+        self.display.DisplayShape(lx, color="RED")
+        self.display.DisplayShape(ly, color="GREEN")
+        self.display.DisplayShape(lz, color="BLUE1")
         if name != None:
             self.display.DisplayMessage(axs.Location(), name)
+        return [lx, ly, lz]
 
     def show_plane(self, axs=gp_Ax3(), scale=100):
         pnt = axs.Location()
         vec = dir_to_vec(axs.Direction())
         pln = make_plane(pnt, vec, -scale, scale, -scale, scale)
         self.display.DisplayShape(pln)
+
+    def show_wire(self, pts=[], axs=gp_Ax3()):
+        poly = make_polygon(pts)
+        poly.Location(set_loc(gp_Ax3(), axs))
+
+        n_sided = BRepFill_Filling()
+        for e in Topo(poly).edges():
+            n_sided.Add(e, GeomAbs_C0)
+        # n_sided.Build()
+        #face = n_sided.Face()
+        self.display.DisplayShape(poly)
+        return poly
 
     def prop_axs(self, axs=gp_Ax3(), scale=100, xyz="z"):
         if xyz == "x":
@@ -789,7 +921,50 @@ class dispocc (OCCApp):
         ).Face()
         return pln
 
-    def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, skin=None, axs=gp_Ax3()):
+    def make_circle(self, axs=gp_Ax3(), radi=100):
+        return make_wire(make_edge(Geom_Circle(axs.Ax2(), radi)))
+
+    def make_torus(self, axs=gp_Ax3(), r0=6000, r1=1500):
+        tok_surf = Geom_ToroidalSurface(axs, r0, r1)
+        return make_face(tok_surf, 1.0E-9)
+
+    def make_cylinder_surf(self, axs=gp_Ax3(), radii=700, hight=500, rng=[0, 0.1], xyz="y"):
+        loc = self.prop_axs(axs, radii, "z")
+        if xyz == "y":
+            rotate_xyz(loc, deg=90, xyz="y")
+        elif xyz == "x":
+            rotate_xyz(loc, deg=90, xyz="x")
+            rotate_xyz(loc, deg=-90, xyz="z")
+        else:
+            loc = self.prop_axs(loc, -radii, "z")
+            #loc = self.prop_axs(loc, -radii, "x")
+
+        face = BRepBuilderAPI_MakeFace(
+            gp_Cylinder(loc, radii),
+            rng[0], rng[1],
+            -hight / 2, hight / 2
+        ).Face()
+        return face
+
+    def make_trimmedcylinder(self, axs=gp_Ax1(), radii=700, hight=500, rng=[0, 0.1], xyz="y"):
+        loc = self.prop_axs(axs, radii, "z")
+        if xyz == "y":
+            rotate_xyz(loc, deg=90, xyz="y")
+        elif xyz == "x":
+            rotate_xyz(loc, deg=90, xyz="x")
+            rotate_xyz(loc, deg=-90, xyz="z")
+        else:
+            loc = self.prop_axs(loc, -radii, "z")
+            #loc = self.prop_axs(loc, -radii, "x")
+
+        face = BRepBuilderAPI_MakeFace(
+            gp_Cylinder(loc, radii),
+            rng[0], rng[1],
+            -hight / 2, hight / 2
+        ).Face()
+        return face
+
+    def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3()):
         rx, ry = rxy
         if rx > ry:
             major_radi = rx
@@ -805,20 +980,7 @@ class dispocc (OCCApp):
         elip = make_edge(gp_Elips(axis, major_radi, minor_radi))
         poly = make_wire(elip)
         poly.Location(set_loc(gp_Ax3(), axs))
-        if skin == None:
-            return poly
-        else:
-            n_sided = BRepFill_Filling()
-            for e in Topo(poly).edges():
-                n_sided.Add(e, GeomAbs_C0)
-            n_sided.Build()
-            face = n_sided.Face()
-            if skin == 0:
-                return face
-            else:
-                solid = BRepOffset_MakeOffset(
-                    face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-                return solid.Shape()
+        return poly
 
     def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3(), skin=None):
         lxy = radi
@@ -908,13 +1070,41 @@ class dispocc (OCCApp):
         #face = n_sided.Face()
         return poly
 
-    def make_FaceByOrder(self, pts=[]):
-        pnt = []
-        for p in pts:
-            pnt.append([p.X(), p.Y(), p.Z()])
+    def make_skin(self, pts=[], axs=gp_Ax3(), skin=1.0):
+        poly = make_polygon(pts, closed=True)
+        poly.Location(set_loc(gp_Ax3(), axs))
 
-        pnt = np.array(pnt)
-        cov = ConvexHull(pnt, qhull_options='QJ')
+        n_sided = BRepFill_Filling()
+        for e in Topo(poly).edges():
+            n_sided.Add(e, GeomAbs_C0)
+        n_sided.Build()
+        face = n_sided.Face()
+        solid = BRepOffset_MakeOffset(
+            face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+        return solid.Shape()
+
+    def make_skin_wire(self, poly, axs=gp_Ax3(), skin=1.0):
+        n_sided = BRepFill_Filling()
+        for e in Topo(poly).edges():
+            n_sided.Add(e, GeomAbs_C0)
+        n_sided.Build()
+        face = n_sided.Face()
+        if skin == None:
+            return poly
+        elif skin == 0:
+            return face
+        else:
+            solid = BRepOffset_MakeOffset(
+                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+            return solid.Shape()
+
+    def make_FaceByOrder(self, pts=[]):
+        dat = []
+        for p in pts:
+            dat.append([p.X(), p.Y(), p.Z()])
+
+        dat = np.array(dat)
+        cov = ConvexHull(dat, qhull_options='QJ')
 
         #pts_ord = []
         # print(cov)
@@ -931,7 +1121,7 @@ class dispocc (OCCApp):
             n_sided.Add(e, GeomAbs_C0)
         n_sided.Build()
         face = n_sided.Face()
-        return face
+        return dat, face
 
     def proj_rim_pln(self, wire, surf, axs=gp_Ax3()):
         proj = BRepProj_Projection(wire, surf, axs.Direction())
@@ -939,7 +1129,16 @@ class dispocc (OCCApp):
 
     def proj_pnt_pln(self, pnt, surf, axs=gp_Ax3()):
         lin = gp_Lin(pnt, axs.Direction())
-        sxy = GeomAPI_IntCS(Geom_Line(lin), BRep_Tool.Surface(surf)).Point(1)
+        api = GeomAPI_IntCS(Geom_Line(lin), BRep_Tool.Surface(surf))
+        dst = np.inf
+        sxy = pnt
+        num = api.NbPoints()
+        for i in range(num):
+            p0 = api.Point(i + 1)
+            dst0 = pnt.Distance(p0)
+            if dst0 < dst:
+                dst = dst0
+                sxy = p0
         return sxy
 
     def proj_pln_show(self, face, nxy=[10, 10], ux=[0, 1], uy=[0, 1], axs=gp_Ax3()):
@@ -972,35 +1171,12 @@ class dispocc (OCCApp):
             self.display.DisplayShape(p1)
         return mesh, data
 
-    def make_torus(self, axs=gp_Ax3(), r0=6000, r1=1500):
-        tok_surf = Geom_ToroidalSurface(axs, r0, r1)
-        return make_face(tok_surf, 1.0E-9)
-
-    def make_cylinder_surf(self, axs=gp_Ax3(), radii=700, hight=500, rng=[0, 0.1], xyz="y"):
-        loc = self.prop_axs(axs, radii, "z")
-        if xyz == "y":
-            rotate_xyz(loc, deg=90, xyz="y")
-        elif xyz == "x":
-            rotate_xyz(loc, deg=90, xyz="x")
-            rotate_xyz(loc, deg=-90, xyz="z")
-        else:
-            loc = self.prop_axs(loc, -radii, "z")
-            #loc = self.prop_axs(loc, -radii, "x")
-
-        face = BRepBuilderAPI_MakeFace(
-            gp_Cylinder(loc, radii),
-            rng[0], rng[1],
-            -hight / 2, hight / 2
-        ).Face()
-        return face
-
-    def run_beam_face(self, beam0=gp_Ax3(), shpe=TopoDS_Shape(), tr=0):
+    def reflect_beam(self, shpe=TopoDS_Shape(), beam0=gp_Ax3(), tr=0):
         v0 = dir_to_vec(beam0.Direction())
         v1 = dir_to_vec(beam0.XDirection())
         p0 = beam0.Location()
         lin = gp_Lin(beam0.Axis())
         api = BRepIntCurveSurface_Inter()
-
         api.Init(shpe, lin, 1.0E-9)
         dst = np.inf
         num = 0
@@ -1041,12 +1217,149 @@ class dispocc (OCCApp):
             vec_to_dir(vx)
         )
         if tr == 0:
+            # Reflect
             beam1.Mirror(norm1.Ax2())
             if beam1.Direction().Dot(norm1.Direction()) < 0:
                 beam1.ZReverse()
         elif tr == 1:
+            # Transporse
             beam1.ZReverse()
+            beam1.XReverse()
         return beam1
+
+    def calc_angle(self, ax0=gp_Ax3(), ax1=gp_Ax3()):
+        p0 = ax0.Location()
+        v0 = dir_to_vec(ax0.Direction())
+        p1 = ax1.Location()
+        v1 = dir_to_vec(ax1.Direction())
+        return p0.Distance(p1), v0.Dot(v1)
+
+    def calc_tor_angle1(self, ax0=gp_Ax3(), ax1=gp_Ax3()):
+        # img/tok_angle_def1.png
+        print(dir_to_vec(ax1.Direction()))
+        # Base plane on ax0
+        pln = self.make_plane_axs(ax0, [-1, 1], [-1, 1])
+
+        # Beam Project to Base plane
+        ax1_prj = self.proj_pnt_pln(ax1.Location(), pln, ax0)
+        ax1_dst = self.prop_axs(ax1, scale=1).Location()
+
+        # Ref Coord
+        # Z Direction: ax1-pnt -> ax0-Z-Ax
+        # Y Direction: ax0-ZDir
+        ax1_loc = gp_Ax3(ax1.Ax2())
+        ax1_loc.SetDirection(vec_to_dir(gp_Vec(ax1_prj, ax0.Location())))
+        ax1_loc.SetYDirection(ax0.Direction())
+        v_z = dir_to_vec(ax1_loc.Direction())
+        v_x = dir_to_vec(ax1_loc.XDirection())
+        v_y = dir_to_vec(ax1_loc.YDirection())
+
+        # Ref Coord XY-Plane (Poloidal)
+        ax1_axy = gp_Ax3(ax1.Location(),
+                         ax1_loc.Direction(),
+                         ax1_loc.XDirection())
+        ax1_pxy = self.make_plane_axs(ax1_axy, [-1, 1], [-1, 1])
+        pnt_pxy = self.proj_pnt_pln(ax1_dst, ax1_pxy, ax1_loc)
+
+        # Ref Coord XZ-Plane (Toroidal)
+        ax1_axz = gp_Ax3(ax1.Location(),
+                         ax1_loc.YDirection(),
+                         ax1_loc.XDirection())
+        ax1_pxz = self.make_plane_axs(ax1_axz, [-1, 1], [-1, 1])
+        pnt_pxz = self.proj_pnt_pln(ax1_dst, ax1_pxz, ax1_axz)
+        lin_pxz = make_edge(ax1_loc.Location(), pnt_pxz)
+        vec_pxz = gp_Vec(ax1_loc.Location(), pnt_pxz)
+        deg_pxz = v_z.AngleWithRef(vec_pxz, v_y.Reversed())
+        txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(deg_pxz))
+        print("Tor: ", np.rad2deg(deg_pxz))
+
+        # Ref Coord YZ-Plane (Poloidal)
+        ax1_ayz = gp_Ax3(ax1.Location(),
+                         ax1_loc.XDirection(),
+                         ax1_loc.Direction())
+        ax1_pyz = self.make_plane_axs(ax1_ayz, [-1, 1], [-1, 1])
+        pnt_pyz = self.proj_pnt_pln(ax1_dst, ax1_pyz, ax1_ayz)
+        lin_pyz = make_edge(ax1_loc.Location(), pnt_pyz)
+        vec_pyz = gp_Vec(ax1_loc.Location(), pnt_pyz)
+        deg_pyz = np.pi / 2 - v_y.AngleWithRef(vec_pyz, v_x)
+        txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(deg_pyz))
+        print("Pol: ", np.rad2deg(deg_pyz))
+
+        #self.show_axs_pln(ax0, scale=0.5)
+        #self.show_axs_pln(ax1_loc, scale=1)
+        #self.display.DisplayShape(lin_pxz, color="BLUE1")
+        #self.display.DisplayShape(ax1_pxz, color="BLUE1", transparency=0.9)
+        #self.display.DisplayShape(lin_pyz, color="GREEN")
+        #self.display.DisplayShape(ax1_pyz, color="GREEN", transparency=0.9)
+        # self.display.DisplayShape(
+        #   make_edge(ax1.Location(), ax1_dst), color="YELLOW")
+        # self.display.DisplayVector(dir_to_vec(
+        #   ax1.Direction()).Scaled(0.5), ax1_dst)
+        return deg_pxz, deg_pyz
+
+    def calc_tor_angle2(self, ax0=gp_Ax3(), ax1=gp_Ax3()):
+        # img/tok_angle_def2.png
+        print(dir_to_vec(ax1.Direction()))
+        # Base plane on ax0
+        pln = self.make_plane_axs(ax0, [-1, 1], [-1, 1])
+
+        # Beam Project to Base plane
+        ax1_prj = self.proj_pnt_pln(ax1.Location(), pln, ax0)
+        ax1_dst = self.prop_axs(ax1, scale=1).Location()
+        ax1_dst_prj = self.proj_pnt_pln(ax1_dst, pln, ax0)
+
+        # Ref Coord
+        # Z Direction: ax1-dir (projected)
+        # Y Direction: ax0-ZDir
+        ax1_loc = gp_Ax3(ax1.Ax2())
+        ax1_loc.SetDirection(vec_to_dir(gp_Vec(ax1_prj, ax1_dst_prj)))
+        ax1_loc.SetYDirection(ax0.Direction())
+        v_z = dir_to_vec(ax1_loc.Direction())
+        v_x = dir_to_vec(ax1_loc.XDirection())
+        v_y = dir_to_vec(ax1_loc.YDirection())
+
+        # Ref Coord XY-Plane (Poloidal)
+        ax1_axy = gp_Ax3(ax1.Location(),
+                         ax1_loc.Direction(),
+                         ax1_loc.XDirection())
+        ax1_pxy = self.make_plane_axs(ax1_axy, [-1, 1], [-1, 1])
+        pnt_pxy = self.proj_pnt_pln(ax1_dst, ax1_pxy, ax1_loc)
+
+        # Ref Coord XZ-Plane (Toroidal)
+        ax1_axz = gp_Ax3(ax1.Location(),
+                         ax1_loc.YDirection(),
+                         ax1_loc.XDirection())
+        ax1_pxz = self.make_plane_axs(ax1_axz, [-1, 1], [-1, 1])
+        pnt_pxz = self.proj_pnt_pln(ax1_dst, ax1_pxz, ax1_axz)
+        lin_pxz = make_edge(ax1_loc.Location(), pnt_pxz)
+        vec_pxz = gp_Vec(ax1_prj, ax0.Location())
+        deg_pxz = v_z.AngleWithRef(vec_pxz, v_y)
+        txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(deg_pxz))
+        print("Tor: ", np.rad2deg(deg_pxz))
+
+        # Ref Coord YZ-Plane (Poloidal)
+        ax1_ayz = gp_Ax3(ax1.Location(),
+                         ax1_loc.XDirection(),
+                         ax1_loc.Direction())
+        ax1_pyz = self.make_plane_axs(ax1_ayz, [-1, 1], [-1, 1])
+        pnt_pyz = self.proj_pnt_pln(ax1_dst, ax1_pyz, ax1_ayz)
+        lin_pyz = make_edge(ax1_loc.Location(), pnt_pyz)
+        vec_pyz = dir_to_vec(ax1.Direction())
+        deg_pyz = vec_pyz.AngleWithRef(v_z, v_x)
+        txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(deg_pyz))
+        print("Pol: ", np.rad2deg(deg_pyz))
+
+        #self.show_axs_pln(ax0, scale=0.5)
+        #self.show_axs_pln(ax1_loc, scale=1)
+        #self.display.DisplayShape(lin_pxz, color="BLUE1")
+        #self.display.DisplayShape(ax1_pxz, color="BLUE1", transparency=0.9)
+        #self.display.DisplayShape(lin_pyz, color="GREEN")
+        #self.display.DisplayShape(ax1_pyz, color="GREEN", transparency=0.9)
+        # self.display.DisplayShape(
+        #   make_edge(ax1.Location(), ax1_dst), color="YELLOW")
+        # self.display.DisplayVector(dir_to_vec(
+        #   ax1.Direction()).Scaled(0.5), ax1_dst)
+        return deg_pxz, deg_pyz
 
 
 if __name__ == '__main__':
@@ -1055,7 +1368,7 @@ if __name__ == '__main__':
     obj.display.DisplayShape(make_box(100, 100, 100))
     obj.display.FitAll()
     obj.export_cap()
-    obj.wi.close()
+    obj.close()
 
     print(obj.base_axs)
 
@@ -1065,8 +1378,8 @@ if __name__ == '__main__':
                              material=Graphic3d_NOM_ALUMINIUM)
     obj.display.DisplayShape(obj.make_plane_axs(),
                              material=Graphic3d_NOM_COPPER)
-    obj.show()
+    obj.show_occ()
 
     print(obj.base_axs)
     obj.reload_app(disp=True, touch=True)
-    obj.show()
+    obj.show_occ()

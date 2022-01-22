@@ -13,11 +13,11 @@ from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc, spl_face
+from src.base import dispocc, spl_face
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_b_rep_builder_a_p_i___make_face.html
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
     obj.show_axs_pln(obj.base_axs, scale=1)
 
     px = np.linspace(-1, 1, 10) * 5
@@ -67,4 +67,4 @@ if __name__ == '__main__':
     write_step_file(face, obj.tempname + "_org.stp")
     write_step_file(bound_face, obj.tempname + ".stp")
 
-    obj.show()
+    obj.show_occ()

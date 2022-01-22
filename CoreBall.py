@@ -19,7 +19,7 @@ from OCCUtils.Construct import make_edge, make_polygon
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Topology import Topo
 
-from src.base import plotocc, gen_ellipsoid
+from src.base import dispocc, gen_ellipsoid
 
 
 class DBall (plotocc):
@@ -127,7 +127,7 @@ class DBall (plotocc):
         #self.show_vec(self.beam, scale=50)
         self.display.DisplayShape(self.base, transparency=0.7, color="RED")
         #self.display.DisplayShape(self.b1, transparency=0.7, color="RED")
-        #self.display.DisplayShape(self.b2, transparency=0.7, color="BLUE")
+        #self.display.DisplayShape(self.b2, transparency=0.7, color="BLUE1")
         self.show_axs_pln(scale=100)
         self.show()
         # self.export_file()

@@ -41,7 +41,7 @@ from OCC.Extend.ShapeFactory import get_aligned_boundingbox, midpoint
 from OCC.Extend.DataExchange import write_step_file
 
 sys.path.append(os.path.join('../'))
-from src.base import plotocc
+from src.base import dispocc
 
 
 def get_boundingbox(shape, tol=1e-6, optimal_BB=True):
@@ -188,7 +188,7 @@ def run(n_procs, compare_by_number_of_processors=False):
     print('\n\n\n done slicing on %i cores \n\n\n' % nprocs)
 
     # Display result
-    obj = plotocc()
+    obj = dispocc()
     obj.create_tempdir(flag=-1)
     print('displaying original shape')
     obj.display.DisplayShape(shape)
@@ -211,7 +211,7 @@ def run(n_procs, compare_by_number_of_processors=False):
     total_time = time.time() - init_time
     print("%s necessary to perform slice with %s processor(s)." %
           (total_time, n_procs))
-    obj.show()
+    obj.show_occ()
 
 
 if __name__ == '__main__':

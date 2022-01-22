@@ -26,7 +26,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = plotocc()
+    obj = dispocc()
 
     wingfile = "wing001.txt"
     wing_cfg = {
@@ -47,4 +47,4 @@ if __name__ == '__main__':
         air = make_polygon(pts, closed=True)
         obj.display.DisplayShape(air)
     obj.show_axs_pln()
-    obj.show()
+    obj.show_occ()

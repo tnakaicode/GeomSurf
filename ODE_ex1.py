@@ -32,7 +32,7 @@ from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Topology import Topo, dumpTopology
 
-from src.base import plotocc
+from src.base import dispocc
 
 
 class ODE1 (plotocc):

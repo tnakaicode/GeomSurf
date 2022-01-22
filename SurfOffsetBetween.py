@@ -16,7 +16,7 @@ from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
 from OCCUtils.Construct import make_polygon
 
 sys.path.append(os.path.join('./'))
-from src.base import plotocc, occ_to_grasp_cor, set_loc
+from src.base import dispocc, occ_to_grasp_cor, set_loc
 
 
 def make_offsetface(dat, axs=gp_Ax3()):
@@ -27,7 +27,7 @@ def make_offsetface(dat, axs=gp_Ax3()):
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
 
     ax1 = gp_Ax3()
     pt1 = np.loadtxt(obj.rootname + "_pln1.txt")
@@ -66,4 +66,4 @@ if __name__ == '__main__':
     shp = api.Shape()
     obj.display.DisplayShape(shp)
     #obj.export_stp(shp)
-    obj.show()
+    obj.show_occ()

@@ -78,14 +78,14 @@ def load_section_from_iges(file):
     return make_face.Shape()
 
 
-from src.base import plotocc, gen_ellipsoid, set_loc, spl_face
+from src.base import dispocc, gen_ellipsoid, set_loc, spl_face
 
 from OCC.Extend.DataExchange import write_iges_file, read_iges_file
 box = read_iges_file("./box.iges")
 pln = load_section_from_iges("./box.iges")
 
-obj = plotocc()
+obj = dispocc()
 obj.show_axs_pln(scale=50)
 obj.display.DisplayShape(box, transparency=0.9)
 obj.display.DisplayShape(pln)
-obj.show()
+obj.show_occ()

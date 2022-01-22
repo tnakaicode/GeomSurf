@@ -24,7 +24,7 @@ from OCC.Extend.DataExchange import read_step_file, write_step_file, write_stl_f
 from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
-from src.base import plotocc, write_stl_file_mesh1, write_stl_file_mesh2
+from src.base import dispocc, write_stl_file_mesh1, write_stl_file_mesh2
 
 
 if __name__ == '__main__':
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = plotocc()
+    obj = dispocc()
     #
     # https://www.opencascade.com/doc/occt-7.4.0/overview/html/occt_user_guides__modeling_algos.html#occt_modalg_6
     # https://www.opencascade.com/doc/occt-7.5.0/overview/html/occt_user_guides__modeling_algos.html#occt_modalg_6
@@ -66,4 +66,4 @@ if __name__ == '__main__':
 
     obj.display.DisplayShape(fil.Shape())
     obj.display.DisplayShape(axs.Location())
-    obj.show()
+    obj.show_occ()

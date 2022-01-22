@@ -9,9 +9,9 @@ from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Pnt2d, gp_Pln, gp_Dir
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism
 
 sys.path.append(os.path.join('../'))
-from src.base import plotocc
+from src.base import dispocc
 
-obj = plotocc()
+obj = dispocc()
 
 pts = []
 pts.append(gp_Pnt(0, 0, 0))
@@ -25,4 +25,4 @@ sold = BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, 2)).Shape()
 
 obj.display.DisplayShape(sold)
 obj.export_stp(sold)
-obj.show()
+obj.show_occ()

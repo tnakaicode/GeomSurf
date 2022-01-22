@@ -6,7 +6,7 @@ import time
 from optparse import OptionParser
 
 sys.path.append(os.path.join("./"))
-from src.base import plotocc
+from src.base import dispocc
 from rnd_sample import cube01_sample, ball01_sample
 
 import logging
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = plotocc(touch=True)
+    obj = dispocc(touch=True)
     brp = BRepTools_NurbsConvertModification()
 
     dat, seed = cube01_sample(2, 100, -1)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         pnt = gp_Pnt(*xyz)
         obj.display.DisplayShape(pnt, color="RED")
     obj.show_axs_pln(scale=1.0)
-    obj.show()
+    obj.show_occ()
 
     # for idx, x in enumerate (dat[0,:]):
     #    pnt = gp_Pnt(dat[0,idx], dat[1, idx], dat[2,idx])

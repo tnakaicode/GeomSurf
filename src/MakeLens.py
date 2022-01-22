@@ -43,6 +43,7 @@ def make_lens(body, face1, face2):
         exp.Next()
     return shp
 
+
 def make_lens1(body, face1, face2, face3):
     splitter = BOPAlgo_Splitter()
     splitter.AddArgument(body)
@@ -60,6 +61,7 @@ def make_lens1(body, face1, face2, face3):
         exp.Next()
     return shp
 
+
 if __name__ == '__main__':
     argvs = sys.argv
     parser = OptionParser()
@@ -73,7 +75,7 @@ if __name__ == '__main__':
     py = np.linspace(-1, 1, 200) * 110 / 2
     mesh = np.meshgrid(px, py)
 
-    obj = plotocc()
+    obj = dispocc()
     axs = gp_Ax3()
     ax1 = gp_Ax3(gp_Pnt(0, 0, -10), axs.Direction())
     vec = gp_Vec(gp_Pnt(0, 0, -10), gp_Pnt(0, 0, 10))
@@ -100,8 +102,8 @@ if __name__ == '__main__':
 
     obj.show_axs_pln(axs, scale=20)
     obj.display.DisplayShape(face1, transparency=0.9, color="RED")
-    obj.display.DisplayShape(face2, transparency=0.9, color="BLUE")
+    obj.display.DisplayShape(face2, transparency=0.9, color="BLUE1")
     obj.display.DisplayShape(shp[1])
     # obj.display.DisplayShape(splitter.Shape())
     # obj.display.DisplayShape(sol)
-    obj.show()
+    obj.show_occ()

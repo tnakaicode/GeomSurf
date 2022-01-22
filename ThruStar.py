@@ -30,7 +30,7 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 from OCCUtils.Topology import Topo
 
-from src.base import plotocc, set_loc, trf_axs
+from src.base import dispocc, set_loc, trf_axs
 
 
 class GenThruSurf (plotocc):
@@ -49,7 +49,7 @@ class GenThruSurf (plotocc):
 
             self.base = self.make_Thru(50)
             self.display.DisplayShape(
-                self.base, transparency=0.7, color="BLUE")
+                self.base, transparency=0.7, color="BLUE1")
             write_step_file(self.base, self.tmpdir +
                             "ThruSurf_{:d}.stp".format(num))
 
@@ -92,7 +92,7 @@ class GenThruSurf (plotocc):
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
     obj.SaveMenu()
     axis1 = gp_Ax3()
     trf_axs(axis1, [0, 0, 10], [10.0, 10.0, 0.0])
@@ -111,4 +111,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(star1)
     obj.display.DisplayShape(star2)
     obj.display.DisplayShape(api.Shape())
-    obj.show()
+    obj.show_occ()

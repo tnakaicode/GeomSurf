@@ -36,7 +36,7 @@ from OCC.Core.IFSelect import IFSelect_RetDone, IFSelect_ItemsByEntity
 from OCC.Extend.DataExchange import write_step_file, read_step_file, write_stl_file
 from OCCUtils.Construct import make_edge, make_polygon
 
-from src.base import plotocc, set_loc, set_trf
+from src.base import dispocc, set_loc, set_trf
 
 
 def spl_face(px, py, pz, axs=gp_Ax3()):
@@ -79,7 +79,7 @@ def bez_face(px, py, pz, axs=gp_Ax3()):
 
 
 if __name__ == '__main__':
-    obj = plotocc(touch=True)
+    obj = dispocc(touch=True)
     obj.show_axs_pln(obj.base_axs, scale=1)
 
     # OCCT dev
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     mesh.Perform()
     face3_mesh = mesh.Shape()
 
-    obj.display.DisplayShape(surf1, color="BLUE", transparency=0.5)
+    obj.display.DisplayShape(surf1, color="BLUE1", transparency=0.5)
     obj.display.DisplayShape(poly1)
     obj.display.DisplayShape(poly1_proj)
     obj.display.DisplayShape(face1_holl, color="GREEN", transparency=0.5)
@@ -167,4 +167,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(surf2_trim, color="RED", transparency=0.5)
     obj.display.DisplayShape(surf2_uiso)
     obj.display.DisplayShape(surf2_viso)
-    obj.show()
+    obj.show_occ()

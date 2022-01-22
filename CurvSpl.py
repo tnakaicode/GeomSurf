@@ -25,7 +25,7 @@ from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFi
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc
+from src.base import dispocc
 
 
 def trsf_scale(axs=gp_Ax3(), scale=1):
@@ -123,7 +123,7 @@ class CurvDEMO (plotocc):
 
 
 if __name__ == '__main__':
-    #obj = plotocc()
+    #obj = dispocc()
     # obj.show_axs_pln(scale=20)
 
     px = np.linspace(-1, 1, 10) * 100 / 2
@@ -142,4 +142,4 @@ if __name__ == '__main__':
 
     #api = GeomFill_BSplineCurves(crv1_shp, crv2_shp, GeomFill_CoonsStyle)
 
-    obj.show()
+    obj.show_occ()

@@ -16,7 +16,7 @@ from OCC.Core.GeomFill import GeomFill_Filling
 from OCC.Extend.DataExchange import write_step_file
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc
+from src.base import dispocc
 
 
 def fill_surface():
@@ -77,7 +77,7 @@ def fill_surface():
 
 
 if __name__ == '__main__':
-    obj = plotocc()
+    obj = dispocc()
     obj.show_axs_pln(scale=20)
     obj.display.DisplayShape(fill_surface())
-    obj.show()
+    obj.show_occ()

@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     display.DisplayShape(face, color="RED", transparency=0.9)
     display.DisplayShape(poly)
-    display.DisplayShape(proj_poly, color="BLUE")
+    display.DisplayShape(proj_poly, color="BLUE1")
     display.FitAll()
     display.View.Dump("Proj_Wire_to_Surf.png")
     start_display()

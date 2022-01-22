@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+import scipy as sp
 import sys
 import pickle
 import json
@@ -11,7 +12,9 @@ import shutil
 import datetime
 import platform
 import subprocess
+from scipy import ndimage
 from scipy.spatial import ConvexHull, Delaunay
+from scipy.optimize import minimize, minimize_scalar, OptimizeResult
 from optparse import OptionParser
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -44,23 +47,28 @@ def which(program):
     return None
 
 
+def sys_flush(n):
+    sys.stdout.write("\r " + " / ".join(map(str, n)))
+    sys.stdout.flush()
+
+
 def split_filename(filename="./temp_20200408000/not_ignore.txt"):
     name = os.path.basename(filename)
     rootname, ext_name = os.path.splitext(name)
     return name, rootname
 
 
-def create_tempdir(name="temp", flag=1):
-    print(datetime.date.today())
+def create_tempdir(name="temp", flag=1, d="./"):
+    print(datetime.date.today(), time.ctime())
     datenm = "{0:%Y%m%d}".format(datetime.date.today())
-    dirnum = len(glob.glob("./{}_{}*/".format(name, datenm)))
+    dirnum = len(glob.glob(d + "{}_{}*/".format(name, datenm)))
     if flag == -1 or dirnum == 0:
-        tmpdir = "./{}_{}{:03}/".format(name, datenm, dirnum)
+        tmpdir = d + "{}_{}{:03}/".format(name, datenm, dirnum)
         os.makedirs(tmpdir)
         fp = open(tmpdir + "not_ignore.txt", "w")
         fp.close()
     else:
-        tmpdir = "./{}_{}{:03}/".format(name, datenm, dirnum - 1)
+        tmpdir = d + "{}_{}{:03}/".format(name, datenm, dirnum - 1)
     return tmpdir
 
 
@@ -71,25 +79,65 @@ def create_tempnum(name, tmpdir="./", ext=".tar.gz"):
     return filename
 
 
+def create_tempdate(name, tmpdir="./", ext=".tar.gz"):
+    print(datetime.date.today())
+    datenm = "{0:%Y%m%d}".format(datetime.date.today())
+    num = len(glob.glob(tmpdir + name + "_{}*".format(datenm) + ext)) + 1
+    filename = '{}{}_{}{:03}{}'.format(tmpdir, name, datenm, num, ext)
+    return filename
+
+
 class SetDir (object):
 
-    def __init__(self):
+    def __init__(self, temp=True):
         self.root_dir = os.getcwd()
         self.tempname = ""
         self.rootname = ""
-        self.create_tempdir()
 
         pyfile = sys.argv[0]
         self.filename = os.path.basename(pyfile)
         self.rootname, ext_name = os.path.splitext(self.filename)
-        self.tempname = self.tmpdir + self.rootname
-        print(self.rootname)
+
+        if temp == True:
+            self.create_tempdir()
+            self.tempname = self.tmpdir + self.rootname
+            print(self.rootname)
+        else:
+            print(self.tmpdir)
 
     def init(self):
         self.tempname = self.tmpdir + self.rootname
 
-    def create_tempdir(self, name="temp", flag=1):
-        self.tmpdir = create_tempdir(name, flag)
+    def create_tempdir(self, name="temp", flag=1, d="./"):
+        self.tmpdir = create_tempdir(name, flag, d)
+        self.tempname = self.tmpdir + self.rootname
+        print(self.tmpdir)
+
+    def create_dir(self, name="temp"):
+        os.makedirs(name, exist_ok=True)
+        if os.path.isdir(name):
+            os.makedirs(name, exist_ok=True)
+            fp = open(name + "not_ignore.txt", "w")
+            fp.close()
+            print("make {}".format(name))
+        else:
+            print("already exist {}".format(name))
+        return name
+
+    def create_dirnum(self, name="./temp", flag=+1):
+        dirnum = len(glob.glob("{}_*/".format(name))) + flag
+        if dirnum < 0:
+            dirnum = 0
+        dirname = name + "_{:03}/".format(dirnum)
+        os.makedirs(dirname, exist_ok=True)
+        fp = open(dirname + "not_ignore.txt", "w")
+        fp.close()
+        print("make {}".format(dirname))
+        return dirname
+
+    def add_tempdir(self, dirname="./", name="temp", flag=1):
+        self.tmpdir = dirname
+        self.tmpdir = create_tempdir(self.tmpdir + name, flag)
         self.tempname = self.tmpdir + self.rootname
         print(self.tmpdir)
 
@@ -106,25 +154,33 @@ class SetDir (object):
             print("already exist {}".format(tmpdir))
         return tmpdir
 
-    def open_file(self, filename=""):
-        subprocess.run('explorer.exe {}'.format(filename))
+    def add_dir_num(self, name="temp", flag=-1):
+        if flag == -1:
+            num = len(glob.glob("{}/{}_*".format(self.tmpdir, name))) + 1
+        else:
+            num = len(glob.glob("{}/{}_*".format(self.tmpdir, name)))
+        tmpdir = "{}/{}_{:03}/".format(self.tmpdir, name, num)
+        os.makedirs(tmpdir, exist_ok=True)
+        fp = open(tmpdir + "not_ignore.txt", "w")
+        fp.close()
+        print("make {}".format(tmpdir))
+        return tmpdir
 
     def open_filemanager(self, path="."):
+        abspath = os.path.abspath(path)
         if sys.platform == "win32":
-            subprocess.run('explorer.exe {}'.format(path))
+            subprocess.run('explorer.exe {}'.format(abspath))
         elif sys.platform == "linux":
-            subprocess.check_call(['xdg-open', path])
+            subprocess.check_call(['xdg-open', abspath])
         else:
-            subprocess.run('explorer.exe {}'.format(path))
+            subprocess.run('explorer.exe {}'.format(abspath))
 
     def open_tempdir(self):
-        path = os.path.abspath(self.tmpdir)
-        self.open_filemanager(path)
+        self.open_filemanager(self.tmpdir)
 
-    def open_newtempir(self):
+    def open_newtempdir(self):
         self.create_tempdir("temp", -1)
-        path = os.path.abspath(self.tmpdir)
-        self.open_filemanager(path)
+        self.open_tempdir()
 
     def exit_app(self):
         sys.exit()
@@ -132,8 +188,9 @@ class SetDir (object):
 
 class PlotBase(SetDir):
 
-    def __init__(self, aspect="equal", *args, **kwargs):
-        SetDir.__init__(self)
+    def __init__(self, aspect="equal", temp=True):
+        if temp == True:
+            SetDir.__init__(self, temp)
         self.dim = 2
         self.fig, self.axs = plt.subplots()
 
@@ -147,16 +204,15 @@ class PlotBase(SetDir):
         else:
             self.new_2Dfig(aspect=aspect)
 
-    def new_2Dfig(self, aspect="equal", *args, **kwargs):
-        self.fig, self.axs = plt.subplots(*args, **kwargs)
+    def new_2Dfig(self, aspect="equal"):
+        self.fig, self.axs = plt.subplots()
         self.axs.set_aspect(aspect)
         self.axs.xaxis.grid()
         self.axs.yaxis.grid()
-        return self.fig, self.axs
 
-    def new_3Dfig(self, aspect="equal", *args, **kwargs):
+    def new_3Dfig(self, aspect="equal"):
         self.fig = plt.figure()
-        self.axs = self.fig.add_subplot(111, projection='3d', *args, **kwargs)
+        self.axs = self.fig.add_subplot(111, projection='3d')
         #self.axs = self.fig.gca(projection='3d')
         # self.axs.set_aspect('equal')
 
@@ -167,31 +223,34 @@ class PlotBase(SetDir):
         self.axs.xaxis.grid()
         self.axs.yaxis.grid()
         self.axs.zaxis.grid()
-        return self.fig, self.axs
 
-    def SavePng(self, pngname=None, *args, **kwargs):
+    def SavePng(self, pngname=None):
         if pngname == None:
-            pngname = self.tempname + ".png"
-        self.fig.savefig(pngname, *args, **kwargs)
-        return pngname
+            pngname = self.tmpdir + self.rootname + ".png"
+        self.fig.savefig(pngname)
 
-    def SavePng_Serial(self, pngname=None, *args, **kwargs):
+    def SavePng_Serial(self, pngname=None):
         if pngname == None:
             pngname = self.rootname
             dirname = self.tmpdir
         else:
-            dirname = os.path.dirname(pngname) + "/"
+            if os.path.dirname(pngname) == "":
+                dirname = "./"
+            else:
+                dirname = os.path.dirname(pngname) + "/"
             basename = os.path.basename(pngname)
             pngname, extname = os.path.splitext(basename)
         pngname = create_tempnum(pngname, dirname, ".png")
-        self.fig.savefig(pngname, *args, **kwargs)
-        return pngname
+        self.fig.savefig(pngname)
 
     def Show(self):
         try:
             plt.show()
         except AttributeError:
             pass
+
+    def plot_close(self):
+        plt.close("all")
 
 
 def make_patch_spines_invisible(ax):
@@ -203,8 +262,8 @@ def make_patch_spines_invisible(ax):
 
 class plot2d (PlotBase):
 
-    def __init__(self, aspect="equal", *args, **kwargs):
-        PlotBase.__init__(self, *args, **kwargs)
+    def __init__(self, aspect="equal", temp=True, *args, **kwargs):
+        PlotBase.__init__(self, aspect, temp, *args, **kwargs)
         self.dim = 2
         # self.new_2Dfig(aspect=aspect)
         self.new_fig(aspect=aspect)
@@ -219,6 +278,7 @@ class plot2d (PlotBase):
 
     def add_twin(self, aspect="auto", side="right", out=0):
         axt = self.axs.twinx()
+        # axt.axis("off")
         axt.set_aspect(aspect)
         axt.xaxis.grid()
         axt.yaxis.grid()
@@ -241,15 +301,6 @@ class plot2d (PlotBase):
         self.ax_y.xaxis.grid(True, zorder=0)
         self.ax_y.yaxis.grid(True, zorder=0)
 
-    def sxy_to_nxy(self, mesh, sxy=[0, 0]):
-        sx, sy = sxy
-        nx, ny = mesh[0].shape
-        xs, ys = mesh[0][0, 0], mesh[1][0, 0]
-        xe, ye = mesh[0][0, -1], mesh[1][-1, 0]
-        dx, dy = mesh[0][0, 1] - mesh[0][0, 0], mesh[1][1, 0] - mesh[1][0, 0]
-        mx, my = int((sy - ys) / dy), int((sx - xs) / dx)
-        return [mx, my]
-
     def contourf_sub(self, mesh, func, sxy=[0, 0], pngname=None):
         self.new_fig()
         self.div_axs()
@@ -267,71 +318,13 @@ class plot2d (PlotBase):
         im = self.axs.contourf(*mesh, func, cmap="jet")
         self.fig.colorbar(im, ax=self.axs, shrink=0.9)
         self.fig.tight_layout()
-        if pngname == None:
-            self.SavePng_Serial(pngname)
-        else:
-            self.SavePng(pngname)
+        self.SavePng(pngname)
 
-    def contourf_sub_xy(self, mesh, func, sxy=[0, 0], pngname=None):
+    def contourf_tri(self, x, y, z):
         self.new_fig()
-        self.div_axs()
-        nx, ny = mesh[0].shape
-        sx, sy = sxy
-        xs, xe = mesh[0][0, 0], mesh[0][0, -1]
-        ys, ye = mesh[1][0, 0], mesh[1][-1, 0]
-        mx = np.searchsorted(mesh[0][:, 0], sx) - 1
-        my = np.searchsorted(mesh[1][0, :], sy) - 1
-
-        self.ax_x.plot(mesh[0][mx, :], func[mx, :])
-        self.ax_x.set_title("y = {:.2f}".format(sy))
-        self.ax_y.plot(func[:, my], mesh[1][:, my])
-        self.ax_y.set_title("x = {:.2f}".format(sx))
-        im = self.axs.contourf(*mesh, func, cmap="jet")
-        self.fig.colorbar(im, ax=self.axs, shrink=0.9)
-        self.fig.tight_layout()
-        if pngname == None:
-            self.SavePng_Serial(pngname)
-        else:
-            self.SavePng(pngname)
-
-    def contourf_tri(self, x, y, z, lim=[-1, 1, -1, 1], pngname=None):
-        self.new_2Dfig()
         self.axs.tricontourf(x, y, z, cmap="jet")
-        self.axs.set_xlim(lim[0], lim[1])
-        self.axs.set_ylim(lim[2], lim[3])
 
-        if pngname == None:
-            pngname = self.SavePng_Serial(pngname)
-        else:
-            pngname = self.SavePng(pngname)
-        png_root, _ = os.path.splitext(pngname)
-        self.axs.scatter(x, y, 5.0)
-        self.SavePng(png_root + "_dot.png")
-
-        pnt = np.array([x, y]).T
-        cov = ConvexHull(pnt)
-        tri = Delaunay(pnt)
-        for idx in tri.simplices:
-            xi = pnt[idx, 0]
-            yi = pnt[idx, 1]
-            self.axs.plot(xi, yi, "k", lw=0.5)
-        self.axs.plot(pnt[cov.vertices, 0],
-                      pnt[cov.vertices, 1], "k", lw=1.0)
-        self.SavePng(png_root + "_grd.png")
-
-        self.new_2Dfig()
-        self.axs.scatter(x, y, 5.0)
-        self.axs.set_xlim(lim[0], lim[1])
-        self.axs.set_ylim(lim[2], lim[3])
-        for idx in tri.simplices:
-            xi = pnt[idx, 0]
-            yi = pnt[idx, 1]
-            self.axs.plot(xi, yi, "k", lw=0.75)
-        self.axs.plot(pnt[cov.vertices, 0],
-                      pnt[cov.vertices, 1], "k", lw=1.5)
-        self.SavePng(png_root + "_grid.png")
-
-    def contourf_div(self, mesh, func, loc=[0, 0], txt="", title="name", pngname=None, level=None):
+    def contourf_div(self, mesh, func, loc=[0, 0], txt="", title="name", pngname="./tmp/png", level=None):
         sx, sy = loc
         nx, ny = func.shape
         xs, ys = mesh[0][0, 0], mesh[1][0, 0]
@@ -340,6 +333,7 @@ class plot2d (PlotBase):
         mx, my = int((sy - ys) / dy), int((sx - xs) / dx)
         tx, ty = 1.1, 0.0
 
+        self.new_2Dfig()
         self.div_axs()
         self.ax_x.plot(mesh[0][mx, :], func[mx, :])
         self.ax_x.set_title("y = {:.2f}".format(sy))
@@ -353,12 +347,9 @@ class plot2d (PlotBase):
         self.fig.colorbar(im, ax=self.axs, shrink=0.9)
 
         plt.tight_layout()
-        if pngname == None:
-            self.SavePng_Serial(pngname)
-        else:
-            self.SavePng(pngname)
+        plt.savefig(pngname + ".png")
 
-    def contourf_div_auto(self, mesh, func, loc=[0, 0], txt="", title="name", pngname=None, level=None):
+    def contourf_div_auto(self, mesh, func, loc=[0, 0], txt="", title="name", pngname="./tmp/png", level=None):
         sx, sy = loc
         nx, ny = func.shape
         xs, ys = mesh[0][0, 0], mesh[1][0, 0]
@@ -367,6 +358,7 @@ class plot2d (PlotBase):
         mx, my = int((sy - ys) / dy), int((sx - xs) / dx)
         tx, ty = 1.1, 0.0
 
+        self.new_2Dfig()
         self.div_axs()
         self.axs.set_aspect('auto')
         self.ax_x.plot(mesh[0][mx, :], func[mx, :])
@@ -381,10 +373,59 @@ class plot2d (PlotBase):
         self.fig.colorbar(im, ax=self.axs, shrink=0.9)
 
         plt.tight_layout()
-        if pngname == None:
-            self.SavePng_Serial(pngname)
-        else:
-            self.SavePng(pngname)
+        plt.savefig(pngname + ".png")
+
+
+class plot3d (PlotBase):
+
+    def __init__(self, aspect="equal", *args, **kwargs):
+        PlotBase.__init__(self, *args, **kwargs)
+        self.dim = 3
+        self.new_fig()
+
+    def set_axes_equal(self):
+        '''
+        Make axes of 3D plot have equal scale so that spheres appear as spheres,
+        cubes as cubes, etc..  This is one possible solution to Matplotlib's
+        ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
+
+        Input
+          ax: a matplotlib axis, e.g., as output from plt.gca().
+        '''
+
+        x_limits = self.axs.get_xlim3d()
+        y_limits = self.axs.get_ylim3d()
+        z_limits = self.axs.get_zlim3d()
+
+        x_range = abs(x_limits[1] - x_limits[0])
+        y_range = abs(y_limits[1] - y_limits[0])
+        z_range = abs(z_limits[1] - z_limits[0])
+
+        x_middle = np.mean(x_limits)
+        y_middle = np.mean(y_limits)
+        z_middle = np.mean(z_limits)
+
+        # The plot bounding box is a sphere in the sense of the infinity
+        # norm, hence I call half the max range the plot radius.
+        plot_radius = 0.5 * max([x_range, y_range, z_range])
+
+        self.axs.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
+        self.axs.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
+        self.axs.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
+
+    def plot_ball(self, rxyz=[1, 1, 1]):
+        u = np.linspace(0, 1, 10) * 2 * np.pi
+        v = np.linspace(0, 1, 10) * np.pi
+        uu, vv = np.meshgrid(u, v)
+        x = rxyz[0] * np.cos(uu) * np.sin(vv)
+        y = rxyz[1] * np.sin(uu) * np.sin(vv)
+        z = rxyz[2] * np.cos(vv)
+
+        self.axs.plot_wireframe(x, y, z)
+        self.set_axes_equal()
+        #self.axs.set_xlim3d(-10, 10)
+        #self.axs.set_ylim3d(-10, 10)
+        #self.axs.set_zlim3d(-10, 10)
 
 
 class plotpolar (plot2d):
@@ -414,68 +455,6 @@ class plotpolar (plot2d):
                     head_length=0.2,
                 )
                 plt.text(px[-n], py[-n], "n={:d}".format(idx))
-
-
-class plot3d (PlotBase):
-
-    def __init__(self, aspect="equal", *args, **kwargs):
-        PlotBase.__init__(self, *args, **kwargs)
-        self.dim = 3
-        self.new_fig()
-
-    def set_axes_equal(self, axis="xyz"):
-        '''
-        Make axes of 3D plot have equal scale so that spheres appear as spheres,
-        cubes as cubes, etc..  This is one possible solution to Matplotlib's
-        ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
-
-        Input
-          ax: a matplotlib axis, e.g., as output from plt.gca().
-        '''
-
-        x_limits = self.axs.get_xlim3d()
-        y_limits = self.axs.get_ylim3d()
-        z_limits = self.axs.get_zlim3d()
-
-        x_range = abs(x_limits[1] - x_limits[0])
-        y_range = abs(y_limits[1] - y_limits[0])
-        z_range = abs(z_limits[1] - z_limits[0])
-
-        x_middle = np.mean(x_limits)
-        y_middle = np.mean(y_limits)
-        z_middle = np.mean(z_limits)
-
-        # The plot bounding box is a sphere in the sense of the infinity
-        # norm, hence I call half the max range the plot radius.
-        plot_radius = 0.5 * max([x_range, y_range, z_range])
-
-        for i in axis:
-            if i == "x":
-                self.axs.set_xlim3d(
-                    [x_middle - plot_radius, x_middle + plot_radius])
-            elif i == "y":
-                self.axs.set_ylim3d(
-                    [y_middle - plot_radius, y_middle + plot_radius])
-            elif i == "z":
-                self.axs.set_zlim3d(
-                    [z_middle - plot_radius, z_middle + plot_radius])
-            else:
-                self.axs.set_zlim3d(
-                    [z_middle - plot_radius, z_middle + plot_radius])
-
-    def plot_ball(self, rxyz=[1, 1, 1]):
-        u = np.linspace(0, 1, 10) * 2 * np.pi
-        v = np.linspace(0, 1, 10) * np.pi
-        uu, vv = np.meshgrid(u, v)
-        x = rxyz[0] * np.cos(uu) * np.sin(vv)
-        y = rxyz[1] * np.sin(uu) * np.sin(vv)
-        z = rxyz[2] * np.cos(vv)
-
-        self.axs.plot_wireframe(x, y, z)
-        self.set_axes_equal()
-        #self.axs.set_xlim3d(-10, 10)
-        #self.axs.set_ylim3d(-10, 10)
-        #self.axs.set_zlim3d(-10, 10)
 
 
 class LineDrawer(object):

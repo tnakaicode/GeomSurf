@@ -29,7 +29,7 @@ from OCC.Core.GeomLProp import GeomLProp_CLProps, GeomLProp_CurveTool
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from src.base import plotocc, spl_face
+from src.base import dispocc, spl_face
 
 
 def trsf_scale(axs=gp_Ax3(), scale=1):
@@ -39,7 +39,7 @@ def trsf_scale(axs=gp_Ax3(), scale=1):
 
 
 if __name__ == '__main__':
-    obj = plotocc(touch=True)
+    obj = dispocc(touch=True)
     obj.show_axs_pln(scale=5)
 
     px = np.linspace(-1, 1, 100) * 2 * np.pi * 2.5
@@ -63,4 +63,4 @@ if __name__ == '__main__':
         print(p0, p1)
         obj.display.DisplayShape(crv)
 
-    obj.show()
+    obj.show_occ()

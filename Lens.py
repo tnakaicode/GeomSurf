@@ -37,7 +37,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = plotocc(view=False)
+    obj = dispocc(view=False)
 
     face1 = read_step_file("./stp_surf/gen_surf_001.stp")
     axis1 = gp_Ax3(gp_Pnt(0, 0, 1), gp_Dir(0, 0, 1))

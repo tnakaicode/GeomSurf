@@ -49,7 +49,7 @@ if __name__ == '__main__':
     opt, argc = parser.parse_args(argvs)
     print(opt, argc)
 
-    obj = plotocc(touch=True)
+    obj = dispocc(touch=True)
     dae_data = uiuc_database()
 
     axs = gp_Ax3()
@@ -118,4 +118,4 @@ if __name__ == '__main__':
     obj.display.DisplayMessage(pnt, uic)
 
     obj.show_axs_pln(axs, scale=10.0)
-    obj.show()
+    obj.show_occ()

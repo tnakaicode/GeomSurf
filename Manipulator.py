@@ -4,14 +4,14 @@ import sys
 import time
 import os
 
-from src.base import plotocc
+from src.base import dispocc
 
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
 from OCC.Core.AIS import AIS_Manipulator, AIS_Dimension
 
-obj = plotocc()
+obj = dispocc()
 obj.SaveMenu()
 obj.AddManipulator()
 obj.display.View.TriedronErase()
@@ -22,4 +22,4 @@ obj.display.DisplayShape(box, update=True)
 # manip.Attach(ais)
 
 obj.show_axs_pln(scale=10)
-obj.show()
+obj.show_occ()

@@ -44,7 +44,7 @@ if __name__ == '__main__':
     py = np.linspace(-1, 1, 200) * 100 - 50
     mesh = np.meshgrid(px, py)
 
-    obj = plotocc(touch=True)
+    obj = dispocc(touch=True)
     r0 = 25.0
     r1 = 10.0
     r2 = 2.5
@@ -79,4 +79,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(plate)
     # for pnt in pts:
     #    obj.display.DisplayShape(pnt)
-    obj.show()
+    obj.show_occ()
