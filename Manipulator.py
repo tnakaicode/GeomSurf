@@ -22,4 +22,4 @@ obj.display.DisplayShape(box, update=True)
 # manip.Attach(ais)
 
 obj.show_axs_pln(scale=10)
-obj.show_occ()
+obj.ShowOCC()

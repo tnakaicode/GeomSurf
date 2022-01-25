@@ -66,4 +66,4 @@ if __name__ == '__main__':
     shp = api.Shape()
     obj.display.DisplayShape(shp)
     #obj.export_stp(shp)
-    obj.show_occ()
+    obj.ShowOCC()

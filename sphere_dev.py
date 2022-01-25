@@ -75,7 +75,7 @@ class Torus (dispocc):
     def ShowTorus(self):
         self.display.DisplayShape(self.face, transparency=0.7)
         self.show_axs_pln(scale=100)
-        self.show_occ()
+        self.ShowOCC()
 
 
 if __name__ == '__main__':

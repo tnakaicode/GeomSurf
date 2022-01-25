@@ -65,7 +65,7 @@ class SurfBox (dispocc):
         self.display.DisplayShape(self.face, update=True)
         self.display.Repaint()
         self.show_axs_pln()
-        self.show_occ()
+        self.ShowOCC()
 
 
 if __name__ == '__main__':

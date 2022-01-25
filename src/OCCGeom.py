@@ -139,7 +139,7 @@ class GenThruSurf (dispocc):
     def display_object(self):
         self.display.DisplayShape(self.curv)
         self.show_axs_pln(self.axs, scale=100)
-        self.show_occ()
+        self.ShowOCC()
 
 
 if __name__ == '__main__':

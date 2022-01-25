@@ -118,4 +118,4 @@ if __name__ == '__main__':
     obj.display.DisplayMessage(pnt, uic)
 
     obj.show_axs_pln(axs, scale=10.0)
-    obj.show_occ()
+    obj.ShowOCC()

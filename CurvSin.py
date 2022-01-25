@@ -63,4 +63,4 @@ if __name__ == '__main__':
         print(p0, p1)
         obj.display.DisplayShape(crv)
 
-    obj.show_occ()
+    obj.ShowOCC()

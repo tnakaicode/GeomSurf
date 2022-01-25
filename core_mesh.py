@@ -33,4 +33,4 @@ if __name__ == '__main__':
     box = make_box(axs.Ax2(), 200, 200, 200)
     obj.display.DisplayShape(box)
     obj.show_axs_pln(axs, scale=250)
-    obj.show_occ()
+    obj.ShowOCC()

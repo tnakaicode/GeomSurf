@@ -63,4 +63,4 @@ if __name__ == '__main__':
             obj.export_stp(section.Shape())
 
     obj.show_axs_pln(scale=75)
-    obj.show_occ()
+    obj.ShowOCC()

@@ -42,7 +42,7 @@ if __name__ == '__main__':
         pnt = gp_Pnt(*xyz)
         obj.display.DisplayShape(pnt, color="RED")
     obj.show_axs_pln(scale=1.0)
-    obj.show_occ()
+    obj.ShowOCC()
 
     # for idx, x in enumerate (dat[0,:]):
     #    pnt = gp_Pnt(dat[0,idx], dat[1, idx], dat[2,idx])

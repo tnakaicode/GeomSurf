@@ -63,4 +63,4 @@ if __name__ == '__main__':
     for pnt in pts[::10]:
         obj.display.DisplayShape(pnt)
 
-    obj.show_occ()
+    obj.ShowOCC()

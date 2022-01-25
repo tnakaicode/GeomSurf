@@ -810,7 +810,7 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
     def exit_win(self):
         self.close()
 
-    def show_occ(self):
+    def ShowOCC(self):
         self.display.FitAll()
         self.display.View.Dump(self.tempname + ".png")
         self.start_display()
@@ -1417,8 +1417,8 @@ if __name__ == '__main__':
                              material=Graphic3d_NOM_ALUMINIUM)
     obj.display.DisplayShape(obj.make_plane_axs(),
                              material=Graphic3d_NOM_COPPER)
-    obj.show_occ()
+    obj.ShowOCC()
 
     print(obj.base_axs)
     obj.reload_app(disp=True, touch=True)
-    obj.show_occ()
+    obj.ShowOCC()

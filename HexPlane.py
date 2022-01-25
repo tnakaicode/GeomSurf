@@ -143,7 +143,7 @@ class HexPlane (dispocc):
         self.display.DisplayShape(self.beam_line)
         self.display.DisplayShape(self.compound)
         self.show_axs_pln(scale=1.0)
-        self.show_occ()
+        self.ShowOCC()
 
 
 if __name__ == '__main__':

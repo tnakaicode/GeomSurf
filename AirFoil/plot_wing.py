@@ -47,4 +47,4 @@ if __name__ == '__main__':
         air = make_polygon(pts, closed=True)
         obj.display.DisplayShape(air)
     obj.show_axs_pln()
-    obj.show_occ()
+    obj.ShowOCC()

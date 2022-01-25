@@ -88,7 +88,7 @@ class GenThruSurf (dispocc):
         self.display.DisplayShape(self.poly)
         self.display.DisplayShape(self.circle)
         self.show_axs_pln(self.axs, scale=100)
-        self.show_occ()
+        self.ShowOCC()
 
 
 if __name__ == '__main__':
@@ -111,4 +111,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(star1)
     obj.display.DisplayShape(star2)
     obj.display.DisplayShape(api.Shape())
-    obj.show_occ()
+    obj.ShowOCC()

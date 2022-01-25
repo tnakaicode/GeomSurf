@@ -88,7 +88,7 @@ class SurfUV (dispocc):
         self.display.DisplayShape(self.bspl_surf, update=True)
         self.display.Repaint()
         self.show_axs_pln()
-        self.show_occ()
+        self.ShowOCC()
 
 
 # https://www.opencascade.com/doc/occt-7.4.0/refman/html/class_shape_analysis___surface.html

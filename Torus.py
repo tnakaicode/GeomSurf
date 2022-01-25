@@ -26,4 +26,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(t.Value(2 * np.pi * (2 / 4), 0))
     obj.display.DisplayShape(t.Value(2 * np.pi * (3 / 4), 0))
     obj.show_axs_pln(scale=100)
-    obj.show_occ()
+    obj.ShowOCC()

@@ -66,4 +66,4 @@ if __name__ == '__main__':
 
     obj.display.DisplayShape(fil.Shape())
     obj.display.DisplayShape(axs.Location())
-    obj.show_occ()
+    obj.ShowOCC()

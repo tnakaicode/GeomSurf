@@ -103,4 +103,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(api.Curve())
 
     obj.show_axs_pln(axs, scale=20)
-    obj.show_occ()
+    obj.ShowOCC()

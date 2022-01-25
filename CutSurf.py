@@ -67,4 +67,4 @@ if __name__ == '__main__':
     write_step_file(face, obj.tempname + "_org.stp")
     write_step_file(bound_face, obj.tempname + ".stp")
 
-    obj.show_occ()
+    obj.ShowOCC()

@@ -135,7 +135,7 @@ class DBall (dispocc):
         self.show_axs_pln(scale=100)
         self.show_axs_pln(self.beam, scale=10)
         self.show_pts(self.pts)
-        self.show_occ()
+        self.ShowOCC()
         self.export_file()
 
 

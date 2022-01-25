@@ -211,7 +211,7 @@ def run(n_procs, compare_by_number_of_processors=False):
     total_time = time.time() - init_time
     print("%s necessary to perform slice with %s processor(s)." %
           (total_time, n_procs))
-    obj.show_occ()
+    obj.ShowOCC()
 
 
 if __name__ == '__main__':

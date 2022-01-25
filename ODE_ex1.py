@@ -56,7 +56,7 @@ class ODE1 (dispocc):
 
     def display_Plane(self):
         self.show_axs_pln(scale=1.0)
-        self.show_occ()
+        self.ShowOCC()
 
 
 if __name__ == '__main__':

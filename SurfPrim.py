@@ -25,4 +25,4 @@ sold = BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, 2)).Shape()
 
 obj.display.DisplayShape(sold)
 obj.export_stp(sold)
-obj.show_occ()
+obj.ShowOCC()

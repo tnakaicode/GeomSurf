@@ -129,7 +129,7 @@ class DBall (dispocc):
         #self.display.DisplayShape(self.b1, transparency=0.7, color="RED")
         #self.display.DisplayShape(self.b2, transparency=0.7, color="BLUE1")
         self.show_axs_pln(scale=100)
-        self.show_occ()
+        self.ShowOCC()
         # self.export_file()
 
 

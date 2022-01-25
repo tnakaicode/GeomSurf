@@ -106,4 +106,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(shp[1])
     # obj.display.DisplayShape(splitter.Shape())
     # obj.display.DisplayShape(sol)
-    obj.show_occ()
+    obj.ShowOCC()

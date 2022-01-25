@@ -144,4 +144,4 @@ class Gyroid (dispocc):
 if __name__ == '__main__':
     obj = Gyroid()
     obj.show_axs_pln(scale=1.0)
-    obj.show_occ()
+    obj.ShowOCC()

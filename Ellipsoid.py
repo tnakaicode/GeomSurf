@@ -122,4 +122,4 @@ if __name__ == '__main__':
     print(api.Point(1))
     print(api.Point(2))
 
-    obj.show_occ()
+    obj.ShowOCC()

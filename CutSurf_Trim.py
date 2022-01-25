@@ -167,4 +167,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(surf2_trim, color="RED", transparency=0.5)
     obj.display.DisplayShape(surf2_uiso)
     obj.display.DisplayShape(surf2_viso)
-    obj.show_occ()
+    obj.ShowOCC()

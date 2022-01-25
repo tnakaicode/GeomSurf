@@ -142,4 +142,4 @@ if __name__ == '__main__':
 
     #api = GeomFill_BSplineCurves(crv1_shp, crv2_shp, GeomFill_CoonsStyle)
 
-    obj.show_occ()
+    obj.ShowOCC()

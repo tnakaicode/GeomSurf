@@ -80,4 +80,4 @@ if __name__ == '__main__':
     obj = dispocc()
     obj.show_axs_pln(scale=20)
     obj.display.DisplayShape(fill_surface())
-    obj.show_occ()
+    obj.ShowOCC()

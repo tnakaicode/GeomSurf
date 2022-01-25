@@ -105,7 +105,7 @@ if __name__ == '__main__':
     #write_step_file(face, obj.tempname + "_org.stp")
     #write_step_file(bound_face, obj.tempname + ".stp")
 
-    obj.show_occ()
+    obj.ShowOCC()
 
     # ハンドルされない例外が 0x00007FFA7A40E8AF (TKSTEP.dll) で発生しました(python.exe 内): 0xC0000005: 場所 0x0000000000000000 の読み取り中にアクセス違反が発生しました。
     # 00007FFA7A40E8AF  mov         rax,qword ptr [rcx]

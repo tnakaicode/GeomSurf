@@ -34,4 +34,4 @@ if __name__ == '__main__':
     obj.display.DisplayShape(elli1)
     obj.display.DisplayShape(Wedge)
 
-    obj.show_occ()
+    obj.ShowOCC()
