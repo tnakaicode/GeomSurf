@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import time
-from optparse import OptionParser
+import argparse
 
 sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc, set_loc
@@ -30,12 +30,12 @@ from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 if __name__ == '__main__':
     argvs = sys.argv
-    parser = OptionParser()
-    parser.add_option("--dir", dest="dir", default="./")
-    parser.add_option("--pxyz", dest="pxyz",
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir", dest="dir", default="./")
+    parser.add_argument("--pxyz", dest="pxyz",
                       default=[0.0, 0.0, 0.0], type="float", nargs=3)
-    opt, argc = parser.parse_args(argvs)
-    print(opt, argc)
+    opt = parser.parse_args()
+    print(opt, argvs)
 
     obj = dispocc(disp=False)
 

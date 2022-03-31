@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import time
-from optparse import OptionParser
+import argparse
 
 sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc, spl_face
@@ -33,16 +33,16 @@ def curvature(px, r, s):
 
 if __name__ == '__main__':
     argvs = sys.argv
-    parser = OptionParser()
-    parser.add_option("--dir", dest="dir", default="./")
-    parser.add_option("--rxy", dest="rxy",
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir", dest="dir", default="./")
+    parser.add_argument("--rxy", dest="rxy",
                       default=[0.0, 0.0], type="float", nargs=2)
-    parser.add_option("--lxy", dest="lxy",
+    parser.add_argument("--lxy", dest="lxy",
                       default=[200, 200], type="float", nargs=2)
-    parser.add_option("--nxy", dest="nxy",
+    parser.add_argument("--nxy", dest="nxy",
                       default=[500, 500], type="int", nargs=2)
-    opt, argc = parser.parse_args(argvs)
-    print(opt, argc)
+    opt = parser.parse_args()
+    print(opt, argvs)
 
     obj = dispocc(disp=False)
     if opt.dir != None:

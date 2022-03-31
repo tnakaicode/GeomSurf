@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import time
 import os
-from optparse import OptionParser
+import argparse
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax3

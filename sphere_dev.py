@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import time
-from optparse import OptionParser
+import argparse
 
 sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
@@ -80,10 +80,10 @@ class Torus (dispocc):
 
 if __name__ == '__main__':
     argvs = sys.argv
-    parser = OptionParser()
-    parser.add_option("--dir", dest="dir", default="./")
-    opt, argc = parser.parse_args(argvs)
-    print(opt, argc)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir", dest="dir", default="./")
+    opt = parser.parse_args()
+    print(opt, argvs)
 
     obj = Torus()
     obj.get_prof([0, 0])

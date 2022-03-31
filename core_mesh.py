@@ -8,7 +8,7 @@ import os
 import glob
 import shutil
 import datetime
-from optparse import OptionParser
+import argparse
 
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
@@ -24,9 +24,9 @@ from src.base_occ import dispocc, write_stl_file_mesh1, write_stl_file_mesh2
 
 if __name__ == '__main__':
     argvs = sys.argv
-    parser = OptionParser()
-    opt, argc = parser.parse_args(argvs)
-    print(opt, argc)
+    parser = argparse.ArgumentParser()
+    opt = parser.parse_args()
+    print(opt, argvs)
 
     obj = dispocc()
     axs = gp_Ax3()

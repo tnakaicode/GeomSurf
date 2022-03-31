@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import time
-from optparse import OptionParser
+import argparse
 
 sys.path.append(os.path.join("../"))
 from src.base_occ import dispocc, spl_face, set_loc
@@ -64,12 +64,12 @@ def make_lens1(body, face1, face2, face3):
 
 if __name__ == '__main__':
     argvs = sys.argv
-    parser = OptionParser()
-    parser.add_option("--dir", dest="dir", default="./")
-    parser.add_option("--pxyz", dest="pxyz",
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dir", dest="dir", default="./")
+    parser.add_argument("--pxyz", dest="pxyz",
                       default=[0.0, 0.0, 0.0], type="float", nargs=3)
-    opt, argc = parser.parse_args(argvs)
-    print(opt, argc)
+    opt = parser.parse_args()
+    print(opt, argvs)
 
     px = np.linspace(-1, 1, 100) * 110 / 2
     py = np.linspace(-1, 1, 200) * 110 / 2
