@@ -36,11 +36,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
     parser.add_argument("--rxy", dest="rxy",
-                      default=[0.0, 0.0], type="float", nargs=2)
+                      default=[0.0, 0.0], type=float, nargs=2)
     parser.add_argument("--lxy", dest="lxy",
-                      default=[200, 200], type="float", nargs=2)
+                      default=[200, 200], type=float, nargs=2)
     parser.add_argument("--nxy", dest="nxy",
-                      default=[500, 500], type="int", nargs=2)
+                      default=[500, 500], type=int, nargs=2)
     opt = parser.parse_args()
     print(opt, argvs)
 
