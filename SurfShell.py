@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import time
-from linecache import getline, clearcache
 import argparse
+from linecache import getline, clearcache
 
 sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc, set_trf
