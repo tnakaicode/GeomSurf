@@ -7,7 +7,7 @@ import argparse
 from linecache import getline, clearcache
 
 sys.path.append(os.path.join("../"))
-from base_occ import dispocc, spl_face
+from src.base_occ import dispocc, spl_face
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

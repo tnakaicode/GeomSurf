@@ -9,7 +9,7 @@ from linecache import getline, clearcache
 basename = os.path.dirname(__file__)
 
 sys.path.append(os.path.join("../"))
-from base_occ import dispocc, spl_face
+from src.base_occ import dispocc, spl_face
 from src.geometry import curvature
 from src.Coord import OCCSurfObj
 

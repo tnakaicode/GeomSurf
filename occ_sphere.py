@@ -5,7 +5,7 @@ import time
 import os
 
 sys.path.append(os.path.join('../'))
-from base_occ import dispocc, which
+from src.base_occ import dispocc, which
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3

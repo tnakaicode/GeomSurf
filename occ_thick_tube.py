@@ -6,7 +6,7 @@ import time
 import argparse
 
 sys.path.append(os.path.join("../"))
-from base_occ import dispocc, set_loc
+from src.base_occ import dispocc, set_loc
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

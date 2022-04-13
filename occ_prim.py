@@ -13,7 +13,7 @@ from OCC.Core.IMeshTools import IMeshTools_MeshBuilder, IMeshTools_MeshAlgo
 from OCC.Core.MeshVS import MeshVS_Array1OfSequenceOfInteger
 
 sys.path.append(os.path.join('../'))
-from base_occ import dispocc
+from src.base_occ import dispocc
 
 obj = dispocc(touch=True)
 

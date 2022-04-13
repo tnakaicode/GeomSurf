@@ -7,7 +7,7 @@ import argparse
 from linecache import getline, clearcache
 
 sys.path.append(os.path.join("../"))
-from base_occ import dispocc, set_loc, spl_face, set_trf
+from src.base_occ import dispocc, set_loc, spl_face, set_trf
 from src.geometry import curvature
 
 import logging
