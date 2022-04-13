@@ -50,7 +50,7 @@ if __name__ == '__main__':
     axs = gp_Ax3()
     ax1 = gp_Ax3(gp_Pnt(0, 0, -10), axs.Direction())
     vec = gp_Vec(gp_Pnt(0, 0, -10), gp_Pnt(0, 0, 10))
-    face = obj.make_EllipWire(rxy=[50.0, 50.0], axs=ax1, skin=0)
+    face = obj.make_EllipWire(rxy=[50.0, 50.0], axs=ax1, shft=0)
     body = BRepPrimAPI_MakePrism(face, vec).Shape()
 
     lens = make_lens(body, face1, face2)

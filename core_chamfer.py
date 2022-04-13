@@ -16,15 +16,91 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Pnt2d
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
 from OCC.Core.BRepFilletAPI import BRepFilletAPI_MakeChamfer, BRepFilletAPI_MakeFillet
+from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCC.Core.BRepMeshData import BRepMeshData_Face
 from OCC.Core.ChFi3d import ChFi3d_Rational
 from OCC.Core.TColgp import TColgp_Array1OfPnt2d
 from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.TopAbs import TopAbs_EDGE
+from OCC.Core.StlAPI import StlAPI_Reader, StlAPI_Writer
+from OCC.Core.IGESControl import IGESControl_Reader, IGESControl_Writer
 from OCC.Extend.DataExchange import read_step_file, write_step_file, write_stl_file
 from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
-from src.base_occ import dispocc, write_stl_file_mesh1, write_stl_file_mesh2
+from src.base_occ import dispocc
+
+
+def write_stl_file_mesh1(a_shape, filename, mode="ascii", linear_deflection=0.9, angular_deflection=0.5):
+    """ 
+    export the shape to a STL file
+    Be careful, the shape first need to be explicitely meshed using BRepMesh_IncrementalMesh
+
+    a_shape: the topods_shape to export
+    filename: the filename
+    mode: optional, "ascii" by default. Can either be "binary"
+    linear_deflection: optional, default to 0.001. Lower, more occurate mesh
+    angular_deflection: optional, default to 0.5. Lower, more accurate_mesh
+    """
+    if a_shape.IsNull():
+        raise AssertionError("Shape is null.")
+    if mode not in ["ascii", "binary"]:
+        raise AssertionError("mode should be either ascii or binary")
+    if os.path.isfile(filename):
+        print("Warning: %s file already exists and will be replaced" % filename)
+    # first mesh the shape
+    mesh = BRepMesh_IncrementalMesh(
+        a_shape, linear_deflection, True, angular_deflection, True)
+    mesh.SetParallelDefault(True)
+    mesh.Perform()
+    if not mesh.IsDone():
+        raise AssertionError("Mesh is not done.")
+
+    stl_exporter = StlAPI_Writer()
+    if mode == "ascii":
+        stl_exporter.SetASCIIMode(True)
+    else:  # binary, just set the ASCII flag to False
+        stl_exporter.SetASCIIMode(False)
+    stl_exporter.Write(a_shape, filename)
+
+    if not os.path.isfile(filename):
+        raise IOError("File not written to disk.")
+
+
+def write_stl_file_mesh2(a_shape, filename, mode="ascii", linear_deflection=0.9, angular_deflection=0.5):
+    """ 
+    export the shape to a STL file
+    Be careful, the shape first need to be explicitely meshed using BRepMesh_IncrementalMesh
+
+    a_shape: the topods_shape to export
+    filename: the filename
+    mode: optional, "ascii" by default. Can either be "binary"
+    linear_deflection: optional, default to 0.001. Lower, more occurate mesh
+    angular_deflection: optional, default to 0.5. Lower, more accurate_mesh
+    """
+    if a_shape.IsNull():
+        raise AssertionError("Shape is null.")
+    if mode not in ["ascii", "binary"]:
+        raise AssertionError("mode should be either ascii or binary")
+    if os.path.isfile(filename):
+        print("Warning: %s file already exists and will be replaced" % filename)
+    # first mesh the shape
+    mesh = BRepMesh_IncrementalMesh(
+        a_shape, linear_deflection, False, angular_deflection, True)
+    mesh.SetParallelDefault(True)
+    mesh.Perform()
+    if not mesh.IsDone():
+        raise AssertionError("Mesh is not done.")
+
+    stl_exporter = StlAPI_Writer()
+    if mode == "ascii":
+        stl_exporter.SetASCIIMode(True)
+    else:  # binary, just set the ASCII flag to False
+        stl_exporter.SetASCIIMode(False)
+    stl_exporter.Write(a_shape, filename)
+
+    if not os.path.isfile(filename):
+        raise IOError("File not written to disk.")
 
 
 if __name__ == '__main__':

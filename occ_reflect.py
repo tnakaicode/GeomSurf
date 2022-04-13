@@ -6,7 +6,7 @@ import time
 import argparse
 from linecache import getline, clearcache
 
-sys.path.append(os.path.join("../"))
+sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
 
 import logging

@@ -5,7 +5,7 @@ import os
 import time
 import argparse
 
-sys.path.append(os.path.join("../"))
+sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc, set_loc
 
 import logging

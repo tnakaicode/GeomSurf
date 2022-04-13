@@ -101,7 +101,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # show time
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.time_draw)
-        self.timer.start(1000)  # msec
+        self.timer.start(500)  # msec
 
     def set_canvas(self, wi, name="Qt"):
         self.canva = wi

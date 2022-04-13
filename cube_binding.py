@@ -11,14 +11,13 @@ from OCC.Core.TopoDS import TopoDS_Shell, TopoDS_Solid
 from OCC.Core.StlAPI import StlAPI_Writer
 from OCC.Extend.DataExchange import write_stl_file
 
-mesh = {
-    "vertices": [[-0.2, -0.2, 0.2], [0.2, -0.2, 0.2], [0.2, 0.2, 0.2], [-0.2, 0.2, 0.2], [-0.2, -0.2, 0.6000000000000001], [0.2, -0.2, 0.6000000000000001], [0.2, 0.2, 0.6000000000000001], [-0.2, 0.2, 0.6000000000000001]],
-    "faces": [[3, 2, 1, 0], [4, 5, 6, 7], [7, 6, 2, 3], [5, 4, 0, 1], [6, 5, 1, 2], [4, 7, 3, 0]]
-}
 
+if __name__ == '__main__':
 
-def main():
-
+    mesh = {
+        "vertices": [[-0.2, -0.2, 0.2], [0.2, -0.2, 0.2], [0.2, 0.2, 0.2], [-0.2, 0.2, 0.2], [-0.2, -0.2, 0.6000000000000001], [0.2, -0.2, 0.6000000000000001], [0.2, 0.2, 0.6000000000000001], [-0.2, 0.2, 0.6000000000000001]],
+        "faces": [[3, 2, 1, 0], [4, 5, 6, 7], [7, 6, 2, 3], [5, 4, 0, 1], [6, 5, 1, 2], [4, 7, 3, 0]]
+    }
     vertices = [gp_Pnt(p[0], p[1], p[2]) for p in mesh['vertices']]
     oFaces = []
 
@@ -42,7 +41,3 @@ def main():
         oFace = BRepBuilderAPI_MakeFace(wire.Wire())
         builder.Add(shell, oFace.Shape())
     write_stl_file(shell, "./cube_binding.stl")
-
-
-if __name__ == '__main__':
-    main()

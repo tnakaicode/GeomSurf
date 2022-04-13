@@ -70,7 +70,7 @@ resolution = 10j  # >6 crashes
 res = int(np.imag(resolution))
 x, y, z = pi / 2 * np.mgrid[-1:1:resolution, -1:1:resolution, -1:1:resolution]
 vol = gyroid(x, y, z, strut_param) * size
-verts, faces, norm, val = measure.marching_cubes_lewiner(vol, level=None)
+verts, faces, norm, val = measure.marching_cubes(vol, level=None)
 xv, yv, zv = verts[:, 0], verts[:, 1], verts[:, 2]
 gxyz = np.array([[x - max(xv) / 2, y - max(yv) / 2, z - max(zv) / 2]
                  for x, y, z in zip(xv, yv, zv)])
@@ -129,13 +129,13 @@ class Gyroid (dispocc):
         solid = BRepOffset_MakeOffset(
             face, thickness, 1.0E-5, BRepOffset_Skin, False, False, GeomAbs_Intersection, True)
         # The last True is important to make solid
-        # solid.MakeOffsetShape()
-        # solid.MakeThickSolid()
-        #aShape = solid.Shape()
+        solid.MakeOffsetShape()
+        solid.MakeThickSolid()
+        aShape = solid.Shape()
 
         self.display.DisplayShape(poly)
         self.display.DisplayShape(face)
-        #display.DisplayShape(aShape, update=True)
+        self.display.DisplayShape(aShape)
         #write_step_file(aShape, "./tmp/gyroid.stp")
 
         self.export_stp(solid.Shape())
