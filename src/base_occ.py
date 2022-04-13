@@ -65,6 +65,8 @@ from OCC.Core.Bnd import Bnd_Box, Bnd_OBB
 from OCC.Core.Geom import Geom_Plane, Geom_Surface, Geom_BSplineSurface
 from OCC.Core.Geom import Geom_Curve, Geom_Line, Geom_Ellipse, Geom_Circle
 from OCC.Core.Geom import Geom_RectangularTrimmedSurface, Geom_ToroidalSurface
+from OCC.Core.Geom import Geom_Curve, Geom_Plane, Geom_Line
+from OCC.Core.GeomAPI import GeomAPI_ProjectPointOnSurf, GeomAPI_ProjectPointOnCurve
 from OCC.Core.GeomAPI import geomapi
 from OCC.Core.GeomAPI import GeomAPI_IntCS, GeomAPI_IntSS
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
@@ -106,6 +108,17 @@ def _gmsh_path():
             + "Interactive plotting and shapes module not available."
         )
     return gmp
+
+
+def pnt_to_xyz(p):
+    return p.X(), p.Y(), p.Z()
+
+
+def float_to_string(number):
+    if number == 0 or abs(np.log10(abs(number))) < 100:
+        return ' {: 0.10E}'.format(number)
+    else:
+        return ' {: 0.10E}'.format(number).replace('E', '')
 
 
 def rotate_xyz(axs=gp_Ax3(), deg=0.0, xyz="x"):
@@ -186,6 +199,125 @@ def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
     ellips = BRepBuilderAPI_GTransform(sphere, gtrf).Shape()
     ellips.Location(loc)
     return ellips
+
+
+def get_axs(filename, ax=gp_Ax3()):
+    dat = np.loadtxt(filename, skiprows=2)
+    pnt = gp_Pnt(*dat[0])
+    d_x = gp_Dir(*dat[1])
+    d_y = gp_Dir(*dat[2])
+    d_z = d_x.Crossed(d_y)
+    axs = gp_Ax3(pnt, d_z, d_x)
+    trf = gp_Trsf()
+    trf.SetTransformation(ax, gp_Ax3())
+    axs.Transform(trf)
+    return axs
+
+
+def get_diff(axis=gp_Ax3(), beam=gp_Ax3()):
+    vx = dir_to_vec(axis.XDirection())
+    vy = dir_to_vec(axis.YDirection())
+    vz = dir_to_vec(axis.Direction())
+    pln_x = Geom_Plane(axis.Location(), axis.YDirection())
+    pln_y = Geom_Plane(axis.Location(), axis.XDirection())
+    vec = dir_to_vec(beam.Direction())
+    vec_p = gp_Pnt((gp_Vec(axis.Location().XYZ()) + vec).XYZ())
+    pnt_x = GeomAPI_ProjectPointOnSurf(vec_p, pln_x).Point(1)
+    pnt_y = GeomAPI_ProjectPointOnSurf(vec_p, pln_y).Point(1)
+    vec_x = gp_Vec(axis.Location(), pnt_x)
+    vec_y = gp_Vec(axis.Location(), pnt_y)
+    deg_x = vec_x.AngleWithRef(vz, vy)
+    deg_y = vec_y.AngleWithRef(vz, vx)
+    p0 = axis.Location()
+    p1 = beam.Location()
+    print(axis.Location().Coord())
+    print(beam.Location().Coord())
+    txt = ""
+    txt += "deg_x = {:+.2f}\n".format(np.rad2deg(deg_x))
+    txt += "deg_y = {:+.2f}\n".format(np.rad2deg(deg_y))
+    txt += "dist = {:.2f}\n".format(p0.Distance(p1))
+    print(txt)
+
+
+def occ_to_grasp_cor(axs, name="name", filename="pln.cor"):
+    pnt = axs.Location()
+    v_x = axs.XDirection()
+    v_y = axs.YDirection()
+    fp = open(filename, "w")
+    fp.write(' {:s}\n'.format(name))
+    fp.write(' {:s}\n'.format("mm"))
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(pnt)]) + '\n')
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_x)]) + '\n')
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_y)]) + '\n')
+    fp.close()
+
+
+def occ_to_grasp_cor_ref(axs, ref=gp_Ax3(), name="name", filename="pln.cor"):
+    trf = gp_Trsf()
+    trf.SetTransformation(gp_Ax3(), ref)
+    # trf.Invert()
+    ax1 = axs.Transformed(trf)
+    pnt = ax1.Location()
+    v_x = ax1.XDirection()
+    v_y = ax1.YDirection()
+    fp = open(filename, "w")
+    fp.write(' {:s}\n'.format(name))
+    fp.write(' {:s}\n'.format("mm"))
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(pnt)]) + '\n')
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_x)]) + '\n')
+    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_y)]) + '\n')
+    fp.close()
+
+
+def occ_to_grasp_rim(axs, pts, filename="pln.rim", name="name", nxy=5):
+    pnt = axs.Location()
+    trf = gp_Trsf()
+    trf.SetTransformation(gp_Ax3(), axs)
+    px, py = [], []
+    for i in range(len(pts)):
+        i0, i1 = i, (i + 1) % len(pts)
+        p0, p1 = pts[i0].Transformed(trf), pts[i1].Transformed(trf)
+        p_x = np.delete(np.linspace(p0.X(), p1.X(), nxy), -1)
+        p_y = np.delete(np.linspace(p0.Y(), p1.Y(), nxy), -1)
+        px.extend(p_x), py.extend(p_y)
+
+    fp = open(filename, "w")
+    fp.write(' {:s}\n'.format(name))
+    fp.write('{:12d}{:12d}{:12d}\n'.format(len(px), 1, 1))
+    #fp.write(' {:s}\n'.format("mm"))
+    for i in range(len(px)):
+        data = [px[i], py[i]]
+        fp.write(''.join([float_to_string(val) for val in data]) + '\n')
+
+
+def grasp_sfc(mesh, surf, sfc_file="surf.sfc"):
+    fp = open(sfc_file, "w")
+    ny, nx = surf.shape
+    xs, xe = mesh[0][0, 0], mesh[0][0, -1]
+    ys, ye = mesh[1][0, 0], mesh[1][-1, 0]
+    fp.write(" {} data \n".format(sfc_file))
+    fp.write(" {:.2e} {:.2e} {:.2e} {:.2e}\n".format(xs, ys, xe, ye))
+    fp.write(" {:d} {:d}\n".format(nx, ny))
+    for ix in range(nx):
+        for iy in range(ny):
+            fp.write(" {:.5e} ".format(surf[iy, ix]))
+        fp.write("\n")
+    fp.close()
+
+
+def surf_spl_pcd(px, py, pz):
+    nx, ny = px.shape
+    pnt_2d = TColgp_Array2OfPnt(1, nx, 1, ny)
+    for row in range(pnt_2d.LowerRow(), pnt_2d.UpperRow() + 1):
+        for col in range(pnt_2d.LowerCol(), pnt_2d.UpperCol() + 1):
+            i, j = row - 1, col - 1
+            pnt = gp_Pnt(px[i, j], py[i, j], pz[i, j])
+            pnt_2d.SetValue(row, col, pnt)
+
+    curv = GeomAPI_PointsToBSplineSurface(
+        pnt_2d, 3, 8, GeomAbs_G2, 0.001).Surface()
+    surf = BRepBuilderAPI_MakeFace(curv, 1e-6).Face()
+    return surf, pnt_2d
 
 
 def spl_face(px, py, pz, axs=gp_Ax3()):
@@ -272,6 +404,14 @@ def get_boundxyz_rim(rim, axs=gp_Ax3()):
 
 
 def get_boundxyz_face(face, axs=gp_Ax3()):
+    """
+    Args:
+        face (TopoDS_Shape): 
+        axs (gp_Ax3): Defaults to gp_Ax3().
+
+    Returns:
+        [float x6]:
+    """
     solid = BRepOffset_MakeOffset(
         face, 10.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
     shape = solid.Shape()
@@ -568,7 +708,7 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
             self.base_axs.Location(),
             update=True
         )
-        self.manip.Attach(ais_shp)
+        self.manip.Attach(ais_shp[0])
 
     def SaveMenu(self):
         self.add_menu("File")
@@ -593,11 +733,12 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         self.add_function("View", self.display.View_Front)  # XZ-Plane(-)
         self.add_function("View", self.display.View_Right)  # YZ-Plane(+)
         self.add_function("View", self.display.View_Left)  # YZ-Plane(-)
-        self.add_function("View", self.view_xaxis)
-        self.add_function("View", self.view_yaxis)
-        self.add_function("View", self.view_zaxis)
+        self.add_function("View", self.View_XZPlane)
+        self.add_function("View", self.View_YZPlane)
         self.add_function("View", self.ray_tracing_mode)
         self.add_function("View", self.display.SetRasterizationMode)
+        self.add_function("View", self.get_view_dir)
+        self.add_function("View", self.save_view_axis)
 
     def SelectMenu(self):
         self.add_menu("Select")
@@ -616,20 +757,41 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
     def SetSelectionModeShape(self):
         self.display.SetSelectionMode(TopAbs_SHAPE)
 
-    def view_xaxis(self):
-        self.display.View.Rotate(0, np.deg2rad(15), 0,
-                                 0, 1, 0,
-                                 True)
+    def get_view_dir(self):
+        print()
+        x, y, z = self.display.View.At()
+        print("Pos: ", x, y, z)
+        x, y, z = self.display.View.Eye()
+        print("Eye: ", x, y, z)
+        x, y, z = self.display.View.Proj()
+        print("Prj: ", x, y, z)
+        x, y, z = self.display.View.Up()
+        print("Up : ", x, y, z)
 
-    def view_yaxis(self):
-        self.display.View.Rotate(np.deg2rad(15), 0, 0,
-                                 1, 0, 0,
-                                 True)
+    def save_view_axis(self):
+        print()
+        x, y, z = self.display.View.At()
+        p = gp_Pnt(x, y, z)
+        print("Pos: ", x, y, z)
+        x, y, z = self.display.View.Eye()
+        dz = gp_Dir(x, y, z)
+        print("Eye: ", x, y, z)
+        x, y, z = self.display.View.Proj()
+        dx = gp_Dir(x, y, z)
+        print("Prj: ", x, y, z)
+        x, y, z = self.display.View.Up()
+        print("Up : ", x, y, z)
+        axs = gp_Ax3(p, dz, dx)
+        cor_name = create_tempnum(self.rootname, self.tmpdir, ".cor")
+        occ_to_grasp_cor(axs, name="axis", filename=cor_name)
 
-    def view_zaxis(self):
-        self.display.View.Rotate(0, 0, np.deg2rad(15),
-                                 0, 0, 1,
-                                 True)
+    def View_YZPlane(self):
+        self.display.View.SetProj(1, 0, 0)
+        self.display.View.SetUp(0, 1, 0)
+
+    def View_XZPlane(self):
+        self.display.View.SetProj(0, -1, 0)
+        self.display.View.SetUp(1, 0, 0)
 
     def gen_mesh_face(self):
         self.export_cap()
@@ -820,6 +982,7 @@ class dispocc (OCCApp):
 
     def __init__(self, temp=True, disp=True, touch=False):
         OCCApp.__init__(self, temp, disp, touch)
+        self.plot_close()
 
         # self._key_map = {ord('W'): self._display.SetModeWireFrame,
         #                  ord('S'): self._display.SetModeShaded,
@@ -1211,10 +1374,25 @@ class dispocc (OCCApp):
         return mesh, data
 
     def reflect_beam(self, shpe=TopoDS_Shape(), beam0=gp_Ax3(), tr=0):
+        """
+        Calculate the reflection/transmission of a beam by shape
+
+        Args:
+            shpe (TopoDS_Shape): The reflection shape. Defaults to TopoDS_Shape().
+            beam0 (gp_Ax3): Defaults to gp_Ax3().
+            tr (int): 
+                0 : reflection (Default)
+                1 : transmission
+                2 : normal on face.
+
+        Returns:
+            beam1 [gp_Ax3]: 
+        """
         v0 = dir_to_vec(beam0.Direction())
         v1 = dir_to_vec(beam0.XDirection())
         p0 = beam0.Location()
-        lin = gp_Lin(beam0.Axis())
+        d0 = beam0.Direction()
+        lin = gp_Lin(p0, d0)
         api = BRepIntCurveSurface_Inter()
         api.Init(shpe, lin, 1.0E-9)
         dst = np.inf
@@ -1225,6 +1403,7 @@ class dispocc (OCCApp):
         while api.More():
             p1 = api.Pnt()
             dst1 = p0.Distance(p1)
+            print(api.Transition(), p1)
             if dst1 < dst and api.W() > 1.0E-6:
                 dst = dst1
                 uvw = [api.U(), api.V(), api.W()]
@@ -1256,14 +1435,21 @@ class dispocc (OCCApp):
             vec_to_dir(vx)
         )
         if tr == 0:
-            # Reflect
+            # Reflection
             beam1.Mirror(norm1.Ax2())
             if beam1.Direction().Dot(norm1.Direction()) < 0:
                 beam1.ZReverse()
         elif tr == 1:
-            # Transporse
+            # Transmission
             beam1.ZReverse()
             beam1.XReverse()
+        elif tr == 2:
+            # Normal Axis
+            beam1 = gp_Ax3(norm1.Ax2())
+        elif tr == 3:
+            # Normal Axis (ZReverse)
+            beam1 = gp_Ax3(norm1.Ax2())
+            beam1.ZReverse()
         return beam1
 
     def calc_angle(self, ax0=gp_Ax3(), ax1=gp_Ax3()):

@@ -9,7 +9,7 @@ from src.base_occ import dispocc
 from OCC.Display.SimpleGui import init_display
 from OCC.Core.gp import gp_Pnt
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeBox
-from OCC.Core.AIS import AIS_Manipulator, AIS_Dimension
+# from OCC.Core.AIS import AIS_Manipulator, AIS_Dimension
 
 obj = dispocc()
 obj.SaveMenu()
