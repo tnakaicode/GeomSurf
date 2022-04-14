@@ -11,6 +11,9 @@ from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakePolygon
 from OCC.Core.BRepProj import BRepProj_Projection
+from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
+from OCC.Extend.ShapeFactory import make_face
 
 
 def spl_face(px, py, pz):
@@ -60,16 +63,26 @@ if __name__ == '__main__':
     pts = []
     pts.append(gp_Pnt(-100, -200, 0))
     pts.append(gp_Pnt(+200, -300, 0))
+    pts.append(gp_Pnt(+250, -350, 0))
     pts.append(gp_Pnt(+300, +400, 0))
     pts.append(gp_Pnt(-400, +500, 0))
     poly = make_polygon(pts, closed=True)
 
     proj = BRepProj_Projection(poly, face, axs.Direction())
-    proj_poly = proj.Current()
+    poly_proj = proj.Current()
+
+    # make hole
+    # face = make_face(face, poly_proj)
+
+    api_face = BRepAlgo_FaceRestrictor()
+    api_face.Init(face, True, True)
+    api_face.Add(poly_proj)
+    api_face.Perform()
+    face = api_face.Current()
 
     display.DisplayShape(face, color="RED", transparency=0.9)
     display.DisplayShape(poly)
-    display.DisplayShape(proj_poly, color="BLUE1")
+    display.DisplayShape(poly_proj, color="BLUE1")
     display.FitAll()
     display.View.Dump("Proj_Wire_to_Surf.png")
     start_display()
