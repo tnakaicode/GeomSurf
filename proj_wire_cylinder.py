@@ -20,7 +20,8 @@ from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Core.TopoDS import TopoDS_Vertex
 from OCC.Extend.ShapeFactory import make_face, make_vertex
 from OCC.Extend.TopologyUtils import TopologyExplorer
-from OCCUtils.Construct import vec_to_dir, dir_to_vec, vector_to_point
+from OCCUtils.Common import vertex2pnt
+from OCCUtils.Construct import vec_to_dir, dir_to_vec
 from OCCUtils.Construct import make_polygon
 
 if __name__ == '__main__':
