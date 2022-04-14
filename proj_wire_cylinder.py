@@ -34,10 +34,13 @@ if __name__ == '__main__':
 
     face = make_face(gp_Cylinder(gp_Ax3(), 50), 0, 2 * np.pi, 0, 200)
 
-    th = 15  # deg
+    th = -15  # deg
     dx = np.cos(np.deg2rad(th))
     dy = np.sin(np.deg2rad(th))
-    axs = gp_Ax3(gp_Pnt(0, 0, 100), gp_Dir(dx, dy, 0))
+    vz = gp_Vec(dx, dy,0)
+    vy = gp_Vec(0,0,1)
+    vx = vy.Crossed(vz)
+    axs = gp_Ax3(gp_Pnt(0, 0, 100), vec_to_dir(vz),vec_to_dir(vx))
     pts = []
     pts.append(gp_Pnt(0, 0, 0))
     pts.append(gp_Pnt(10, 0, 0))
@@ -66,8 +69,11 @@ if __name__ == '__main__':
         proj_poly = proj.Current()
         pnt = [brt.Pnt(v) for v in TopologyExplorer(proj_poly).vertices()]
         obj.display.DisplayShape(proj_poly)
-        obj.display.DisplayMessage(pnt[0], f"{i:d}")
+        obj.display.DisplayMessage(pnt[0], f"{i:d}",height=25)
         i += 1
         proj.Next()
-
+    
+    # Projection order depends on the size of the UV parameters of the base shape being projected
+    
+    obj.display.View_Top()
     obj.ShowOCC()
