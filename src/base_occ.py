@@ -87,6 +87,7 @@ from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCC.Extend.DataExchange import write_iges_file, read_iges_file
 from OCC.Extend.DataExchange import write_stl_file, read_stl_file
 from OCC.Extend.ShapeFactory import midpoint
+from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Topology import Topo
 from OCCUtils.Topology import shapeTypeString, dumpTopology
 from OCCUtils.Construct import make_box, make_face, make_line, make_wire, make_edge
@@ -1325,9 +1326,14 @@ class dispocc (OCCApp):
         face = n_sided.Face()
         return dat, face
 
-    def proj_rim_pln(self, wire, surf, axs=gp_Ax3()):
+    def proj_rim_pln(self, wire, surf, axs=gp_Ax3(), idx=0):
         proj = BRepProj_Projection(wire, surf, axs.Direction())
-        return proj.Current()
+        i = 0
+        while proj.More() or i == idx:
+            proj_poly = proj.Current()
+            i += 1
+            proj.Next()
+        return proj_poly
 
     def proj_pnt_pln(self, pnt, surf, axs=gp_Ax3()):
         lin = gp_Lin(pnt, axs.Direction())
