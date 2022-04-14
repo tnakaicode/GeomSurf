@@ -786,11 +786,11 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         occ_to_grasp_cor(axs, name="axis", filename=cor_name)
 
     def View_YZPlane(self):
-        self.display.View.SetProj(1, 0, 0)
+        self.display.View.SetProj(-1, 0, 0)
         self.display.View.SetUp(0, 1, 0)
 
     def View_XZPlane(self):
-        self.display.View.SetProj(0, -1, 0)
+        self.display.View.SetProj(0, 1, 0)
         self.display.View.SetUp(1, 0, 0)
 
     def gen_mesh_face(self):
