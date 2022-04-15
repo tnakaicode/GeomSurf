@@ -1390,6 +1390,7 @@ class dispocc (OCCApp):
                 0 : reflection (Default)
                 1 : transmission
                 2 : normal on face.
+                3 : normal on face (ZReverse).
 
         Returns:
             beam1 [gp_Ax3]: 
@@ -1456,6 +1457,15 @@ class dispocc (OCCApp):
             # Normal Axis (ZReverse)
             beam1 = gp_Ax3(norm1.Ax2())
             beam1.ZReverse()
+        elif tr == 4:
+            # Transmission and Refraction
+            norm1.ZReverse()
+            beam1 = gp_Ax3(
+                p1,
+                beam0.Direction(),
+                beam0.XDirection()
+            )
+            beam1.Mirror(norm1.Ax2())
         return beam1
 
     def calc_angle(self, ax0=gp_Ax3(), ax1=gp_Ax3()):

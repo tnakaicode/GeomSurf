@@ -52,7 +52,7 @@ if __name__ == '__main__':
     surf2.axs = gp_Ax3(gp_Pnt(0, 0, 50), gp_Dir(0, 1, 1))
     surf2.rot = gp_Ax3(surf2.axs.Ax2())
     surf2.SurfCurvature_Loc(lxy=[100, 100], rxy=[500, 0])
-    norm2 = obj.reflect_beam(surf2.surf, beam0.beam, tr=3)
+    norm2 = obj.reflect_beam(surf2.surf, beam0.beam, tr=4)
 
     obj.show_axs_pln(beam0.beam, scale=75)
     obj.show_axs_pln(surf1.beam, scale=25)
