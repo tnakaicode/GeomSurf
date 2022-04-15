@@ -1461,12 +1461,12 @@ class dispocc (OCCApp):
         elif tr == 4:
             # Transmission and Refraction
             norm1.ZReverse()
-            beam1 = gp_Ax3(
-                p1,
-                beam0.Direction(),
-                beam0.XDirection()
-            )
-            beam1.Mirror(norm1.Ax2())
+            beam1.ZReverse()
+            beam1.XReverse()
+            #beam1.Mirror(norm1.Ax2())
+            beam1 = norm1.Mirrored(beam1.Ax2())
+            if beam1.Direction().Dot(norm1.Direction()) < 0:
+                beam1.ZReverse()
         return beam1
 
     def calc_angle(self, ax0=gp_Ax3(), ax1=gp_Ax3()):

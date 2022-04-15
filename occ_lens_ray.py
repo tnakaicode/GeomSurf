@@ -33,14 +33,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
     parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
     opt = parser.parse_args()
     print(opt, argvs)
 
     obj = dispocc(touch=True)
 
     beam0 = OCCSurfObj(name="beam0")
-    beam0.beam = gp_Ax3(beam0.axs.Location(), gp_Dir(0.1, 0.1, 1.0))
+    beam0.beam = gp_Ax3(beam0.axs.Location(), gp_Dir(0.1, -0.3, 1.0))
 
     surf1 = OCCSurfObj(name="surf1")
     surf1.axs = gp_Ax3(gp_Pnt(0, 0, 50), gp_Dir(0, 1, 1))
@@ -49,19 +49,26 @@ if __name__ == '__main__':
 
     surf1.reflect_beam(beam0.beam, tr=1)
     norm1 = obj.reflect_beam(surf1.surf, beam0.beam, tr=3)
-    line1 = make_polygon([b.Location() for b in [beam0.beam, norm1, obj.prop_axs(norm1,30)]])
+    line1 = make_polygon([b.Location()
+                         for b in [beam0.beam, norm1, obj.prop_axs(norm1, 30)]])
 
     surf2 = OCCSurfObj(name="surf2")
     surf2.axs = gp_Ax3(gp_Pnt(0, 0, 50), gp_Dir(0, 1, 1))
     surf2.rot = gp_Ax3(surf2.axs.Ax2())
     surf2.SurfCurvature_Loc(lxy=[100, 100], rxy=[500, 0])
     norm2 = obj.reflect_beam(surf2.surf, beam0.beam, tr=4)
-    line2 = make_polygon([b.Location() for b in [beam0.beam, norm2, obj.prop_axs(norm2,30)]])
+    line2 = make_polygon([b.Location()
+                         for b in [beam0.beam, norm2, obj.prop_axs(norm2, 30)]])
+
+    norm3 = obj.reflect_beam(surf2.surf, beam0.beam, tr=3)
+    line3 = make_polygon([b.Location()
+                         for b in [beam0.beam, norm3, obj.prop_axs(norm3, 30)]])
 
     #obj.show_axs_pln(beam0.beam, scale=75)
     #obj.show_axs_pln(surf1.beam, scale=25)
     obj.display.DisplayShape(line1, color="BLUE1")
     obj.display.DisplayShape(line2, color="RED")
+    obj.display.DisplayShape(line3, color="GREEN")
     obj.display.DisplayShape(surf1.surf, transparency=0.9, color="BLUE1")
     obj.display.DisplayShape(surf2.surf, transparency=0.9, color="RED")
     obj.display.View_Right()
