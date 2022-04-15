@@ -51,11 +51,11 @@ def make_parabola(axs=gp_Ax3(), dst=100, width=[-50, 50], hight=[-50, 50], xyz="
         TopoDS_Shape : Parabola surface
     """
     if xyz == "z":
-        axis = gp_Ax3(axs.Location(), axs.Direction())
+        axis = gp_Ax3(axs.Location(), axs.Direction(), axs.XDirection())
     elif xyz == "y":
-        axis = gp_Ax3(axs.Location(), axs.YDirection())
+        axis = gp_Ax3(axs.Location(), axs.YDirection(), axs.Direction())
     elif xyz == "x":
-        axis = gp_Ax3(axs.Location(), axs.XDirection())
+        axis = gp_Ax3(axs.Location(), axs.XDirection(), axs.Direction())
     else:
         axis = gp_Ax3(axs.Ax2())
     ax1 = dispocc.prop_axs(None, axis, hight[0], "z")
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
     focus = 200
     face = make_parabola(xyz="z", width=[10, 200], hight=[-100,100], dst=focus)
-    obj.display.DisplayShape(face)
+    obj.display.DisplayShape(face, color="BLUE1")
     obj.show_axs_pln(gp_Ax3(gp_Pnt(focus, 0, 0), gp_Dir(1, 0, 0)), scale=50)
 
     beams = [
@@ -104,11 +104,11 @@ if __name__ == '__main__':
         obj.display.DisplayShape(lin, color=obj.colors[i])
         obj.show_axs_pln(beam, scale=10, name="beam" + str(i))
 
-    #face = make_parabola(xyz="y")
-    #obj.display.DisplayShape(face, color="GREEN")
+    face = make_parabola(xyz="y")
+    obj.display.DisplayShape(face, color="GREEN")
 
-    #face = make_parabola(xyz="x")
-    #obj.display.DisplayShape(face, color="RED")
+    face = make_parabola(xyz="x")
+    obj.display.DisplayShape(face, color="RED")
 
     obj.show_axs_pln()
     obj.display.DisplayShape(curv)
