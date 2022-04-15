@@ -86,7 +86,8 @@ if __name__ == '__main__':
     curv = Geom_TrimmedCurve(para, -100, 100)
 
     focus = 200
-    face = make_parabola(xyz="z", width=[10, 200], hight=[-100,100], dst=focus)
+    face = make_parabola(dst=focus, width=[10, 200], hight=[-100, 100],
+                         xyz="z")
     obj.display.DisplayShape(face, color="BLUE1")
     obj.show_axs_pln(gp_Ax3(gp_Pnt(focus, 0, 0), gp_Dir(1, 0, 0)), scale=50)
 
@@ -104,11 +105,11 @@ if __name__ == '__main__':
         obj.display.DisplayShape(lin, color=obj.colors[i])
         obj.show_axs_pln(beam, scale=10, name="beam" + str(i))
 
-    face = make_parabola(xyz="y")
-    obj.display.DisplayShape(face, color="GREEN")
+    #face = make_parabola(xyz="y")
+    #obj.display.DisplayShape(face, color="GREEN")
 
-    face = make_parabola(xyz="x")
-    obj.display.DisplayShape(face, color="RED")
+    #face = make_parabola(xyz="x")
+    #obj.display.DisplayShape(face, color="RED")
 
     obj.show_axs_pln()
     obj.display.DisplayShape(curv)
