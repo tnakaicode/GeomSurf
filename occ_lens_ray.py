@@ -6,6 +6,8 @@ import time
 import argparse
 from linecache import getline, clearcache
 
+from pyparsing import col
+
 basename = os.path.dirname(__file__)
 
 sys.path.append(os.path.join("./"))
@@ -47,18 +49,20 @@ if __name__ == '__main__':
 
     surf1.reflect_beam(beam0.beam, tr=1)
     norm1 = obj.reflect_beam(surf1.surf, beam0.beam, tr=3)
+    line1 = make_polygon([b.Location() for b in [beam0.beam, norm1, obj.prop_axs(norm1,30)]])
 
     surf2 = OCCSurfObj(name="surf2")
     surf2.axs = gp_Ax3(gp_Pnt(0, 0, 50), gp_Dir(0, 1, 1))
     surf2.rot = gp_Ax3(surf2.axs.Ax2())
     surf2.SurfCurvature_Loc(lxy=[100, 100], rxy=[500, 0])
     norm2 = obj.reflect_beam(surf2.surf, beam0.beam, tr=4)
+    line2 = make_polygon([b.Location() for b in [beam0.beam, norm2, obj.prop_axs(norm2,30)]])
 
-    obj.show_axs_pln(beam0.beam, scale=75)
-    obj.show_axs_pln(surf1.beam, scale=25)
-    obj.show_vec(norm1, scale=15)
-    obj.show_vec(norm2, scale=15)
-    obj.display.DisplayShape(surf1.surf, transparency=0.9)
+    #obj.show_axs_pln(beam0.beam, scale=75)
+    #obj.show_axs_pln(surf1.beam, scale=25)
+    obj.display.DisplayShape(line1, color="BLUE1")
+    obj.display.DisplayShape(line2, color="RED")
+    obj.display.DisplayShape(surf1.surf, transparency=0.9, color="BLUE1")
     obj.display.DisplayShape(surf2.surf, transparency=0.9, color="RED")
     obj.display.View_Right()
     obj.ShowOCC()

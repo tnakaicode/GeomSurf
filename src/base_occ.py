@@ -1391,6 +1391,7 @@ class dispocc (OCCApp):
                 1 : transmission
                 2 : normal on face.
                 3 : normal on face (ZReverse).
+                4 : refraction
 
         Returns:
             beam1 [gp_Ax3]: 

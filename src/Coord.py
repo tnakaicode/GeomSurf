@@ -497,11 +497,11 @@ if __name__ == "__main__":
     parser.add_argument("--dir", dest="dir", default="../temp/")
     parser.add_argument("--surf", dest="surf", default="surf")
     parser.add_argument("--pxyz", dest="pxyz",
-                      default=(0, 0, 0), type=float, nargs=3)
+                        default=(0, 0, 0), type=float, nargs=3)
     parser.add_argument("--rxyz", dest="rxyz",
-                      default=(0, 0, 0), type=float, nargs=3)
+                        default=(0, 0, 0), type=float, nargs=3)
     opt = parser.parse_args()
-    print(argc, opt)
+    print(opt)
 
     obj = CoordSys()
     obj.SetAxs(opt.pxyz, opt.rxyz)
