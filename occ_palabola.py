@@ -37,7 +37,19 @@ from OCCUtils.Construct import dir_to_vec, vec_to_dir
 from OCCUtils.Construct import make_wire, make_edge, make_polygon, make_face
 
 
-def make_parabola(axs=gp_Ax3(), dst=100, rxy=[50, 50], xyz="z"):
+def make_parabola(axs=gp_Ax3(), dst=100, width=[-50, 50], hight=[-50, 50], xyz="z"):
+    """make Parabola Surface
+
+    Args:
+        axs (gp_Ax3, optional): Defaults to gp_Ax3().
+        dst (float, optional): Parabola focus length. Defaults to 100.
+        width (list, optional): Defaults to [-50, 50].
+        hight (list, optional): Defaults to [-50, 50].
+        xyz (str, optional): Defaults to "z".
+
+    Returns:
+        TopoDS_Shape : Parabola surface
+    """
     if xyz == "z":
         axis = gp_Ax3(axs.Location(), axs.Direction())
     elif xyz == "y":
@@ -46,10 +58,10 @@ def make_parabola(axs=gp_Ax3(), dst=100, rxy=[50, 50], xyz="z"):
         axis = gp_Ax3(axs.Location(), axs.XDirection())
     else:
         axis = gp_Ax3(axs.Ax2())
-    ax1 = dispocc.prop_axs(None, axis, -rxy[0], "z")
-    ax2 = dispocc.prop_axs(None, axis, +rxy[0], "z")
-    crv1 = Geom_TrimmedCurve(Geom_Parabola(ax1.Ax2(), dst), -rxy[1], rxy[1])
-    crv2 = Geom_TrimmedCurve(Geom_Parabola(ax2.Ax2(), dst), -rxy[1], rxy[1])
+    ax1 = dispocc.prop_axs(None, axis, hight[0], "z")
+    ax2 = dispocc.prop_axs(None, axis, hight[1], "z")
+    crv1 = Geom_TrimmedCurve(Geom_Parabola(ax1.Ax2(), dst), width[0], width[1])
+    crv2 = Geom_TrimmedCurve(Geom_Parabola(ax2.Ax2(), dst), width[0], width[1])
 
     api = BRepOffsetAPI_ThruSections(False, True, 1.0e-6)
     api.AddWire(make_wire(make_edge(crv1)))
@@ -74,15 +86,15 @@ if __name__ == '__main__':
     curv = Geom_TrimmedCurve(para, -100, 100)
 
     focus = 200
-    face = make_parabola(xyz="z", rxy=[200, 200], dst=focus)
+    face = make_parabola(xyz="z", width=[10, 200], hight=[-100,100], dst=focus)
     obj.display.DisplayShape(face)
     obj.show_axs_pln(gp_Ax3(gp_Pnt(focus, 0, 0), gp_Dir(1, 0, 0)), scale=50)
 
     beams = [
         gp_Ax3(gp_Pnt(100, 120, -10), gp_Dir(-0.9, 0.0, 0.0)),
-        gp_Ax3(gp_Pnt(100, -20, 10), gp_Dir(-0.9, -0.0, 0.0)),
+        gp_Ax3(gp_Pnt(100, 150, 10), gp_Dir(-0.9, -0.0, 0.0)),
         gp_Ax3(gp_Pnt(100, 120, -10), gp_Dir(-0.9, 0.1, 0.0)),
-        gp_Ax3(gp_Pnt(100, -20, 10), gp_Dir(-0.9, -0.3, 0.0))
+        gp_Ax3(gp_Pnt(100, 150, 10), gp_Dir(-0.9, -0.3, 0.0))
     ]
     for i, beam in enumerate(beams):
         beam1 = obj.reflect_beam(face, beam)
