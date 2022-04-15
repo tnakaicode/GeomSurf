@@ -11,7 +11,12 @@ from src.base_occ import dispocc
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.gp import gp_XOY, gp_Pnt2d, gp_Dir2d, gp_Lin2d
 from OCC.Core.BRepProj import BRepProj_Projection
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+from OCC.Core.Geom import Geom_CylindricalSurface
+from OCC.Core.gce import gce_MakeTranslation
+from OCC.Core.GCE2d import GCE2d_MakeSegment
 from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCC.Extend.DataExchange import write_stl_file, read_stl_file
 from OCCUtils.Construct import make_face, make_polygon, point_to_vector, vector_to_point
@@ -34,24 +39,36 @@ def make_spiral(r=1, z=1.0):
     return make_polygon(pts, closed=True)
 
 
+def make_helix(r=1, z=1.0):
+    # Build an helix
+    aCylinder = Geom_CylindricalSurface(gp_Ax3(), r)
+    aLine2d = gp_Lin2d(gp_Pnt2d(0.0, 0.0), gp_Dir2d(r, r))
+    aSegment = GCE2d_MakeSegment(aLine2d, 0.0, np.pi * 2.0)
+
+    return BRepBuilderAPI_MakeEdge(aSegment.Value(), aCylinder, 0.0, 2*np.pi).Edge()
+
+
 if __name__ == '__main__':
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
     parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
     opt = parser.parse_args()
     print(opt, argvs)
 
     obj = dispocc(touch=True)
     axs = gp_Ax3()
     surf = obj.make_cylinder_surf(
-        axs, radii=1, hight=1.75, rng=[0, 2 * np.pi], xyz="z")
+        axs, radii=1, hight=2.1, rng=[0, 2 * np.pi], xyz="z")
     sprl = make_spiral()
+    helx = make_helix()
     proj = BRepProj_Projection(sprl, surf, axs.Location())
     sprl_proj = proj.Current()
     trim = make_face(surf, sprl_proj)
-
+    
+    # https://dev.opencascade.org/doc/occt-7.5.0/refman/html/class_b_rep_builder_a_p_i___make_edge.html#details
+    #
     #proj = BRepProj_Projection(sprl, surf, axs.Location())
     #i = 0
     # while proj.More():
@@ -62,8 +79,9 @@ if __name__ == '__main__':
     #    print(i)
 
     # obj.display.DisplayShape(surf)
-    obj.display.DisplayShape(sprl)
-    obj.display.DisplayShape(sprl_proj, color="BLUE")
-    obj.display.DisplayShape(trim, color="RED")
+    obj.display.DisplayShape(sprl, color="BLUE1")
+    obj.display.DisplayShape(sprl_proj, color="GREEN")
+    obj.display.DisplayShape(helx, color="RED")
+    obj.display.DisplayShape(trim, transparency=0.9)
 
     obj.ShowOCC()
