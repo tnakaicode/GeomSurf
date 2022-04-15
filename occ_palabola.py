@@ -73,8 +73,24 @@ if __name__ == '__main__':
     para = Geom_Parabola(axs.Ax2(), 100)
     curv = Geom_TrimmedCurve(para, -100, 100)
 
-    face = make_parabola(xyz="z")
-    obj.display.DisplayShape(face, color="BLUE1")
+    focus = 200
+    face = make_parabola(xyz="z", rxy=[200, 200], dst=focus)
+    obj.display.DisplayShape(face)
+    obj.show_axs_pln(gp_Ax3(gp_Pnt(focus, 0, 0), gp_Dir(1, 0, 0)), scale=50)
+
+    beams = [
+        gp_Ax3(gp_Pnt(100, 120, -10), gp_Dir(-0.9, 0.0, 0.0)),
+        gp_Ax3(gp_Pnt(100, -20, 10), gp_Dir(-0.9, -0.0, 0.0)),
+        gp_Ax3(gp_Pnt(100, 120, -10), gp_Dir(-0.9, 0.1, 0.0)),
+        gp_Ax3(gp_Pnt(100, -20, 10), gp_Dir(-0.9, -0.3, 0.0))
+    ]
+    for i, beam in enumerate(beams):
+        beam1 = obj.reflect_beam(face, beam)
+        beam2 = obj.prop_axs(beam1, scale=300)
+        pts = [b.Location() for b in [beam, beam1, beam2]]
+        lin = make_polygon(pts)
+        obj.display.DisplayShape(lin, color=obj.colors[i])
+        obj.show_axs_pln(beam, scale=10, name="beam" + str(i))
 
     #face = make_parabola(xyz="y")
     #obj.display.DisplayShape(face, color="GREEN")
