@@ -364,6 +364,15 @@ def spl_curv_pts(pts=[gp_Pnt()]):
     return p_array, api.Curve()
 
 
+def spl_curv_pts(pts=[]):
+    num = len(pts)
+    p_array = TColgp_Array1OfPnt(1, num)
+    for idx, pnt in enumerate(pts):
+        p_array.SetValue(idx + 1, pnt)
+    api = GeomAPI_PointsToBSpline(p_array)
+    return api.Curve()
+
+
 def get_boundxyz_pts(pts, axs=gp_Ax3()):
     poly = make_polygon(pts, closed=True)
     poly.Location(set_loc(gp_Ax3(), axs))
@@ -1463,7 +1472,7 @@ class dispocc (OCCApp):
             norm1.ZReverse()
             beam1.ZReverse()
             beam1.XReverse()
-            #beam1.Mirror(norm1.Ax2())
+            # beam1.Mirror(norm1.Ax2())
             beam1 = norm1.Mirrored(beam1.Ax2())
             if beam1.Direction().Dot(norm1.Direction()) < 0:
                 beam1.ZReverse()
