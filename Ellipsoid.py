@@ -12,7 +12,9 @@ from OCC.Core.TopoDS import TopoDS_Shape
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
+from OCC.Core.BRep import BRep_Tool_Surface
 from OCC.Core.BRepFill import BRepFill_Filling
+from OCC.Core.BRepTools import breptools_UVBounds
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
@@ -26,15 +28,11 @@ from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
 from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
-from OCCUtils.Topology import TopExp_Explorer, Topo
-from OCCUtils.Topology import TopAbs_FACE
+from OCC.Core.ShapeAnalysis import ShapeAnalysis_ShapeTolerance
+from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge
 
-from OCC.Core.GeomAPI import GeomAPI_IntCS
-from OCC.Core.ShapeAnalysis import ShapeAnalysis_ShapeTolerance
-from OCC.Core.BRepTools import breptools_UVBounds
-from OCC.Core.BRep import BRep_Tool_Surface
 
 from src.base_occ import dispocc
 
@@ -107,7 +105,7 @@ if __name__ == '__main__':
 
     #elp = gen_ellipsoid_geom(axs, [10, 20, 30])
 
-    top_api = Topo(elp)
+    top_api = TopologyExplorer(elp)
     print(top_api.number_of_faces())
     for face in top_api.faces():
         elp_face = face
