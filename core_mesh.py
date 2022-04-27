@@ -15,7 +15,8 @@ from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Pnt2d
 from OCC.Core.MeshVS import MeshVS_Mesh, MeshVS_PrsBuilder
-from OCC.Core.IMeshTools import IMeshTools_MeshAlgoFactory
+from OCC.Core.IMeshData import IMeshData_Edge, IMeshData_Curve, IMeshData_Face, IMeshData_ReMesh
+from OCC.Core.IMeshTools import IMeshTools_MeshAlgoFactory, IMeshTools_Parameters
 from OCCUtils.Construct import make_box
 from OCCUtils.Construct import make_line, make_wire, make_edge
 
