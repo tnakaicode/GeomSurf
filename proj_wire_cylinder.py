@@ -14,7 +14,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Pnt, gp_Dir, gp_Vec
-from OCC.Core.gp import gp_Cylinder
+from OCC.Core.gp import gp_Cylinder, gp_Pln
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Core.TopoDS import TopoDS_Vertex
@@ -33,15 +33,23 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     print(opt, argvs)
 
-    face = make_face(gp_Cylinder(gp_Ax3(), 50), 0, 2 * np.pi, 0, 200)
+    obj = dispocc(touch=True)
+    face1 = make_face(gp_Cylinder(
+        gp_Ax3(gp_Pnt(-10, 5., 1), gp_Dir(0, 0, 1)), 50), 0, 2 * np.pi, 0, 200)
+    face2 = make_face(gp_Cylinder(
+        gp_Ax3(gp_Pnt(0, 10, 1), gp_Dir(0, 0.1, 1)), 25), -np.pi, np.pi, 0, 200)
+    pln = make_face(
+        gp_Pln(gp_Ax3(gp_Pnt(100, 0, 100), gp_Dir(1, 0, 0))), -100, 100, -100, 100)
+    obj.selected_shape = [pln, face1, face2]
+    face = obj.make_comp_selcted()
 
     th = -15  # deg
     dx = np.cos(np.deg2rad(th))
     dy = np.sin(np.deg2rad(th))
-    vz = gp_Vec(dx, dy,0)
-    vy = gp_Vec(0,0,1)
+    vz = gp_Vec(dx, dy, 0)
+    vy = gp_Vec(0, 0, 1)
     vx = vy.Crossed(vz)
-    axs = gp_Ax3(gp_Pnt(0, 0, 100), vec_to_dir(vz),vec_to_dir(vx))
+    axs = gp_Ax3(gp_Pnt(-101, 50, 100), vec_to_dir(vz), vec_to_dir(vx))
     pts = []
     pts.append(gp_Pnt(0, 0, 0))
     pts.append(gp_Pnt(10, 0, 0))
@@ -50,8 +58,7 @@ if __name__ == '__main__':
     poly = make_polygon(pts, closed=True)
     poly.Location(set_loc(gp_Ax3(), axs))
 
-    obj = dispocc(touch=True)
-    obj.display.DisplayShape(face, color="BLUE", transparency=0.9)
+    obj.display.DisplayShape(face, color="BLUE1", transparency=0.9)
     obj.display.DisplayShape(poly)
     obj.show_axs_pln(axs, scale=10)
 
@@ -70,11 +77,11 @@ if __name__ == '__main__':
         proj_poly = proj.Current()
         pnt = [brt.Pnt(v) for v in TopologyExplorer(proj_poly).vertices()]
         obj.display.DisplayShape(proj_poly)
-        obj.display.DisplayMessage(pnt[0], f"{i:d}",height=25)
+        obj.display.DisplayMessage(pnt[0], f"{i:d}", height=25)
         i += 1
         proj.Next()
-    
+
     # Projection order depends on the size of the UV parameters of the base shape being projected
-    
+
     obj.display.View_Top()
     obj.ShowOCC()
