@@ -6,8 +6,6 @@ import time
 import argparse
 from linecache import getline, clearcache
 
-from pyparsing import col
-
 basename = os.path.dirname(__file__)
 
 sys.path.append(os.path.join("./"))

@@ -10,8 +10,8 @@ import glob
 import shutil
 import datetime
 import platform
-from scipy.spatial import ConvexHull, Delaunay
 import argparse
+from scipy.spatial import ConvexHull, Delaunay
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
@@ -87,7 +87,6 @@ from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCC.Extend.DataExchange import write_iges_file, read_iges_file
 from OCC.Extend.DataExchange import write_stl_file, read_stl_file
 from OCC.Extend.ShapeFactory import midpoint
-from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Topology import Topo
 from OCCUtils.Topology import shapeTypeString, dumpTopology
 from OCCUtils.Construct import make_box, make_face, make_line, make_wire, make_edge
@@ -134,14 +133,14 @@ def rotate_xyz(axs=gp_Ax3(), deg=0.0, xyz="x"):
     axs.Rotate(ax1, np.deg2rad(deg))
 
 
+def line_from_axs(axs=gp_Ax3(), length=100):
+    return make_edge(axs.Location(), pnt_from_axs(axs, length))
+
+
 def pnt_from_axs(axs=gp_Ax3(), length=100):
     vec = point_to_vector(axs.Location()) + \
         dir_to_vec(axs.Direction()) * length
     return vector_to_point(vec)
-
-
-def line_from_axs(axs=gp_Ax3(), length=100):
-    return make_edge(axs.Location(), pnt_from_axs(axs, length))
 
 
 def pnt_trf_vec(pnt=gp_Pnt(), vec=gp_Vec()):
@@ -166,26 +165,6 @@ def trsf_scale(axs=gp_Ax3(), scale=1):
     trf = gp_Trsf()
     trf.SetDisplacement(gp_Ax3(), axs)
     return trf
-
-
-def rotate_axs(axs=gp_Ax3(), deg=0.0, idx="x"):
-    ax = axs.Axis()
-    if idx == "x":
-        ax.SetDirection(axs.XDirection())
-    elif idx == "y":
-        ax.SetDirection(axs.YDirection())
-    elif idx == "z":
-        ax.SetDirection(axs.Direction())
-    else:
-        ax.SetDirection(axs.Direction())
-    axs.Rotate(ax, np.deg2rad(deg))
-
-
-def trf_axs(axs=gp_Ax3(), pxyz=[0, 0, 0], rxyz=[0, 0, 0]):
-    rotate_axs(axs, rxyz[0], "x")
-    rotate_axs(axs, rxyz[1], "y")
-    rotate_axs(axs, rxyz[2], "z")
-    axs.SetLocation(gp_Pnt(*pxyz))
 
 
 def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
@@ -362,15 +341,6 @@ def spl_curv_pts(pts=[gp_Pnt()]):
         p_array.SetValue(idx + 1, pnt)
     api = GeomAPI_PointsToBSpline(p_array)
     return p_array, api.Curve()
-
-
-def spl_curv_pts(pts=[]):
-    num = len(pts)
-    p_array = TColgp_Array1OfPnt(1, num)
-    for idx, pnt in enumerate(pts):
-        p_array.SetValue(idx + 1, pnt)
-    api = GeomAPI_PointsToBSpline(p_array)
-    return api.Curve()
 
 
 def get_boundxyz_pts(pts, axs=gp_Ax3()):
@@ -692,7 +662,9 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         self.disp = disp
         self.touch = touch
         self.colors = ["BLUE1", "RED", "GREEN",
-                       "YELLOW", "BLACK", "WHITE", "BROWN"]
+                       "YELLOW", "BLACK", "WHITE",
+                       "BROWN"]
+        self.colorn = 0
 
         # OCC Viewer
         if disp == True:
@@ -718,7 +690,7 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
             self.base_axs.Location(),
             update=True
         )
-        self.manip.Attach(ais_shp[0])
+        self.manip.Attach(ais_shp)
 
     def SaveMenu(self):
         self.add_menu("File")
@@ -796,11 +768,11 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         occ_to_grasp_cor(axs, name="axis", filename=cor_name)
 
     def View_YZPlane(self):
-        self.display.View.SetProj(-1, 0, 0)
+        self.display.View.SetProj(1, 0, 0)
         self.display.View.SetUp(0, 1, 0)
 
     def View_XZPlane(self):
-        self.display.View.SetProj(0, 1, 0)
+        self.display.View.SetProj(0, -1, 0)
         self.display.View.SetUp(1, 0, 0)
 
     def gen_mesh_face(self):
@@ -1133,8 +1105,17 @@ class dispocc (OCCApp):
         ).Face()
         return pln
 
-    def make_circle(self, axs=gp_Ax3(), radi=100):
-        return make_wire(make_edge(Geom_Circle(axs.Ax2(), radi)))
+    def make_circle(self, axs=gp_Ax3(), radi=100, skin=None):
+        poly = make_wire(make_edge(Geom_Circle(axs.Ax2(), radi)))
+        if skin == None:
+            return poly
+        elif skin == 0:
+            return make_face(poly)
+        else:
+            face = make_face(poly)
+            solid = BRepOffset_MakeOffset(
+                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+            return solid.Shape()
 
     def make_torus(self, axs=gp_Ax3(), r0=6000, r1=1500):
         tok_surf = Geom_ToroidalSurface(axs, r0, r1)
@@ -1176,7 +1157,7 @@ class dispocc (OCCApp):
         ).Face()
         return face
 
-    def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3()):
+    def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3(), skin=None):
         rx, ry = rxy
         if rx > ry:
             major_radi = rx
@@ -1192,7 +1173,16 @@ class dispocc (OCCApp):
         elip = make_edge(gp_Elips(axis, major_radi, minor_radi))
         poly = make_wire(elip)
         poly.Location(set_loc(gp_Ax3(), axs))
-        return poly
+        if skin == None:
+            return poly
+        elif skin == 0:
+            face = make_face(poly)
+            return face
+        else:
+            face = make_face(poly)
+            solid = BRepOffset_MakeOffset(
+                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+            return solid.Shape()
 
     def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3(), skin=None):
         lxy = radi

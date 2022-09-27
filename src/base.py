@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import scipy as sp
+import pandas as pd
 import sys
 import pickle
 import json
@@ -9,13 +10,13 @@ import time
 import os
 import glob
 import shutil
-import datetime
 import platform
 import subprocess
+import argparse
+from datetime import date, datetime
 from scipy import ndimage
 from scipy.spatial import ConvexHull, Delaunay
 from scipy.optimize import minimize, minimize_scalar, OptimizeResult
-import argparse
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
@@ -47,6 +48,29 @@ def which(program):
     return None
 
 
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if 'log_time' in kw:
+            name = kw.get('log_name', method.__name__.upper())
+            kw['log_time'][name] = int((te - ts) * 1000)
+        else:
+            print('%r  %2.2f ms' %
+                  (method.__name__, (te - ts) * 1000))
+        return result
+    return timed
+
+
+def get_dname_list(dirname, flag=-1):
+    dlist = []
+    for i in range(abs(flag)):
+        (dirname, dname) = os.path.split(dirname)
+        dlist.append(dname)
+    return dlist
+
+
 def sys_flush(n):
     sys.stdout.write("\r " + " / ".join(map(str, n)))
     sys.stdout.flush()
@@ -59,8 +83,8 @@ def split_filename(filename="./temp_20200408000/not_ignore.txt"):
 
 
 def create_tempdir(name="temp", flag=1, d="./"):
-    print(datetime.date.today(), time.ctime())
-    datenm = "{0:%Y%m%d}".format(datetime.date.today())
+    print(date.today(), time.ctime())
+    datenm = date.today().strftime("%Y%m%d")
     dirnum = len(glob.glob(d + "{}_{}*/".format(name, datenm)))
     if flag == -1 or dirnum == 0:
         tmpdir = d + "{}_{}{:03}/".format(name, datenm, dirnum)
@@ -80,8 +104,8 @@ def create_tempnum(name, tmpdir="./", ext=".tar.gz"):
 
 
 def create_tempdate(name, tmpdir="./", ext=".tar.gz"):
-    print(datetime.date.today())
-    datenm = "{0:%Y%m%d}".format(datetime.date.today())
+    print(date.today())
+    datenm = date.today().strftime("%Y%m%d")
     num = len(glob.glob(tmpdir + name + "_{}*".format(datenm) + ext)) + 1
     filename = '{}{}_{}{:03}{}'.format(tmpdir, name, datenm, num, ext)
     return filename
@@ -93,6 +117,8 @@ class SetDir (object):
         self.root_dir = os.getcwd()
         self.tempname = ""
         self.rootname = ""
+        self.date_text = date.today().strftime("%Y.%m.%d")
+        self.date_str = self.get_datestr()
 
         pyfile = sys.argv[0]
         self.filename = os.path.basename(pyfile)
@@ -182,36 +208,100 @@ class SetDir (object):
         self.create_tempdir("temp", -1)
         self.open_tempdir()
 
+    def get_datestr(self, flg=0):
+        if flg == 0:
+            return datetime.now().strftime("%y%m%d-%H%M%S")
+        elif flg == 1:
+            return datetime.now().strftime("%Y%m%d-%H%M%S")
+        elif flg == 2:
+            return datetime.now().strftime("%y%m%d-%H%M%S-%f")
+        else:
+            return datetime.now().strftime("%y%m%d-%H%M%S")
+
+    def copy_rawfile(self, file):
+        filename = os.path.basename(file)
+        if os.path.exists(self.tmpdir + filename) != True:
+            shutil.copy(file, self.tmpdir + filename)
+
+    def copy_rawfile_date(self, file, flag=-1):
+        filename = os.path.basename(file)
+        dir_name = os.path.dirname(file)
+        basename = get_dname_list(dir_name, flag)[-1]
+        name = basename + "_" + filename
+        if os.path.exists(self.tmpdir + name) != True:
+            shutil.copy(file, self.tmpdir + name)
+        return name
+
+    def check_csv_encode(self, csvfile, header=None, encoding="cp932", low_memory=False, *args, **kwargs):
+        try:
+            df = pd.read_csv(csvfile,
+                             header=header,
+                             encoding=encoding, *args, **kwargs)
+        except:
+            print('got unicode error with %s , trying different encoding' % encoding)
+
+            for e in ["cp932", "UTF-8", "Shift-JIS", "ANSI", "cp1252"]:
+                try:
+                    df = pd.read_csv(csvfile,
+                                     header=header,
+                                     encoding=e, *args, **kwargs)
+                except UnicodeDecodeError:
+                    print('got unicode error with %s , trying different encoding' % e)
+                else:
+                    print('opening the file with encoding:  %s ' % e)
+                    break
+        return df
+
+    def text2float(self, txt="", val=0):
+        try:
+            return float(txt)
+        except (ValueError, TypeError):
+            return val
+
+    def text2int(self, txt="", val=0):
+        try:
+            return int(txt)
+        except (ValueError, TypeError):
+            return val
+
+    def val2text(self, val=None, txt=""):
+        if val == None:
+            return txt
+        elif isinstance(val, float) and np.isnan(val):
+            return txt
+        else:
+            return str(val)
+
     def exit_app(self):
         sys.exit()
 
 
 class PlotBase(SetDir):
 
-    def __init__(self, aspect="equal", temp=True):
+    def __init__(self, aspect="equal", dim=2, temp=True, *args, **kwargs):
         if temp == True:
             SetDir.__init__(self, temp)
-        self.dim = 2
-        self.fig, self.axs = plt.subplots()
+        self.dim = dim
+        self.new_fig(aspect, *args, **kwargs)
 
-    def new_fig(self, aspect="equal", dim=None):
+    def new_fig(self, aspect="equal", dim=None, *args, **kwargs):
         if dim == None:
-            self.new_fig(aspect=aspect, dim=self.dim)
+            self.new_fig(aspect=aspect, dim=self.dim, *args, **kwargs)
         elif self.dim == 2:
-            self.new_2Dfig(aspect=aspect)
+            self.new_2Dfig(aspect=aspect, *args, **kwargs)
         elif self.dim == 3:
-            self.new_3Dfig(aspect=aspect)
+            self.new_3Dfig(aspect=aspect, *args, **kwargs)
         else:
-            self.new_2Dfig(aspect=aspect)
+            self.new_2Dfig(aspect=aspect, *args, **kwargs)
 
-    def new_2Dfig(self, aspect="equal"):
-        self.fig, self.axs = plt.subplots()
+    def new_2Dfig(self, aspect="equal", *args, **kwargs):
+        self.fig, self.axs = plt.subplots(*args, **kwargs)
         self.axs.set_aspect(aspect)
         self.axs.xaxis.grid()
         self.axs.yaxis.grid()
 
-    def new_3Dfig(self, aspect="equal"):
-        self.fig = plt.figure()
+    def new_3Dfig(self, aspect="equal", *args, **kwargs):
+        self.fig = plt.figure(*args, **kwargs)
         self.axs = self.fig.add_subplot(111, projection='3d')
         #self.axs = self.fig.gca(projection='3d')
         # self.axs.set_aspect('equal')
@@ -224,12 +314,17 @@ class PlotBase(SetDir):
         self.axs.yaxis.grid()
         self.axs.zaxis.grid()
 
-    def SavePng(self, pngname=None):
+    def new_polar(self, aspect="equal"):
+        self.new_fig(aspect=aspect)
+        self.axs.set_axis_off()
+        self.axs = self.fig.add_subplot(111, projection='polar')
+
+    def SavePng(self, pngname=None, *args, **kwargs):
         if pngname == None:
             pngname = self.tmpdir + self.rootname + ".png"
-        self.fig.savefig(pngname)
+        self.fig.savefig(pngname, *args, **kwargs)
 
-    def SavePng_Serial(self, pngname=None):
+    def SavePng_Serial(self, pngname=None, *args, **kwargs):
         if pngname == None:
             pngname = self.rootname
             dirname = self.tmpdir
@@ -241,7 +336,7 @@ class PlotBase(SetDir):
             basename = os.path.basename(pngname)
             pngname, extname = os.path.splitext(basename)
         pngname = create_tempnum(pngname, dirname, ".png")
-        self.fig.savefig(pngname)
+        self.fig.savefig(pngname, *args, **kwargs)
 
     def Show(self):
         try:
@@ -263,10 +358,10 @@ def make_patch_spines_invisible(ax):
 class plot2d (PlotBase):
 
     def __init__(self, aspect="equal", temp=True, *args, **kwargs):
-        PlotBase.__init__(self, aspect, temp, *args, **kwargs)
-        self.dim = 2
+        PlotBase.__init__(self, aspect, 2, temp, *args, **kwargs)
+        # self.dim = 2
         # self.new_2Dfig(aspect=aspect)
-        self.new_fig(aspect=aspect)
+        # self.new_fig(aspect=aspect)
 
     def add_axs(self, row=1, col=1, num=1, aspect="auto"):
         self.axs.set_axis_off()
@@ -324,7 +419,7 @@ class plot2d (PlotBase):
         self.new_fig()
         self.axs.tricontourf(x, y, z, cmap="jet")
 
-    def contourf_div(self, mesh, func, loc=[0, 0], txt="", title="name", pngname="./tmp/png", level=None):
+    def contourf_div(self, mesh, func, loc=[0, 0], txt="", title="name", pngname=None, level=None):
         sx, sy = loc
         nx, ny = func.shape
         xs, ys = mesh[0][0, 0], mesh[1][0, 0]
@@ -347,7 +442,7 @@ class plot2d (PlotBase):
         self.fig.colorbar(im, ax=self.axs, shrink=0.9)
 
         plt.tight_layout()
-        plt.savefig(pngname + ".png")
+        self.SavePng(pngname)
 
     def contourf_div_auto(self, mesh, func, loc=[0, 0], txt="", title="name", pngname="./tmp/png", level=None):
         sx, sy = loc
@@ -378,12 +473,12 @@ class plot2d (PlotBase):
 
 class plot3d (PlotBase):
 
-    def __init__(self, aspect="equal", *args, **kwargs):
-        PlotBase.__init__(self, *args, **kwargs)
-        self.dim = 3
-        self.new_fig()
+    def __init__(self, aspect="equal", temp=True, *args, **kwargs):
+        PlotBase.__init__(self, aspect, 3, temp, *args, **kwargs)
+        #self.dim = 3
+        # self.new_fig()
 
-    def set_axes_equal(self):
+    def set_axes_equal(self, axis="xyz"):
         '''
         Make axes of 3D plot have equal scale so that spheres appear as spheres,
         cubes as cubes, etc..  This is one possible solution to Matplotlib's
@@ -409,9 +504,19 @@ class plot3d (PlotBase):
         # norm, hence I call half the max range the plot radius.
         plot_radius = 0.5 * max([x_range, y_range, z_range])
 
-        self.axs.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
-        self.axs.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
-        self.axs.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
+        for i in axis:
+            if i == "x":
+                self.axs.set_xlim3d(
+                    [x_middle - plot_radius, x_middle + plot_radius])
+            elif i == "y":
+                self.axs.set_ylim3d(
+                    [y_middle - plot_radius, y_middle + plot_radius])
+            elif i == "z":
+                self.axs.set_zlim3d(
+                    [z_middle - plot_radius, z_middle + plot_radius])
+            else:
+                self.axs.set_zlim3d(
+                    [z_middle - plot_radius, z_middle + plot_radius])
 
     def plot_ball(self, rxyz=[1, 1, 1]):
         u = np.linspace(0, 1, 10) * 2 * np.pi
@@ -434,11 +539,6 @@ class plotpolar (plot2d):
         plot2d.__init__(self, *args, **kwargs)
         self.dim = 2
         self.new_polar(aspect)
-
-    def new_polar(self, aspect="equal"):
-        self.new_fig(aspect=aspect)
-        self.axs.set_axis_off()
-        self.axs = self.fig.add_subplot(111, projection='polar')
 
     def plot_polar(self, px, py, arrow=True, **kwargs):
         plt.polar(px, py, **kwargs)
@@ -555,12 +655,6 @@ class LineDrawer(object):
         self.empty.set_data([], [])
 
         return self.traj_line, self.record_line, self.empty
-
-    def show(self):
-        try:
-            plt.show()
-        except AttributeError:
-            pass
 
 
 if __name__ == '__main__':

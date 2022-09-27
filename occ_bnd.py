@@ -166,7 +166,7 @@ if __name__ == '__main__':
     c4, d4xyz, box4 = get_oriented_boundingbox_ratio(shp, ratio=1.25)
 
     obj.display.DisplayShape(shp)
-    obj.display.DisplayShape(box1, transparency=0.9, color="BLUE")
+    obj.display.DisplayShape(box1, transparency=0.9, color="BLUE1")
     obj.display.DisplayShape(box2, transparency=0.9, color="RED")
     obj.display.DisplayShape(box3, transparency=0.9, color="GREEN")
     obj.display.DisplayShape(box4, transparency=0.9, color="YELLOW")
