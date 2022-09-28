@@ -10,6 +10,7 @@ basename = os.path.dirname(__file__)
 
 sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
+from src.base_occ import set_loc
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
@@ -27,6 +28,36 @@ from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
+
+def boolean_cut(shapeToCutFrom, cuttingShape):
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
+
+    cut = BRepAlgoAPI_Cut(shapeToCutFrom, cuttingShape)
+    print(cut.Check())
+
+    shp = cut.Shape()
+    return shp
+
+def boolean_common(shape1, shape2):
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+    from OCC.Core.BOPAlgo import BOPAlgo_PaveFiller
+
+    com = BRepAlgoAPI_Common(shape1, shape2)
+    print(com.Check())
+
+    shp = com.Shape()
+    return shp
+
+def boolean_cut_bycommon(shapeToCutFrom, cuttingShape):
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
+
+    com = boolean_common(shapeToCutFrom, cuttingShape)
+    cut = BRepAlgoAPI_Cut(shapeToCutFrom, com)
+    print(cut.Check())
+
+    shp = cut.Shape()
+    return shp
+
 if __name__ == '__main__':
     argvs = sys.argv
     parser = argparse.ArgumentParser()
@@ -39,17 +70,39 @@ if __name__ == '__main__':
     obj = dispocc(touch=True)
     axs = gp_Ax3()
 
+    pts = [
+        gp_Pnt(0, -10, 0),
+        gp_Pnt(100, -10, 0),
+        gp_Pnt(100, 20, 0),
+        gp_Pnt(0, 20, 0)
+    ]
+    pts_axs = gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1))
+    plate = obj.make_plate(pts, skin=-5.0, axs=pts_axs)
+    # obj.display.DisplayShape(plate)
+
+    surf = obj.make_trimmedcylinder(axs, 100, 50, [-np.pi / 6, np.pi / 6])
+    api = BRepOffset_MakeOffset(
+        surf, 5.0, 1.0E-5, BRepOffset_Skin,
+        False, False, GeomAbs_Arc,
+        True, True
+    )
+    surf_soild = api.Shape()
+    # obj.display.DisplayShape(surf_soild)
+
     # register the font
     register_font("../font/arialbi.ttf")
     register_font("../font/msgothic.ttc")
     register_font("../font/arialuni.ttf")
+    text_axs = gp_Ax3(gp_Pnt(0, 0, 1), gp_Dir(0, 0, 1))
     text = r"あ" + "\n" + r"い"
-    text = r"あ"
+    text = r"あい"
+    text = "Aib"
     brep_string = text_to_brep(text, "MS Gothic",
                                Font_FA_Regular, 12.0, True)
+    brep_string.Location(set_loc(axs, text_axs))
     print(brep_string)
     api = BRepOffset_MakeOffset(
-        brep_string, 1.0, 1.0E-5, BRepOffset_Skin,
+        brep_string, -2.0, 1.0E-5, BRepOffset_Skin,
         False, False, GeomAbs_Arc,
         True, True
     )
@@ -69,10 +122,28 @@ if __name__ == '__main__':
     # BRepOffset_C0Geometry = 3
     # BRepOffset_NullOffset = 4
     # BRepOffset_NotConnectedShell = 5
-    sold_string = api.Shape()
+    if api.Error() == 5:
+        obj.selected_shape = []
+        for text_face in Topo(brep_string).faces():
+            api = BRepOffset_MakeOffset(
+                text_face, -2.0, 1.0E-5, BRepOffset_Skin,
+                False, False, GeomAbs_Arc,
+                True, True
+            )
+            obj.selected_shape.append(api.Shape())
+        sold_string = obj.make_comp_selcted()
+        obj.selected_shape = []
+    else:
+        sold_string = api.Shape()
 
-    obj.display.DisplayShape(brep_string)
-    obj.display.DisplayShape(sold_string)
+    # obj.display.DisplayShape(brep_string)
+    #obj.display.DisplayShape(sold_string)
+
+    plate_counterbore = boolean_cut(plate, sold_string)
+    # obj.display.DisplayShape(plate_counterbore)
+
+    surf_counterbore = boolean_common(surf_soild, sold_string)
+    obj.display.DisplayShape(surf_counterbore)
 
     # obj.show_axs_pln(scale=15)
     obj.ShowOCC()

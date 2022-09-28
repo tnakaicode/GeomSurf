@@ -47,6 +47,7 @@ from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.BRepProj import BRepProj_Projection
+from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor
 from OCC.Core.BRepFill import BRepFill_Filling
 from OCC.Core.BRepFill import BRepFill_CurveConstraint
 from OCC.Core.BRepTools import breptools_Read
@@ -1080,23 +1081,9 @@ class dispocc (OCCApp):
         return axs.Translated(vec)
 
     def make_plate(self, pts=[], axs=gp_Ax3(), skin=None):
-        poly = make_polygon(pts)
+        poly = make_polygon(pts, True)
         poly.Location(set_loc(gp_Ax3(), axs))
-
-        if skin == None:
-            return poly
-        else:
-            n_sided = BRepFill_Filling()
-            for e in Topo(poly).edges():
-                n_sided.Add(e, GeomAbs_C0)
-            n_sided.Build()
-            face = n_sided.Face()
-            if skin == 0:
-                return face
-            else:
-                solid = BRepOffset_MakeOffset(
-                    face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-                return solid.Shape()
+        return self.make_wire2soild(poly, skin, True)
 
     def make_plane_axs(self, axs=gp_Ax3(), rx=[0, 500], ry=[0, 500]):
         pln = BRepBuilderAPI_MakeFace(
@@ -1157,6 +1144,63 @@ class dispocc (OCCApp):
         ).Face()
         return face
 
+    def make_trimmedface(self, poly, face, axs=gp_Ax3()):
+        """make trimmed face by projected poly
+
+        Args:
+            poly (TopoDS_Wire): 
+            face (TopoDS_Face): 
+            axs (gp_Ax3, optional): Defaults to gp_Ax3().
+
+        Returns:
+            face (TopoDS_Face)
+        """
+        proj = BRepProj_Projection(poly, face, axs.Direction())
+        poly_proj = self.proj_rim_pln(poly, face, axs, 0)
+
+        # make hole
+        # face = make_face(face, poly_proj)
+
+        api_face = BRepAlgo_FaceRestrictor()
+        api_face.Init(face, True, True)
+        api_face.Add(poly_proj)
+        api_face.Perform()
+        return api_face.Current()
+
+    def make_wire2soild(self, poly, skin=None, fit=False):
+        """make soild frok poly wire
+
+        Args:
+            poly (TopoDS_Wire): 
+            skin (float, optional): size of depth of solid. Defaults to None.
+            fit (bool, optional): fitting. Defaults to False.
+
+        Returns:
+            case: skin = None
+                return poly (TopoDS_Wire)
+            case: skin = 0
+                retun face (TopoDS_Face)
+            case: skin = 1~
+                retun solid (TopoDS_Solid)
+        """
+        if fit == True:
+            n_sided = BRepFill_Filling()
+            for e in Topo(poly).edges():
+                n_sided.Add(e, GeomAbs_C0)
+            n_sided.Build()
+            face = n_sided.Face()
+        else:
+            face = make_face(poly)
+
+        if skin == None:
+            return poly
+        elif skin == 0:
+            return face
+        else:
+            solid = BRepOffset_MakeOffset(face, skin, 1.0E-5, BRepOffset_Skin,
+                                          False, True, GeomAbs_Arc, True, True)
+            return solid.Shape()
+
     def make_EllipWire(self, rxy=[1.0, 1.0], shft=0.0, axs=gp_Ax3(), skin=None):
         rx, ry = rxy
         if rx > ry:
@@ -1173,16 +1217,7 @@ class dispocc (OCCApp):
         elip = make_edge(gp_Elips(axis, major_radi, minor_radi))
         poly = make_wire(elip)
         poly.Location(set_loc(gp_Ax3(), axs))
-        if skin == None:
-            return poly
-        elif skin == 0:
-            face = make_face(poly)
-            return face
-        else:
-            face = make_face(poly)
-            solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-            return solid.Shape()
+        return self.make_wire2soild(poly, skin, False)
 
     def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3(), skin=None):
         lxy = radi
@@ -1195,20 +1230,7 @@ class dispocc (OCCApp):
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
         poly.Location(set_loc(gp_Ax3(), axs))
-
-        n_sided = BRepFill_Filling()
-        for e in Topo(poly).edges():
-            n_sided.Add(e, GeomAbs_C0)
-        n_sided.Build()
-        face = n_sided.Face()
-        if skin == None:
-            return poly
-        elif skin == 0:
-            return face
-        else:
-            solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-            return solid.Shape()
+        return self.make_wire2soild(poly, skin, True)
 
     def make_StarWire(self, num=5, radi=[2.0, 1.0], shft=0.0, axs=gp_Ax3(), skin=None):
         lxy = radi
@@ -1224,20 +1246,7 @@ class dispocc (OCCApp):
         pnts.append(pnts[0])
         poly = make_polygon(pnts)
         poly.Location(set_loc(gp_Ax3(), axs))
-
-        n_sided = BRepFill_Filling()
-        for e in Topo(poly).edges():
-            n_sided.Add(e, GeomAbs_C0)
-        n_sided.Build()
-        face = n_sided.Face()
-        if skin == None:
-            return poly
-        elif skin == 0:
-            return face
-        else:
-            solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-            return solid.Shape()
+        return self.make_wire2soild(poly, skin, True)
 
     def make_Wire_pts(self, dat=[], axs=gp_Ax3()):
         num = dat.shape
@@ -1271,34 +1280,6 @@ class dispocc (OCCApp):
         # n_sided.Build()
         #face = n_sided.Face()
         return poly
-
-    def make_skin(self, pts=[], axs=gp_Ax3(), skin=1.0):
-        poly = make_polygon(pts, closed=True)
-        poly.Location(set_loc(gp_Ax3(), axs))
-
-        n_sided = BRepFill_Filling()
-        for e in Topo(poly).edges():
-            n_sided.Add(e, GeomAbs_C0)
-        n_sided.Build()
-        face = n_sided.Face()
-        solid = BRepOffset_MakeOffset(
-            face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-        return solid.Shape()
-
-    def make_skin_wire(self, poly, axs=gp_Ax3(), skin=1.0):
-        n_sided = BRepFill_Filling()
-        for e in Topo(poly).edges():
-            n_sided.Add(e, GeomAbs_C0)
-        n_sided.Build()
-        face = n_sided.Face()
-        if skin == None:
-            return poly
-        elif skin == 0:
-            return face
-        else:
-            solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-            return solid.Shape()
 
     def make_FaceByOrder(self, pts=[]):
         dat = []
