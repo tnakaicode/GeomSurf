@@ -15,7 +15,6 @@ from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Splitter
-from OCC.Core.BRepAlgo import BRepAlgo_Cut, BRepAlgo_Common, BRepAlgo_Tool
 from OCC.Core.Geom import Geom_Circle, Geom_Curve
 from OCC.Core.GeomAPI import GeomAPI_IntCS
 from OCC.Core.GeomLProp import GeomLProp_CurveTool
