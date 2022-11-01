@@ -142,8 +142,9 @@ def get_oriented_boundingbox_ratio(shape, optimal_OBB=True, ratio=1.0):
     if dz <= 0.1E-6:
         aBox = make_face(gp_Pln(anAxes), -dx, dx, -dy, dy)
     else:
-        anAxes.SetLocation(gp_Pnt(p.XYZ() - ax * dx - ay * dy - az * dz))
-        aBox = BRepPrimAPI_MakeBox(anAxes.Ax2(),
+        anAxs2 = gp_Ax2(gp_Pnt(p.XYZ() - ax * dx - ay * dy - az * dz),
+                        gp_Dir(aZDir), gp_Dir(aXDir))
+        aBox = BRepPrimAPI_MakeBox(anAxs2,
                                    2.0 * dx, 2.0 * dy, 2.0 * dz).Shape()
     return aBaryCenter, [dx, dy, dz], aBox
 
