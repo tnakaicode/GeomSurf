@@ -35,16 +35,16 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import make_polygon, make_plane, make_edge, make_line
 
 sys.path.append(os.path.join('../'))
-from base_occ import dispocc
-from base_occ import float_to_string, pnt_to_xyz, rotate_xyz, set_loc, set_trf
-from base_occ import get_axs, get_deg, grasp_sfc, occ_to_grasp_cor, occ_to_grasp_cor_ref, surf_spl_pcd
+from src.base_occ import dispocc
+from src.base_occ import float_to_string, pnt_to_xyz, rotate_xyz, set_loc, set_trf
+from src.base_occ import get_axs, get_deg, grasp_sfc, occ_to_grasp_cor, occ_to_grasp_cor_ref, surf_spl_pcd
 from src.geometry import curvature
 
 
 class CoordSys (dispocc):
 
     def __init__(self):
-        #dispocc.__init__(self, touch=False)
+        # dispocc.__init__(self, touch=False)
         self.axs = gp_Ax3()
         self.org = gp_Ax3()
 
