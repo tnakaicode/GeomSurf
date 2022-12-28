@@ -51,10 +51,12 @@ class NewWidget(QtWidgets.QWidget):
         self.setFont(font)
 
         self.closeButton = QtWidgets.QPushButton("Set & Close", self)
-        self.uval_text = QtWidgets.QLineEdit("0.0", self)
-        self.vval_text = QtWidgets.QLineEdit("0.0", self)
+        self.uval_text = QtWidgets.QLineEdit("", self)
+        self.vval_text = QtWidgets.QLineEdit("", self)
+        self.uval_text.setText(self.setting.value("u", "0.0", str))
+        self.vval_text.setText(self.setting.value("v", "0.0", str))
 
-        self.layout = QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.closeButton)
         self.layout.addWidget(self.uval_text)
         self.layout.addWidget(self.vval_text)
@@ -66,6 +68,8 @@ class NewWidget(QtWidgets.QWidget):
             self.setting.setValue("size", self.size())
             self.setting.setValue("pos", self.pos())
             self.setting.setValue("font", self.font().pointSize())
+            self.setting.setValue("u", self.uval_text.text())
+            self.setting.setValue("v", self.vval_text.text())
         self.close()
 
 

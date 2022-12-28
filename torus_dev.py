@@ -28,7 +28,7 @@ from OCC.Core.GeomLib import GeomLib_Tool
 from OCC.Core.ShapeAnalysis import ShapeAnalysis_Surface
 from OCC.Core.GeomLProp import GeomLProp_SLProps, GeomLProp_SurfaceTool
 from OCCUtils.Construct import make_n_sided, make_n_sections
-from OCCUtils.Construct import make_edge
+from OCCUtils.Construct import make_edge, dir_to_vec, vec_to_dir
 
 
 class NewWidget(QtWidgets.QWidget):
@@ -41,7 +41,7 @@ class NewWidget(QtWidgets.QWidget):
         self.height = 125
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        self.setting = QtCore.QSettings(basename + "temp_setting/Widget.ini",
+        self.setting = QtCore.QSettings(basename + "temp_setting/uvWidget.ini",
                                         QtCore.QSettings.IniFormat)
         self.setting.setFallbacksEnabled(False)
         self.move(self.setting.value("pos", self.pos()))
@@ -51,8 +51,10 @@ class NewWidget(QtWidgets.QWidget):
         self.setFont(font)
 
         self.closeButton = QtWidgets.QPushButton("Set & Close", self)
-        self.uval_text = QtWidgets.QLineEdit("0.0", self)
-        self.vval_text = QtWidgets.QLineEdit("0.0", self)
+        self.uval_text = QtWidgets.QLineEdit("", self)
+        self.vval_text = QtWidgets.QLineEdit("", self)
+        self.uval_text.setText(self.setting.value("u", "0.0", str))
+        self.vval_text.setText(self.setting.value("v", "0.0", str))
 
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.closeButton)
@@ -66,6 +68,8 @@ class NewWidget(QtWidgets.QWidget):
             self.setting.setValue("size", self.size())
             self.setting.setValue("pos", self.pos())
             self.setting.setValue("font", self.font().pointSize())
+            self.setting.setValue("u", self.uval_text.text())
+            self.setting.setValue("v", self.vval_text.text())
         self.close()
 
 
@@ -99,24 +103,32 @@ class Torus (dispocc, Geom_ToroidalSurface):
         vx = vu.Normalized()
         vy = vv.Normalized()
         vz = vx.Crossed(vy)
+        axs = gp_Ax3(p,vec_to_dir(vz), vec_to_dir(vx))
         print(u, v)
         print(p)
         print(vx)
         print(vy)
         print(vz)
         if self.prop.IsCurvatureDefined():
+            d0, d1 = gp_Dir(0,0,1), gp_Dir(0,0,1)
             print("Gaussian :", 1 / self.prop.GaussianCurvature())
             print("Max      :", 1 / self.prop.MaxCurvature())
             print("Min      :", 1 / self.prop.MinCurvature())
             print("Mean     :", 1 / self.prop.MeanCurvature())
+            self.prop.CurvatureDirections(d0, d1)
+            print("Max:", dir_to_vec(d0))
+            print("Min:", dir_to_vec(d1))
+            print(d0.Dot(d1))
         else:
             print("NO Curvature defined")
         self.display.DisplayShape(p)
         self.display.DisplayVector(vz.Scaled(20), p)
+        self.show_axs_pln(axs, scale=25)
         return p, vu, vv, vz
 
     def set_uv_widget(self):
         self.uvWidget = NewWidget(None)
+        self.uvWidget.setWindowTitle("Torus UV Parameter")
 
         self.uvWidget.closeButton.clicked.connect(self.get_uv_val)
         self.uvWidget.closeButton.clicked.connect(self.uvWidget.close_self)
