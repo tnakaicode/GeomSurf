@@ -12,7 +12,7 @@ from linecache import getline, clearcache
 
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Pnt, gp_Dir, gp_Vec
-from OCC.Core.gp import gp_Pln, gp_Circ, gp_Lin
+from OCC.Core.gp import gp_Pln, gp_Circ, gp_Lin, gp_Elips
 from OCC.Core.gp import gp_Trsf, gp_Quaternion
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.Geom import Geom_Curve, Geom_Plane, Geom_Line
@@ -37,33 +37,8 @@ from OCCUtils.Construct import make_polygon, make_plane, make_edge, make_line
 sys.path.append(os.path.join('../'))
 from base_occ import dispocc
 from base_occ import float_to_string, pnt_to_xyz, rotate_xyz, set_loc, set_trf
-from base_occ import get_axs, grasp_sfc, occ_to_grasp_cor, occ_to_grasp_cor_ref, surf_spl_pcd
-
-
-def curvature(px, r, s):
-    """( x + sx )**2 / 2*rx + ( y + sy )**2 / 2*ry"""
-    if (r == 0):
-        py = np.zeros_like(px + s)
-    else:
-        py = (px + s)**2 / (2 * r)
-    return py
-
-
-def get_deg(axs, vec):
-    vx = dir_to_vec(axs.XDirection())
-    vy = dir_to_vec(axs.YDirection())
-    vz = dir_to_vec(axs.Direction())
-    pln_x = Geom_Plane(axs.Location(), axs.YDirection())
-    pln_y = Geom_Plane(axs.Location(), axs.XDirection())
-    vec_p = gp_Pnt((gp_Vec(axs.Location().XYZ()) + vec).XYZ())
-    pnt_x = GeomAPI_ProjectPointOnSurf(vec_p, pln_x).Point(1)
-    pnt_y = GeomAPI_ProjectPointOnSurf(vec_p, pln_y).Point(1)
-    vec_x = gp_Vec(axs.Location(), pnt_x)
-    vec_y = gp_Vec(axs.Location(), pnt_y)
-    deg_x = vec_x.AngleWithRef(vz, vy)
-    deg_y = vec_y.AngleWithRef(vz, vx)
-    print(np.rad2deg(deg_x), np.rad2deg(deg_y))
-    return deg_x, deg_y
+from base_occ import get_axs, get_deg, grasp_sfc, occ_to_grasp_cor, occ_to_grasp_cor_ref, surf_spl_pcd
+from src.geometry import curvature
 
 
 class CoordSys (dispocc):
@@ -134,20 +109,43 @@ class CoordSys (dispocc):
 class OCCSurfObj(object):
 
     def __init__(self, name="surf"):
+        self.name = name
+        self.rot = gp_Ax3()
         self.axs = gp_Ax3()
-        self.rot = self.axs
         self.rim = make_edge(gp_Circ(self.axs.Ax2(), 100))
         self.pln = dispocc.make_plane_axs(self.axs)
-        self.surf = make_plane(
-            self.axs.Location(), dir_to_vec(self.axs.Direction()),
-            -500, 500, -500, 500)
-        self.face = self.BuilFace()
-        self.name = name
+        self.surf = make_plane(self.axs.Location(),
+                               dir_to_vec(self.axs.Direction()),
+                               -500, 500, -500, 500)
+
+        # Beam
+        num = 4
+        self.pt = np.linspace(0, 2 * np.pi, num + 1)[:-1]
+        self.wxy = [10, 10]
+        self.beam = gp_Ax3(self.axs.Ax2())
+        self.beam_wxy = self.make_beam_wxy()
+        self.beam_pts = self.make_beam_pts()
+
+    def MovTrfSurf(self, trf=gp_Trsf(), rot=False):
+        if rot == True:
+            self.axs.Transform(trf)
+        self.axs.Transform(trf)
+        self.rim.Move(TopLoc_Location(trf))
+        self.pln.Move(TopLoc_Location(trf))
+        self.surf.Move(TopLoc_Location(trf))
 
     def get_trsf(self):
         self.trf = gp_Trsf()
         self.trf.SetTransformation(self.axs, gp_Ax3())
         return self.trf
+
+    def get_beam_local(self):
+        axs = self.beam.Transformed(set_trf(self.axs, gp_Ax3()))
+        print(self.name, "-", "beam")
+        get_deg(self.axs, dir_to_vec(self.beam.Direction()))
+        print(axs.Location())
+        print(gp_Vec(axs.Direction()))
+        return axs
 
     def get_vxyz(self):
         trf = gp_Trsf()
@@ -155,34 +153,11 @@ class OCCSurfObj(object):
         # trf.Invert()
         ax1 = self.axs.Transformed(trf)
         d_z = ax1.Direction()
-        print(dir_to_vec(d_z), get_deg(
-            self.axs, dir_to_vec(self.rot.Direction())))
+        print(dir_to_vec(d_z),
+              get_deg(self.axs, dir_to_vec(self.rot.Direction())))
         return [d_z.X(), d_z.Y(), d_z.Z()]
 
-    def BuilFace(self):
-        proj = BRepProj_Projection(self.rim, self.surf, self.axs.Direction())
-        bild = BRepBuilderAPI_MakeFace(self.surf, proj.Current())
-        return bild.Face()
-
-    def UpdateFace(self):
-        self.face = self.BuilFace()
-
-    def RotateFace(self, deg=0.0, axs="z"):
-        if axs == "x":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.XDirection())
-        elif axs == "y":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.YDirection())
-        elif axs == "z":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.Direction())
-        else:
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.Direction())
-        rot = self.rot.Rotated(ax1, np.deg2rad(deg))
-        trf = gp_Trsf()
-        trf.SetDisplacement(self.rot, rot)
-        self.axs.Transform(trf)
-        self.face.Move(TopLoc_Location(trf))
-
-    def RotateSurf(self, deg=0.0, axs="z"):
+    def RotateSurf(self, deg=0.0, axs="z", rot=False):
         if axs == "x":
             ax1 = gp_Ax1(self.rot.Location(), self.rot.XDirection())
         elif axs == "y":
@@ -193,42 +168,9 @@ class OCCSurfObj(object):
             ax1 = gp_Ax1(self.rot.Location(), self.rot.Direction())
         trf = gp_Trsf()
         trf.SetRotation(ax1, np.deg2rad(deg))
-        self.rot.Transform(trf)
-        self.axs.Transform(trf)
-        self.surf.Move(TopLoc_Location(trf))
+        self.MovTrfSurf(trf, rot)
 
-    def RotateSurf2(self, deg=0.0, axs="z"):
-        if axs == "x":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.XDirection())
-        elif axs == "y":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.YDirection())
-        elif axs == "z":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.Direction())
-        else:
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.Direction())
-        trf = gp_Trsf()
-        trf.SetRotation(ax1, np.deg2rad(deg))
-        self.axs.Transform(trf)
-        self.surf.Move(TopLoc_Location(trf))
-
-    def SetSurf_XY(self, deg=0.0, axs="x"):
-        dx, dy = get_deg(self.axs, dir_to_vec(self.rot.Direction()))
-        if axs == "x":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.XDirection())
-            dg0 = np.rad2deg(dy)
-        elif axs == "y":
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.YDirection())
-            dg0 = np.rad2deg(dx)
-        else:
-            ax1 = gp_Ax1(self.rot.Location(), self.rot.Direction())
-            dg0 = np.rad2deg(dx)
-        trf = gp_Trsf()
-        trf.SetRotation(ax1, np.deg2rad(-dg0 + deg))
-        self.axs.Transform(trf)
-        self.surf.Move(TopLoc_Location(trf))
-        get_deg(self.rot, dir_to_vec(self.axs.Direction()))
-
-    def MovXYZSurf(self, dst=0.0, axs="z"):
+    def MovXYZSurf(self, dst=0.0, axs="z", rot=False):
         if axs == "x":
             vec = dir_to_vec(self.rot.XDirection())
         elif axs == "y":
@@ -239,16 +181,12 @@ class OCCSurfObj(object):
             vec = dir_to_vec(self.rot.Direction())
         trf = gp_Trsf()
         trf.SetTranslation(vec.Scaled(dst))
-        # self.rot.Transform(trf)
-        self.axs.Transform(trf)
-        self.surf.Move(TopLoc_Location(trf))
+        self.MovTrfSurf(trf, rot)
 
-    def MovVecSurf(self, vec=gp_Vec(0, 0, 1)):
+    def MovVecSurf(self, vec=gp_Vec(0, 0, 1), rot=False):
         trf = gp_Trsf()
         trf.SetTranslation(vec)
-        self.rot.Transform(trf)
-        self.axs.Transform(trf)
-        self.surf.Move(TopLoc_Location(trf))
+        self.MovTrfSurf(trf, rot)
 
     def RotateAxis(self, deg=0.0, axs="z"):
         if axs == "x":
@@ -278,153 +216,49 @@ class OCCSurfObj(object):
         trf.SetDisplacement(ax, rot)
         ax.Transform(trf)
 
-    def MoveRel(self, trf=gp_Trsf()):
-        self.axs.Transform(trf)
-        self.face.Move(TopLoc_Location(trf))
+    def make_mesh(self, lxy=[100, 100], sxy=[0, 0], nxy=[200, 200]):
+        px = np.linspace(-1, 1, nxy[0]) * lxy[0] / 2 + sxy[0]
+        py = np.linspace(-1, 1, nxy[1]) * lxy[1] / 2 + sxy[1]
+        self.mesh = np.meshgrid(px, py)
 
-    def SurfCurvature(self, nxy=[200, 200], lxy=[450, 450], rxy=[700, 0], sxy=[0, 0]):
-        px = np.linspace(-1, 1, int(nxy[0])) * lxy[0] / 2
-        py = np.linspace(-1, 1, int(nxy[1])) * lxy[1] / 2
-        mesh = np.meshgrid(px, py)
-        surf_x = curvature(mesh[0], r=rxy[0], s=sxy[0])
-        surf_y = curvature(mesh[1], r=rxy[1], s=sxy[1])
-        data = surf_x + surf_y
-        self.surf, self.surf_pts = surf_spl_pcd(*mesh, data)
+    def make_surf_curvature(self, rxy=[1000, 1000], sxy=[0, 0]):
+        curv_x = curvature(self.mesh[0], rxy[0], sxy[0])
+        curv_y = curvature(self.mesh[1], rxy[1], sxy[1])
+        self.surf_data = curv_x + curv_y
+        self.surf, self.surf_pts = surf_spl_pcd(*self.mesh, self.surf_data)
+        self.surf.Move(TopLoc_Location(self.get_trsf()))
 
-    def SurfCurvature_Loc(self, nxy=[200, 200], lxy=[450, 450], rxy=[700, 0], sxy=[0, 0]):
-        px = np.linspace(-1, 1, int(nxy[0])) * lxy[0] / 2
-        py = np.linspace(-1, 1, int(nxy[1])) * lxy[1] / 2
-        mesh = np.meshgrid(px, py)
-        surf_x = curvature(mesh[0], r=rxy[0], s=sxy[0])
-        surf_y = curvature(mesh[1], r=rxy[1], s=sxy[1])
-        data = surf_x + surf_y
-        self.surf, self.surf_pts = surf_spl_pcd(*mesh, data)
-        trf = gp_Trsf()
-        trf.SetTransformation(self.axs, gp_Ax3())
-        self.surf.Location(TopLoc_Location(trf))
+    def make_beam_wxy(self):
+        rim = dispocc.make_EllipWire(None, self.wxy, 0, self.beam, None)
+        beam_wxy = dispocc.proj_rim_pln(None, rim, self.surf, self.axs)
+        return beam_wxy
+
+    def make_beam_pts(self):
+        pts = []
+        for i, t in enumerate(self.pt):
+            x, y = self.wxy[0] * np.cos(t), self.wxy[1] * np.sin(t)
+            pnt = gp_Pnt(x, y, 0)
+            pnt.Transform(set_trf(gp_Ax3(), self.beam))
+            pnt = dispocc.proj_pnt_pln(None, pnt, self.surf, self.beam)
+            pts.append(pnt)
+        return pts
+
+    def get_surf_mesh(self):
+        nx = self.surf_pts.UpperRow()
+        ny = self.surf_pts.UpperCol()
+        x, y, z = np.zeros((nx, ny)), np.zeros((nx, ny)), np.zeros((nx, ny))
+        for row in range(self.surf_pts.LowerRow(), self.surf_pts.UpperRow() + 1):
+            for col in range(self.surf_pts.LowerCol(), self.surf_pts.UpperCol() + 1):
+                i, j = row - 1, col - 1
+                pnt = self.surf_pts.Value(row, col)
+                x[i, j], y[i, j], z[i, j] = pnt.Coord()
+        return [x, y], z
 
     def get_surf_uvpnt(self, uv=[0, 0]):
         surf = BRep_Tool.Surface(self.surf)
         pnt = gp_Pnt()
         surf.D0(uv[0], uv[1], pnt)
         return pnt
-
-    def load_rim(self, rimfile="../ticra/input/surf/mou.rim"):
-        data = np.loadtxt(rimfile, skiprows=2)
-        pts = []
-        for xy in data:
-            pts.append(gp_Pnt(*xy, 0))
-        self.rim = make_polygon(pts, closed=True)
-
-    def load_mat(self, sfcfile="../ticra/input/surf/pln_mat.sfc"):
-        xs, ys, xe, ye = [float(v) for v in getline(sfcfile, 2).split()]
-        nx, ny = [int(v) for v in getline(sfcfile, 3).split()]
-        px = np.linspace(xs, xe, nx)
-        py = np.linspace(ys, ye, ny)
-        mesh = np.meshgrid(px, py)
-        data = np.loadtxt(sfcfile, skiprows=3).T
-        self.surf, self.surf_pts = surf_spl_pcd(*mesh, data)
-
-    def export_rim_2d(self, rimfile="m2.rim", name="m2-rim"):
-        rim_2d = dispocc.proj_rim_pln(self, self.rim, self.pln, self.axs)
-
-        fp = open(rimfile, "w")
-        fp.write(' {:s}\n'.format(name))
-        fp.write('{:12d}{:12d}{:12d}\n'.format(1, 1, 1))
-        rim_tmp = gp_Pnt()
-        for i, e in enumerate(Topo(rim_2d).edges()):
-            e_curve, u0, u1 = BRep_Tool.Curve(e)
-            print(i, e, u0, u1)
-            if i != 0 and rim_tmp == e_curve.Value(u0):
-                u_range = np.linspace(u0, u1, 50)
-                rim_tmp = e_curve.Value(u1)
-                p = e_curve.Value(u0)
-                p.Transform(set_trf(self.axs, gp_Ax3()))
-                data = [p.X(), p.Y()]
-                print(0, p, u_range[0], u_range[-1])
-            elif i != 0 and rim_tmp == e_curve.Value(u1):
-                u_range = np.linspace(u1, u0, 50)
-                rim_tmp = e_curve.Value(u0)
-                p = e_curve.Value(u1)
-                p.Transform(set_trf(self.axs, gp_Ax3()))
-                data = [p.X(), p.Y()]
-                print(1, p, u_range[0], u_range[-1])
-            else:
-                u_range = np.linspace(u0, u1, 50)
-                rim_tmp = e_curve.Value(u1)
-                p = e_curve.Value(u0)
-                p.Transform(set_trf(self.axs, gp_Ax3()))
-                data = [p.X(), p.Y()]
-                print(2, p, u_range[0], u_range[-1])
-            fp.write(''.join([float_to_string(val) for val in data]) + '\n')
-            for u in u_range[1:]:
-                p = e_curve.Value(u)
-                p.Transform(set_trf(self.axs, gp_Ax3()))
-                data = [p.X(), p.Y()]
-                fp.write(''.join([float_to_string(val)
-                                  for val in data]) + '\n')
-        fp.close()
-
-    def export_sfc1_axs(self, sfcfile="m2_mat.sfc", name="M2 Mat"):
-        surf = BRep_Tool.Surface(self.surf)
-
-        trf = set_trf(self.axs, gp_Ax3())
-        xy0 = dispocc.proj_pnt_pln(self, surf.Value(0, 0), self.pln, self.axs)
-        xy1 = dispocc.proj_pnt_pln(self, surf.Value(1, 1), self.pln, self.axs)
-        xy0.Transform(trf)
-        xy1.Transform(trf)
-
-        m2_trf = set_trf(gp_Ax3(), self.axs)
-        m2_pln = BRep_Tool.Surface(self.pln)
-        for px in np.linspace(-100, 100, 10):
-            for py in np.linspace(-100, 100, 10):
-                p0 = gp_Pnt(px, py, 0).Transformed(m2_trf)
-                p1 = obj.proj_pnt_pln(p0, self.surf, self.axs)
-
-        #ix0, ix1 = m2.surf_pts.LowerRow(), m2.surf_pts.UpperRow()
-        #iy0, iy1 = m2.surf_pts.LowerCol(), m2.surf_pts.UpperCol()
-        #xy0 = m2.surf_pts.Value(ix0, iy0).Transformed(trf)
-        #xy1 = m2.surf_pts.Value(ix1, iy1).Transformed(trf)
-        nx, ny = 200, 200
-        xs, xe = xy0.X(), xy1.X()
-        ys, ye = xy0.Y(), xy1.Y()
-        fp = open(sfcfile, "w")
-        fp.write(" {} \n".format(name))
-        fp.write(" {:.2e} {:.2e} {:.2e} {:.2e}\n".format(xs, ys, xe, ye))
-        fp.write(" {:d} {:d}\n".format(nx, ny))
-        for ix in np.linspace(0, 1, nx):
-            for iy in np.linspace(0, 1, ny):
-                p0 = surf.Value(ix, iy)
-                p1 = dispocc.proj_pnt_pln(self, p0, self.pln, self.axs)
-                pz = p1.Transformed(trf)
-                z = p0.Distance(p1)
-                fp.write(" {:.5e} ".format(z))
-            fp.write("\n")
-        fp.close()
-        print(xy0)
-
-    def export_sfc2_axs(self, nxy=[200, 200], rx=[-250, 250], ry=[-250, 250], sfcfile="m2_mat.sfc"):
-        trsf = set_trf(gp_Ax3(), self.axs)
-        nx, ny = nxy
-        xs, xe = rx
-        ys, ye = ry
-        plnx = np.linspace(xs, xe, nx)
-        plny = np.linspace(ys, ye, ny)
-        mesh = np.meshgrid(plnx, plny)
-        data = np.zeros_like(mesh[0])
-        for (ix, iy), x in np.ndenumerate(data):
-            px, py = mesh[0][ix, iy], mesh[1][ix, iy]
-            p0 = gp_Pnt(px, py, 0).Transformed(trsf)
-            p1 = dispocc.proj_pnt_pln(self, p0, self.surf, self.axs)
-            z = p0.Distance(p1)
-            data[ix, iy] = z
-
-            txt = "\r"
-            txt += "{:d}, {:d} / {:d}, {:d}".format(ix, iy, ny, nx)
-            sys.stdout.write(txt)
-            sys.stdout.flush()
-        print()
-        grasp_sfc(mesh, data, sfcfile)
 
     def reflect_beam(self, beam0=gp_Ax3(), tr=0):
         v0 = dir_to_vec(beam0.Direction())
@@ -501,7 +335,7 @@ if __name__ == "__main__":
     parser.add_argument("--rxyz", dest="rxyz",
                         default=(0, 0, 0), type=float, nargs=3)
     opt = parser.parse_args()
-    print(opt)
+    print(opt, argvs)
 
     obj = CoordSys()
     obj.SetAxs(opt.pxyz, opt.rxyz)
