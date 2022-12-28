@@ -31,7 +31,7 @@ import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 
-class NewWidget(QtWidgets.QWidget):
+class UVWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
@@ -41,7 +41,7 @@ class NewWidget(QtWidgets.QWidget):
         self.height = 125
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        self.setting = QtCore.QSettings(basename + "temp_setting/Widget.ini",
+        self.setting = QtCore.QSettings(basename + "temp_setting/UVWidget.ini",
                                         QtCore.QSettings.IniFormat)
         self.setting.setFallbacksEnabled(False)
         self.move(self.setting.value("pos", self.pos()))
@@ -53,13 +53,17 @@ class NewWidget(QtWidgets.QWidget):
         self.closeButton = QtWidgets.QPushButton("Set & Close", self)
         self.uval_text = QtWidgets.QLineEdit("", self)
         self.vval_text = QtWidgets.QLineEdit("", self)
+        self.uval_labl = QtWidgets.QLabel("", self)
+        self.vval_labl = QtWidgets.QLabel("", self)
         self.uval_text.setText(self.setting.value("u", "0.0", str))
         self.vval_text.setText(self.setting.value("v", "0.0", str))
 
-        self.layout = QtWidgets.QVBoxLayout()
-        self.layout.addWidget(self.closeButton)
-        self.layout.addWidget(self.uval_text)
-        self.layout.addWidget(self.vval_text)
+        self.layout = QtWidgets.QGridLayout(self)
+        self.layout.addWidget(self.uval_labl, 1, 0)
+        self.layout.addWidget(self.vval_labl, 2, 0)
+        self.layout.addWidget(self.uval_text, 1, 1)
+        self.layout.addWidget(self.vval_text, 2, 1)
+        self.layout.addWidget(self.closeButton, 3, 0)
         self.setLayout(self.layout)
 
     def close_self(self):

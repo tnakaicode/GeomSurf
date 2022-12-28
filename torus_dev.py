@@ -9,6 +9,7 @@ basename = os.path.dirname(__file__) + "/"
 
 sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
+from src.base_widget import UVWidget
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
@@ -31,46 +32,6 @@ from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, dir_to_vec, vec_to_dir
 
 
-class NewWidget(QtWidgets.QWidget):
-
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent)
-        self.left = 200
-        self.top = 200
-        self.width = 125
-        self.height = 125
-        self.setGeometry(self.left, self.top, self.width, self.height)
-
-        self.setting = QtCore.QSettings(basename + "temp_setting/uvWidget.ini",
-                                        QtCore.QSettings.IniFormat)
-        self.setting.setFallbacksEnabled(False)
-        self.move(self.setting.value("pos", self.pos()))
-        self.resize(self.setting.value("size", self.size()))
-        font = self.font()
-        font.setPointSize(self.setting.value("font", 9, int))
-        self.setFont(font)
-
-        self.closeButton = QtWidgets.QPushButton("Set & Close", self)
-        self.uval_text = QtWidgets.QLineEdit("", self)
-        self.vval_text = QtWidgets.QLineEdit("", self)
-        self.uval_text.setText(self.setting.value("u", "0.0", str))
-        self.vval_text.setText(self.setting.value("v", "0.0", str))
-
-        self.layout = QtWidgets.QVBoxLayout()
-        self.layout.addWidget(self.closeButton)
-        self.layout.addWidget(self.uval_text)
-        self.layout.addWidget(self.vval_text)
-        self.setLayout(self.layout)
-
-    def close_self(self):
-        if self.setting != None:
-            # Write window size and position to config file
-            self.setting.setValue("size", self.size())
-            self.setting.setValue("pos", self.pos())
-            self.setting.setValue("font", self.font().pointSize())
-            self.setting.setValue("u", self.uval_text.text())
-            self.setting.setValue("v", self.vval_text.text())
-        self.close()
 
 
 class Torus (dispocc, Geom_ToroidalSurface):
@@ -79,7 +40,7 @@ class Torus (dispocc, Geom_ToroidalSurface):
         super().__init__(temp, disp, touch)
         self.axs = gp_Ax3()
         self.radi = [500, 200]
-        self.rxyz = [1.0, 1.1, 1.1]
+        self.rxyz = [1.0, 1.0, 1.0]
         mat = gp_Mat(
             self.rxyz[0], 0, 0,
             0, self.rxyz[1], 0,
@@ -111,24 +72,26 @@ class Torus (dispocc, Geom_ToroidalSurface):
         print(vz)
         if self.prop.IsCurvatureDefined():
             d0, d1 = gp_Dir(0,0,1), gp_Dir(0,0,1)
-            print("Gaussian :", 1 / self.prop.GaussianCurvature())
-            print("Max      :", 1 / self.prop.MaxCurvature())
-            print("Min      :", 1 / self.prop.MinCurvature())
-            print("Mean     :", 1 / self.prop.MeanCurvature())
+            print("Gaussian :", 1 / self.prop.GaussianCurvature(), self.prop.GaussianCurvature())
+            print("Max      :", 1 / self.prop.MaxCurvature(), self.prop.MaxCurvature())
+            print("Min      :", 1 / self.prop.MinCurvature(), self.prop.MinCurvature())
+            print("Mean     :", 1 / self.prop.MeanCurvature(), self.prop.MeanCurvature())
             self.prop.CurvatureDirections(d0, d1)
             print("Max:", dir_to_vec(d0))
             print("Min:", dir_to_vec(d1))
             print(d0.Dot(d1))
         else:
             print("NO Curvature defined")
-        self.display.DisplayShape(p)
-        self.display.DisplayVector(vz.Scaled(20), p)
         self.show_axs_pln(axs, scale=25)
+        self.display.DisplayShape(p)
+        self.display.DisplayVector(vz.Scaled(20), p, update=True)
         return p, vu, vv, vz
 
     def set_uv_widget(self):
-        self.uvWidget = NewWidget(None)
+        self.uvWidget = UVWidget(None)
         self.uvWidget.setWindowTitle("Torus UV Parameter")
+        self.uvWidget.uval_labl.setText(f"U: 0~")
+        self.uvWidget.vval_labl.setText(f"V: 0~")
 
         self.uvWidget.closeButton.clicked.connect(self.get_uv_val)
         self.uvWidget.closeButton.clicked.connect(self.uvWidget.close_self)
