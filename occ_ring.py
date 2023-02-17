@@ -6,8 +6,8 @@ import time
 import argparse
 from linecache import getline, clearcache
 
-sys.path.append(os.path.join("../"))
-from base import plot2d
+sys.path.append(os.path.join("./"))
+from src.base import plot2d
 from src.base_occ import dispocc
 
 import logging
