@@ -5,7 +5,7 @@ from scipy.linalg import lu, svd
 from OCC.Core.math import math_Matrix, math_Vector
 from OCC.Core.math import math_MultipleVarFunction
 from OCC.Core.math import math_GaussLeastSquare, math_SVD
-from OCC.Core.math import math_PSO
+from OCC.Core.math import math_PSO, math_NewtonMinimum, math_Function
 
 # import MultipleVarFunction: GCPnts_DistFunction
 from OCC.Core.GCPnts import GCPnts_DistFunction, GCPnts_DistFunctionMV
