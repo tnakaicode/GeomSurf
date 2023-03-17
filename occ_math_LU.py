@@ -6,7 +6,7 @@ from scipy.linalg import lu, svd
 np.random.seed(10)
 
 # ランダムな要素をもつ行列を生成
-n = 10001
+n = 100
 A = np.random.randint(1, 10, (n, n))
 
 # PA=LU分解
@@ -26,12 +26,11 @@ print(time.time() - c)
 from OCC.Core.math import math_Matrix, math_Vector
 from OCC.Core.math import math_GaussLeastSquare, math_SVD
 
-vec_b = math_Vector(1, n)
-for i in range(n):
-    vec_b.SetValue(i + 1, 1.0)
-vec_x = math_Vector(1, n)
-for i in range(n):
-    vec_x.SetValue(i + 1, 0.0)
+vec_b = math_Vector(1, n, 1)
+print(vec_b.Value(1))
+vec_b.Set(1, 1, math_Vector(1, 1, 0))
+print(vec_b.Value(1))
+vec_x = math_Vector(1, n, 0)
 mat = math_Matrix(1, n, 1, n)
 for (i, j), v in np.ndenumerate(A):
     mat.SetValue(i + 1, j + 1, float(v))
@@ -57,3 +56,6 @@ print(time.time() - c)
 #    vec_txt += f"{vec_x.Value(i)}\t"
 # print(vec_txt)
 #
+
+from OCC.Core.Expr import Expr_ArcCosine, Expr_GeneralExpression
+from OCC.Core.ExprIntrp import ExprIntrp_Analysis, ExprIntrp_Generator
