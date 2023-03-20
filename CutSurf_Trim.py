@@ -27,7 +27,7 @@ from OCC.Core.GeomToStep import GeomToStep_MakeBoundedSurface
 from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.Core.BRepFill import BRepFill_CurveConstraint
 from OCC.Core.BRepFeat import BRepFeat_SplitShape
-from OCC.Core.BRepAlgo import BRepAlgo_Cut, BRepAlgo_Section, BRepAlgo_Common
+#from OCC.Core.BRepAlgo import BRepAlgo_Cut, BRepAlgo_Section, BRepAlgo_Common
 from OCC.Core.BOPAlgo import BOPAlgo_Tools, BOPAlgo_Builder
 from OCC.Core.BOPTools import BOPTools_AlgoTools
 from OCC.Core.STEPControl import STEPControl_Reader, STEPControl_Writer, STEPControl_AsIs
@@ -125,10 +125,10 @@ if __name__ == '__main__':
 
     face1_holl = BRepBuilderAPI_MakeFace(face1, poly1_proj).Face()
     print(face1_holl)
-    api = BRepAlgo_Cut(face1, face1_holl)
-    api.Build()
-    face1_trim = api.Shape()
-    print(face1_trim)
+    #api = BRepAlgo_Cut(face1, face1_holl)
+    #api.Build()
+    #face1_trim = api.Shape()
+    #print(face1_trim)
 
     axis2 = gp_Ax3(gp_Pnt(+100, -50.0, 0.0), gp_Dir(0, 0, 1))
     surf2, face2 = bez_face(*mesh, data2, axs=axis2)

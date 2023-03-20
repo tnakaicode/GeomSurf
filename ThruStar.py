@@ -15,7 +15,7 @@ from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Splitter
-from OCC.Core.BRepAlgo import BRepAlgo_Cut, BRepAlgo_Common, BRepAlgo_Tool
+from OCC.Core.BRepAlgo import BRepAlgo_Loop, BRepAlgo_FaceRestrictor
 from OCC.Core.Geom import Geom_Circle, Geom_Curve
 from OCC.Core.GeomAPI import GeomAPI_IntCS
 from OCC.Core.GeomLProp import GeomLProp_CurveTool
@@ -30,7 +30,14 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 from OCCUtils.Topology import Topo
 
-from src.base_occ import dispocc, set_loc, trf_axs
+from src.base_occ import dispocc, set_loc, rotate_xyz
+
+
+def trf_axs(axs=gp_Ax3(), pxyz=[0, 0, 0], rxyz=[0, 0, 0]):
+    rotate_xyz(axs, rxyz[0], "x")
+    rotate_xyz(axs, rxyz[1], "y")
+    rotate_xyz(axs, rxyz[2], "z")
+    axs.SetLocation(gp_Pnt(*pxyz))
 
 
 class GenThruSurf (dispocc):
