@@ -30,7 +30,7 @@ def spl_face(px, py, pz):
             i, j = row - 1, col - 1
             pnt = gp_Pnt(px[i, j], py[i, j], pz[i, j])
             pnt_2d.SetValue(row, col, pnt)
-            #print (i, j, px[i, j], py[i, j], pz[i, j])
+            # print (i, j, px[i, j], py[i, j], pz[i, j])
 
     api = GeomAPI_PointsToBSplineSurface(pnt_2d, 3, 8, GeomAbs_G2, 0.001)
     api.Interpolate(pnt_2d)
@@ -91,11 +91,12 @@ if __name__ == '__main__':
 
     # make polygon on XY-plane
     pts = [
-        gp_Pnt(-50, -50, 0),
+        gp_Pnt(0, -50, 0),
         gp_Pnt(50, -50, 0),
         gp_Pnt(50, 50, 0),
         gp_Pnt(0, 60, 0),
-        gp_Pnt(-50, 50, 0)
+        gp_Pnt(-50, 40, 0),
+        gp_Pnt(-45, -20, 0),
     ]
     pts.reverse()
     poly_2d = make_polygon(pts, True)
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     plan = make_plane(gp_Pnt(0, 0, 10),
                       extent_x_min=-60, extent_x_max=60,
                       extent_y_min=-40, extent_y_max=55)
-    obj.display.DisplayShape(plan, transparency=0.7)
+    # obj.display.DisplayShape(plan, transparency=0.7)
 
     # make curved surface by spline on gp_Pnt(0,0,10) which size is same plane
     px = np.linspace(-60, 60, 100)
@@ -113,27 +114,70 @@ if __name__ == '__main__':
     mesh = np.meshgrid(px, py)
     surf = mesh[0]**2 / 1000 + mesh[1]**2 / 2000 + 10.0
     face = spl_face(*mesh, surf)
-    face_pnts = get_polygon_from_face(face)
-    face_poly = get_polygon_from_face(face)
+    #face_pnts = get_polygon_from_face(face)
+    #face_poly = get_polygon_from_face(face)
     obj.display.DisplayShape(face, transparency=0.9)
-    obj.display.DisplayShape(face_poly, color="GREEN")
+    # obj.display.DisplayShape(face_poly, color="GREEN")
     # for i, p in enumerate(get_polygon_from_face(plan)):
     #    display.DisplayShape(p, color="YELLOW")
     #    display.DisplayMessage(p, f"{i:2d}")
 
     # projection polygon to curved surface
     # the current TopoDS_Wire is not connectted each other beacause the size of curved surface is larger than polygon on XY-Plane.
-    idx = 10
-    proj_idx = 0
+    
     proj = BRepProj_Projection(poly_2d, face, gp_Dir(0, 0, 1))
-    while proj.More() and proj_idx < idx:
+    poly_face = []
+    while proj.More():
         poly = proj.Current()
+        poly_face.append(poly)
         proj.Next()
-        proj_idx += 1
-        obj.display.DisplayShape(poly, color="BLUE1")
 
-    face_trim = make_trimmedface(poly_2d, face)
-    print(face_trim)
-    #display.DisplayShape(face_trim, color="RED")
+    
+    from OCC.Core.BRepAdaptor import BRepAdaptor_Surface, BRepAdaptor_Curve
+    adap = BRepAdaptor_Surface(face)
+    u0 = adap.FirstUParameter()
+    v0 = adap.FirstVParameter()
+    u1 = adap.LastVParameter()
+    v1 = adap.LastVParameter()
+    
+    poly_plan = make_face(poly_2d)
+    face_edge = make_polygon([adap.Value(u,v) for u, v in [[u0,v0],[u1,v0], [u1,v1], [u0, v1]]], closed=True)
+    proj = BRepProj_Projection(face_edge, poly_plan, gp_Dir(0, 0, 1))
+    face_poly = []
+    while proj.More():
+        poly = proj.Current()
+        proj_face = BRepProj_Projection(poly, face, gp_Dir(0, 0, 1))
+        while proj_face.More():
+            poly_face.append(proj_face.Current())
+            proj_face.Next()
+        face_poly.append(proj.Current())
+        proj.Next()
+
+    #face_plan = make_face(face_poly[0])
+    obj.display.DisplayShape(face_poly, color="BLUE1")
+    #obj.display.DisplayShape(poly_face)
+    obj.display.DisplayShape(poly_plan)
+    
+    for wire in poly_face:
+        #c = BRepAdaptor_Curve(wire)
+        print(wire, TopologyExplorer(wire).number_of_vertices())
+    
+    poly_face1 = [poly_face[0], poly_face[2], poly_face[1], poly_face[3]]
+
+
+    poly_face = make_wire(poly_face1)
+    trim_face = BRepAlgo_FaceRestrictor()
+    trim_face.Init(face, True, True)
+    trim_face.Add(poly_face)
+    ##for poly in poly_face:
+    #trim_face.Add(poly)
+    trim_face.Perform()
+    print(trim_face.IsDone())
+    while trim_face.More():
+        print(1, trim_face.Current())
+        obj.display.DisplayShape(trim_face.Current(), color="RED")
+        #obj.export_stp(trim_face.Current())
+        trim_face.Next()
+    obj.display.DisplayShape(poly_face, color="BLUE1")
 
     obj.ShowOCC()
