@@ -11,6 +11,8 @@ from OCC.Core.gp import gp_Mat, gp_GTrsf, gp_Trsf
 from OCC.Core.gp import gp_Cylinder
 from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.Core.BRep import BRep_Tool
+from OCC.Core.TopoDS import TopoDS_Wire, TopoDS_Vertex
+from OCC.Core.BRepAdaptor import BRepAdaptor_Surface, BRepAdaptor_Curve
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor, BRepAlgo_NormalProjection
@@ -19,6 +21,7 @@ from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
 from OCC.Extend.DataExchange import write_step_file
 from OCC.Extend.TopologyUtils import TopologyExplorer
+from OCCUtils.Common import vertex2pnt
 from OCCUtils.Construct import make_face, make_polygon, make_plane, make_wire
 
 
@@ -85,6 +88,13 @@ def get_polygon_from_face(face):
     return poly
 
 
+def get_wire_ends(wire=TopoDS_Wire()):
+    edges = [edge for edge in TopologyExplorer(wire).edges()]
+    c0 = BRepAdaptor_Curve(edges[0])
+    c1 = BRepAdaptor_Curve(edges[-1])
+    return [v for v in TopologyExplorer(wire).vertices()]
+
+
 if __name__ == "__main__":
     obj = dispocc()
 
@@ -135,8 +145,6 @@ if __name__ == "__main__":
         poly_face.append(poly)
         proj.Next()
 
-    from OCC.Core.BRepAdaptor import BRepAdaptor_Surface, BRepAdaptor_Curve
-
     adap = BRepAdaptor_Surface(face)
     u0 = adap.FirstUParameter()
     v0 = adap.FirstVParameter()
@@ -145,8 +153,7 @@ if __name__ == "__main__":
 
     poly_plan = make_face(poly_2d)
     face_edge = make_polygon(
-        [adap.Value(u, v)
-         for u, v in [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]],
+        [adap.Value(u, v) for u, v in [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]],
         closed=True,
     )
     proj = BRepProj_Projection(face_edge, poly_plan, gp_Dir(0, 0, 1))
@@ -165,11 +172,29 @@ if __name__ == "__main__":
     # obj.display.DisplayShape(poly_face)
     obj.display.DisplayShape(poly_plan)
 
-    for wire in poly_face:
-        # c = BRepAdaptor_Curve(wire)
-        print(wire, TopologyExplorer(wire).number_of_vertices())
+    v0 = [v for v in TopologyExplorer(poly_face[0]).vertices()]
+    poly_face1 = [poly_face[0]]
 
-    poly_face1 = [poly_face[0], poly_face[2], poly_face[1], poly_face[3]]
+    for i, wire in enumerate(poly_face[1:]):
+        # c = BRepAdaptor_Curve(wire)
+        v1 = [v for v in TopologyExplorer(wire).vertices()]
+        print(i, wire, *get_wire_ends(wire))
+        for v in v1:
+            print(
+                vertex2pnt(v),
+                [v.IsEqual(p) for p in v0],
+                [vertex2pnt(v).IsEqual(vertex2pnt(p), 0.1e-3) for p in v0],
+            )
+            # gp_Pnt().IsEqual()
+            # TopoDS_Vertex().IsEqual()
+
+    idx = [0, 3, 1, 2]  # ok
+    idx = [0, 2, 1, 3]  # ok
+    idx = [0, 3, 2, 1]  # ok
+    idx = [0, 1, 3, 2]  # ng
+    idx = [0, 2, 3, 1]  # ng
+    idx = [0, 1, 2, 3]  # ng
+    poly_face1 = [poly_face[i] for i in idx]
 
     poly_face = make_wire(poly_face1)
     trim_face = BRepAlgo_FaceRestrictor()
