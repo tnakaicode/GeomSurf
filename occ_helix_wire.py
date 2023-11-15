@@ -6,9 +6,10 @@ from OCC.Display.SimpleGui import init_display
 import numpy as np
 from math import pi
 
-from OCC.Core.gp import gp_Pnt2d, gp_Pnt, gp_Lin2d, gp_Ax3, gp_Dir2d, gp_Dir
+from OCC.Core.gp import gp_Pnt2d, gp_Pnt, gp_Lin2d, gp_Ax3, gp_Dir2d, gp_Dir, gp_Ax2d
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 from OCC.Core.Geom import Geom_CylindricalSurface, Geom_ToroidalSurface, Geom_Curve, Geom_Surface, Geom_ConicalSurface
+from OCC.Core.Geom2d import Geom2d_Circle, Geom2d_Curve
 from OCC.Core.GCE2d import GCE2d_MakeSegment
 from OCCUtils.Common import vertex2pnt
 from OCCUtils.Construct import make_face, make_edge, make_wire
@@ -16,17 +17,17 @@ from OCCUtils.Construct import make_face, make_edge, make_wire
 display, start_display, add_menu, add_function_to_menu = init_display()
 
 
-def make_helix_wire(segment=Geom_Curve, surface=Geom_Surface, t0=0, t1=1):
-    print(segment, surface)
-    helix_api = BRepBuilderAPI_MakeEdge(aSegment, surface, t0, t1)
+def make_helix_wire(uvcurve=Geom_Curve, surface=Geom_Surface, t0=0, t1=1):
+    print(uvcurve, surface)
+    helix_api = BRepBuilderAPI_MakeEdge(uvcurve, surface, t0, t1)
     helix_edge = helix_api.Edge()
     helix_vert = [vertex2pnt(helix_api.Vertex1()),
                   vertex2pnt(helix_api.Vertex2())]
     print(helix_vert)
-    print(segment.Value(t0).X(), segment.Value(t0).Y())
-    print(segment.Value(t1).X(), segment.Value(t1).Y())
-    print(surface.Value(segment.Value(t0).X(), segment.Value(t0).Y()))
-    print(surface.Value(segment.Value(t1).X(), segment.Value(t1).Y()))
+    for t in [t0, (t0 + t1) / 2, t1]:
+        u, v = uvcurve.Value(t).X(), uvcurve.Value(t).Y()
+        print(t, u, v, surface.Value(u, v))
+        # display.DisplayShape(surface.Value(u, v))
     if helix_vert[0].IsEqual(helix_vert[1], 0.1):
         helix_wire = make_wire(helix_edge)
     else:
@@ -41,6 +42,22 @@ aTorus = Geom_ToroidalSurface(gp_Ax3(gp_Pnt(40, 0, 0), gp_Dir(0, 0, 1)),
                               10, 3)
 
 # Build an helix
+u0, v0 = 0.0, 1.0
+ur, vr = 20., 1.0
+ut, vt = 1 / ur, 1 / vr
+uv = np.sqrt(ut**2 + vt**2)
+aLine2d = gp_Lin2d(gp_Pnt2d(u0, v0), gp_Dir2d(ut, vt))
+aSegment = GCE2d_MakeSegment(aLine2d, 0, 1).Value()
+
+# Torus
+t0, t1 = 0.0, 1.0 * uv * 2 * pi * ur
+helix_wire = make_helix_wire(aSegment, aTorus, t0, t1)
+# face = make_face(aTorus.Torus(), helix_wire)
+display.DisplayShape(make_face(aTorus.Torus(), 0, 2 * pi, 0, 2 * pi))
+display.DisplayShape(helix_wire)
+# display.DisplayShape(face)
+
+# Build an helix
 u0, v0 = pi, 1.0
 ur, vr = 1.2, 1.0
 ut, vt = 1 / ur, 1 / vr
@@ -48,28 +65,33 @@ uv = np.sqrt(ut**2 + vt**2)
 aLine2d = gp_Lin2d(gp_Pnt2d(u0, v0), gp_Dir2d(ut, vt))
 aSegment = GCE2d_MakeSegment(aLine2d, 0, 1).Value()
 
-# Cylinder
-t0, t1 = 0.0, uv * 2 * pi * ur
-helix_wire = make_helix_wire(aSegment, aCylinder, t0, t1)
-face = make_face(aCylinder.Cylinder(), helix_wire)
-display.DisplayShape(make_face(aCylinder.Cylinder(), 0, 2 * pi, 0, 10))
-display.DisplayShape(helix_wire)
-# display.DisplayShape(face)
-
 # Cone
 t0, t1 = 0.0, uv * 2 * pi * ur
 helix_wire = make_helix_wire(aSegment, aCone, t0, t1)
-face = make_face(aCone.Cone(), helix_wire)
+# face = make_face(aCone.Cone(), helix_wire)
 display.DisplayShape(make_face(aCone.Cone(), 0, 2 * pi, 0, 10))
 display.DisplayShape(helix_wire)
 # display.DisplayShape(face)
 
-# Torus
-t0, t1 = 0.0, 1.5 * uv * 2 * pi * ur
-helix_wire = make_helix_wire(aSegment, aTorus, t0, t1)
-face = make_face(aTorus.Torus(), helix_wire)
-display.DisplayShape(make_face(aTorus.Torus(), 0, 2 * pi, 0, 2 * pi))
+
+# Cylinder
+t0, t1 = 0.0, uv * 2 * pi * ur
+helix_wire = make_helix_wire(aSegment, aCylinder, t0, t1)
+# face = make_face(aCylinder.Cylinder(), helix_wire)
+display.DisplayShape(make_face(aCylinder.Cylinder(), 0, 2 * pi, 0, 10))
 display.DisplayShape(helix_wire)
+# display.DisplayShape(face)
+
+# Build an helix
+u0, v0 = 0.0, 0.0
+radii = 1.0
+aCicle2d = Geom2d_Circle(gp_Ax2d(gp_Pnt2d(u0, v0), gp_Dir2d(1, 0)), radii)
+
+# Cylinder
+t0, t1 = 0.0, pi
+helix_wire = make_helix_wire(aCicle2d, aCylinder, t0, t1)
+# face = make_face(aCylinder.Cylinder(), helix_wire)
+display.DisplayShape(helix_wire, color="BLUE1")
 # display.DisplayShape(face)
 
 display.DisplayShape(aSegment)
