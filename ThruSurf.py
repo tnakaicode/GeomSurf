@@ -52,6 +52,14 @@ class GenThruSurf (dispocc):
             write_step_file(self.base, self.tmpdir +
                             "ThruSurf_{:d}.stp".format(num))
 
+        from OCC.Core.BRep import BRep_Tool, BRep_PointOnSurface
+        from OCC.Core.BRepLProp import BRepLProp_SurfaceTool
+        from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
+        from OCC.Core.TopOpeBRepTool import TopOpeBRepTool_face
+        print(self.base)
+        # surf = BRep_Tool.Surface(self.base)
+        # print(surf)
+
     def make_Thru(self, num=50):
         api = BRepOffsetAPI_ThruSections()
         print(self.poly.Location().Transformation())
