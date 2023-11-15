@@ -9,7 +9,8 @@ sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc, spl_face
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -24,23 +25,20 @@ from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 def curvature(px, r, s):
     """( x + sx )**2 / 2*rx + ( y + sy )**2 / 2*ry"""
-    if (r == 0):
+    if r == 0:
         py = np.zeros_like(px + s)
     else:
-        py = (px + s)**2 / (2 * r)
+        py = (px + s) ** 2 / (2 * r)
     return py
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--rxy", dest="rxy",
-                      default=[0.0, 0.0], type=float, nargs=2)
-    parser.add_argument("--lxy", dest="lxy",
-                      default=[200, 200], type=float, nargs=2)
-    parser.add_argument("--nxy", dest="nxy",
-                      default=[500, 500], type=int, nargs=2)
+    parser.add_argument("--rxy", dest="rxy", default=[0.0, 0.0], type=float, nargs=2)
+    parser.add_argument("--lxy", dest="lxy", default=[200, 200], type=float, nargs=2)
+    parser.add_argument("--nxy", dest="nxy", default=[500, 500], type=int, nargs=2)
     opt = parser.parse_args()
     print(opt, argvs)
 

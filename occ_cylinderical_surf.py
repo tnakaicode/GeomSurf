@@ -19,11 +19,19 @@ from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCC.Extend.DataExchange import write_stl_file, read_stl_file
-from OCCUtils.Construct import make_edge, make_face, make_polygon, make_wire, point_to_vector, vector_to_point
+from OCCUtils.Construct import (
+    make_edge,
+    make_face,
+    make_polygon,
+    make_wire,
+    point_to_vector,
+    vector_to_point,
+)
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 
 def make_spiral(r=1, z=1.0):
@@ -39,30 +47,31 @@ def make_spiral(r=1, z=1.0):
     return make_polygon(pts, closed=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt, argvs)
 
     obj = dispocc(touch=True)
     axs = gp_Ax3()
-    
+
     circ_ax2 = axs.Ax2()
     circ = gp_Circ(circ_ax2, 75)
     circ_edg = make_edge(circ)
 
     elip_ax2 = axs.Ax2()
-    elip = make_wire(make_edge(gp_Elips (elip_ax2, 100, 50)))
-    
+    elip = make_wire(make_edge(gp_Elips(elip_ax2, 100, 50)))
+
     rd = PrsDim_RadiusDimension(circ_edg)
     the_aspect = Prs3d_DimensionAspect()
     the_aspect.SetCommonColor(Quantity_Color(Quantity_NOC_BLACK))
     rd.SetDimensionAspect(the_aspect)
-    
+
     obj.display.Context.Display(rd, True)
     obj.display.DisplayShape(elip)
     obj.display.DisplayShape(circ_edg)
