@@ -44,6 +44,7 @@ def edge_midpoint(edg=TopoDS_Edge()):
     u1 = tool.LastParameter(BRepAdaptor_Curve(edg))
     return tool.Value(BRepAdaptor_Curve(edg), (u0 + u1) / 2)
 
+
 def edge_1stpoint(edg=TopoDS_Edge()):
     from OCC.Core.BRepGProp import BRepGProp_EdgeTool
     from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
@@ -51,12 +52,14 @@ def edge_1stpoint(edg=TopoDS_Edge()):
     u0 = tool.FirstParameter(BRepAdaptor_Curve(edg))
     return tool.Value(BRepAdaptor_Curve(edg), u0)
 
+
 def edge_endpoint(edg=TopoDS_Edge()):
     from OCC.Core.BRepGProp import BRepGProp_EdgeTool
     from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
     tool = BRepGProp_EdgeTool()
     u1 = tool.LastParameter(BRepAdaptor_Curve(edg))
     return tool.Value(BRepAdaptor_Curve(edg), u1)
+
 
 def make_fillet(e1=TopoDS_Edge(), e2=TopoDS_Edge(), radii=10):
     f = ChFi2d_AnaFilletAlgo()
@@ -67,6 +70,7 @@ def make_fillet(e1=TopoDS_Edge(), e2=TopoDS_Edge(), radii=10):
     print("e1->f2", edge_endpoint(e1), edge_1stpoint(f2))
     print("f2->e2", edge_endpoint(f2), edge_1stpoint(e2))
     return e1, f2, e2
+
 
 if __name__ == '__main__':
     argvs = sys.argv
@@ -92,10 +96,10 @@ if __name__ == '__main__':
     pln = gp_Pln()
     radii = 20.0
     poly = make_wire(edg)
-    
-    #edg = [make_edge(pts[0], pts[1]),
+
+    # edg = [make_edge(pts[0], pts[1]),
     #       make_edge(pts[1], pts[2]),]
-    #for i, p in enumerate(pts):
+    # for i, p in enumerate(pts):
     #    e1, e2 = edg[-2], edg[-1]
     f = ChFi2d_AnaFilletAlgo()
     edg = []
@@ -108,7 +112,7 @@ if __name__ == '__main__':
     print("0->1->2", pts[0], pts[1], pts[2], edge_length(f01))
     print("e0->f01", edge_endpoint(e0), edge_1stpoint(f01))
     print("f01->e1", edge_1stpoint(e1), edge_endpoint(f01))
-    
+
     # for i, p in enumerate(pts):
     #    i1, i2, i3 = i, (i + 1) % (len(pts)), (i + 2) % (len(pts))
     #    p1, p2, p3 = pts[i1], pts[i2], pts[i3]
@@ -137,7 +141,7 @@ if __name__ == '__main__':
     #    fi = f.Result(edg[i], edg[i+1])
     #    print(edge_length(fi))
     #    print(edge_length(edg[i]), edge_length(edg[i+1]))
-    
+
     e2 = make_edge(pts[2], pts[3])
     print("e1", edge_1stpoint(e1), edge_endpoint(e1))
     print("e2", edge_1stpoint(e2), edge_endpoint(e2))
@@ -150,11 +154,11 @@ if __name__ == '__main__':
     print("e1->f12", edge_endpoint(e1), edge_1stpoint(f12))
     print("f12->e3", edge_1stpoint(e2), edge_endpoint(f12))
 
-    #e2, e3 = edg[-1], make_edge(pts[4], pts[3])
-    #f.Init(e2, e3, pln)
-    #f.Perform(radii)
-    #f23 = f.Result(e2, e3)
-    #edg += [f23, e3]
+    # e2, e3 = edg[-1], make_edge(pts[4], pts[3])
+    # f.Init(e2, e3, pln)
+    # f.Perform(radii)
+    # f23 = f.Result(e2, e3)
+    # edg += [f23, e3]
     #
     # edg.insert(1, fil[0])
     # edg.insert(3, fil[1])
