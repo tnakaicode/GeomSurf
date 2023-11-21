@@ -66,7 +66,7 @@ def make_fillet(e1=TopoDS_Edge(), e2=TopoDS_Edge(), radii=10):
     f.Init(e1, e2, pln)
     f.Perform(radii)
     f2 = f.Result(e1, e2)
-    print("f2", edge_length(f01))
+    print("f2", edge_length(f2))
     print("e1->f2", edge_endpoint(e1), edge_1stpoint(f2))
     print("f2->e2", edge_endpoint(f2), edge_1stpoint(e2))
     return e1, f2, e2
@@ -88,30 +88,39 @@ if __name__ == '__main__':
         gp_Pnt(-50, -50, 0),
         gp_Pnt(50, -50, 0),
         gp_Pnt(50, 50, 0),
-        gp_Pnt(0, 60, 0),
+        gp_Pnt(20, 60, 0),
+        gp_Pnt(40, -40, 0),
         gp_Pnt(-50, 50, 0),
     ]
-    edg = [make_edge(pts[pts[i], (i + 1) % len(pts)]) for i in range(len(pts))]
+    edg = [make_edge(pts[i], pts[(i + 1) % len(pts)]) for i in range(len(pts))]
     fil = []
     pln = gp_Pln()
-    radii = 20.0
+    radii = 5.0
     poly = make_wire(edg)
+    obj.display.DisplayShape(edg, color="BLUE1")
 
-    # edg = [make_edge(pts[0], pts[1]),
-    #       make_edge(pts[1], pts[2]),]
-    # for i, p in enumerate(pts):
-    #    e1, e2 = edg[-2], edg[-1]
-    f = ChFi2d_AnaFilletAlgo()
-    edg = []
-    e0 = make_edge(pts[0], pts[1])
-    e1 = make_edge(pts[1], pts[2])
-    f.Init(e0, e1, pln)
-    f.Perform(radii)
-    f01 = f.Result(e0, e1)
-    edg += [e0, f01, e1]
-    print("0->1->2", pts[0], pts[1], pts[2], edge_length(f01))
-    print("e0->f01", edge_endpoint(e0), edge_1stpoint(f01))
-    print("f01->e1", edge_1stpoint(e1), edge_endpoint(f01))
+    edg = [make_edge(pts[0], pts[1])]
+    for i, p in enumerate(pts + [pts[0]]):
+        i1, i2 = (i + 1) % (len(pts)), (i + 2) % (len(pts))
+        e1, e2 = edg[-1], make_edge(pts[i1], pts[i2])
+        e1, f2, e2 = make_fillet(e1, e2, radii)
+        edg[-1] = e1
+        edg += [f2, e2]
+    edg.pop(0)
+    edg.pop(-1)
+    edg.pop(-1)
+
+    # f = ChFi2d_AnaFilletAlgo()
+    # edg = []
+    # e0 = make_edge(pts[0], pts[1])
+    # e1 = make_edge(pts[1], pts[2])
+    # f.Init(e0, e1, pln)
+    # f.Perform(radii)
+    # f01 = f.Result(e0, e1)
+    # edg += [e0, f01, e1]
+    # print("0->1->2", pts[0], pts[1], pts[2], edge_length(f01))
+    # print("e0->f01", edge_endpoint(e0), edge_1stpoint(f01))
+    # print("f01->e1", edge_1stpoint(e1), edge_endpoint(f01))
 
     # for i, p in enumerate(pts):
     #    i1, i2, i3 = i, (i + 1) % (len(pts)), (i + 2) % (len(pts))
@@ -142,17 +151,17 @@ if __name__ == '__main__':
     #    print(edge_length(fi))
     #    print(edge_length(edg[i]), edge_length(edg[i+1]))
 
-    e2 = make_edge(pts[2], pts[3])
-    print("e1", edge_1stpoint(e1), edge_endpoint(e1))
-    print("e2", edge_1stpoint(e2), edge_endpoint(e2))
-    f = ChFi2d_AnaFilletAlgo()
-    f.Init(e1, e2, pln)
-    f.Perform(radii)
-    f12 = f.Result(e1, e2)
-    edg += [f12, e2]
-    print("1->2->3", pts[1], pts[2], pts[3], edge_length(f12))
-    print("e1->f12", edge_endpoint(e1), edge_1stpoint(f12))
-    print("f12->e3", edge_1stpoint(e2), edge_endpoint(f12))
+    # e2 = make_edge(pts[2], pts[3])
+    # print("e1", edge_1stpoint(e1), edge_endpoint(e1))
+    # print("e2", edge_1stpoint(e2), edge_endpoint(e2))
+    # f = ChFi2d_AnaFilletAlgo()
+    # f.Init(e1, e2, pln)
+    # f.Perform(radii)
+    # f12 = f.Result(e1, e2)
+    # edg += [f12, e2]
+    # print("1->2->3", pts[1], pts[2], pts[3], edge_length(f12))
+    # print("e1->f12", edge_endpoint(e1), edge_1stpoint(f12))
+    # print("f12->e3", edge_1stpoint(e2), edge_endpoint(f12))
 
     # e2, e3 = edg[-1], make_edge(pts[4], pts[3])
     # f.Init(e2, e3, pln)
@@ -163,8 +172,7 @@ if __name__ == '__main__':
     # edg.insert(1, fil[0])
     # edg.insert(3, fil[1])
 
-    # poly = make_wire([edg[0], fil[0], edg[1], fil[1], edg[2], edg[3], edg[4]])
-    # obj.display.DisplayShape(poly)
-    obj.display.DisplayShape(edg, color="BLUE1")
+    poly = make_wire(edg)
+    obj.display.DisplayShape(poly)
     [obj.display.DisplayShape(edge_midpoint(e)) for e in edg + fil]
     obj.ShowOCC()
