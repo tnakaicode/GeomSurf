@@ -23,7 +23,7 @@ from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Common import vertex2pnt, curve_length, midpoint
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
-from OCCUtils.Construct import make_plane, make_polygon
+from OCCUtils.Construct import make_plane, make_polygon, make_face
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir, vertex2pnt
 
@@ -61,15 +61,17 @@ def edge_endpoint(edg=TopoDS_Edge()):
     return tool.Value(BRepAdaptor_Curve(edg), u1)
 
 
-def make_fillet(e1=TopoDS_Edge(), e2=TopoDS_Edge(), radii=10):
+def make_fillet(e1=TopoDS_Edge(), e2=TopoDS_Edge(), radii=10, pln=gp_Pln()):
     f = ChFi2d_AnaFilletAlgo()
     f.Init(e1, e2, pln)
-    f.Perform(radii)
-    f2 = f.Result(e1, e2)
-    print("f2", edge_length(f2))
-    print("e1->f2", edge_endpoint(e1), edge_1stpoint(f2))
-    print("f2->e2", edge_endpoint(f2), edge_1stpoint(e2))
-    return e1, f2, e2
+    if radii == 0 or radii == None or f.Perform(radii) != True:
+        return [e1, e2]
+    else:
+        f2 = f.Result(e1, e2)
+        print("f2", edge_length(f2))
+        print("e1->f2", edge_endpoint(e1), edge_1stpoint(f2))
+        print("f2->e2", edge_endpoint(f2), edge_1stpoint(e2))
+        return [e1, f2, e2]
 
 
 if __name__ == '__main__':
@@ -84,14 +86,17 @@ if __name__ == '__main__':
     obj = dispocc(touch=True)
     axs = gp_Ax3()
 
-    pts = [
-        gp_Pnt(-50, -50, 0),
-        gp_Pnt(50, -50, 0),
-        gp_Pnt(50, 50, 0),
-        gp_Pnt(20, 60, 0),
-        gp_Pnt(40, -40, 0),
-        gp_Pnt(-50, 50, 0),
+    data = [
+        [[-50, -50, 0], 10],
+        [[50, -50, 0], 10],
+        [[50, 50, 0], 10],
+        [[20, 60, 0], 500],
+        [[40, -40, 0], 2],
+        [[-50, 50, 0], 10],
     ]
+
+    pts = [gp_Pnt(*dat) for (dat, r) in data]
+    rad = [r for (dat, r) in data]
     edg = [make_edge(pts[i], pts[(i + 1) % len(pts)]) for i in range(len(pts))]
     fil = []
     pln = gp_Pln()
@@ -102,10 +107,11 @@ if __name__ == '__main__':
     edg = [make_edge(pts[0], pts[1])]
     for i, p in enumerate(pts + [pts[0]]):
         i1, i2 = (i + 1) % (len(pts)), (i + 2) % (len(pts))
+        radii = rad[i1]
         e1, e2 = edg[-1], make_edge(pts[i1], pts[i2])
-        e1, f2, e2 = make_fillet(e1, e2, radii)
-        edg[-1] = e1
-        edg += [f2, e2]
+        edges = make_fillet(e1, e2, radii, pln)
+        edg[-1] = edges[0]
+        edg += edges[1:]
     edg.pop(0)
     edg.pop(-1)
     edg.pop(-1)
@@ -174,5 +180,6 @@ if __name__ == '__main__':
 
     poly = make_wire(edg)
     obj.display.DisplayShape(poly)
+    obj.display.DisplayShape(make_face(poly))
     [obj.display.DisplayShape(edge_midpoint(e)) for e in edg + fil]
     obj.ShowOCC()
