@@ -4,6 +4,7 @@ import sys
 import os
 import time
 import argparse
+from itertools import accumulate, repeat, takewhile
 from linecache import getline, clearcache, updatecache
 
 basename = os.path.dirname(__file__)
@@ -16,9 +17,14 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3, gp_Trsf, gp_Translation
-from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound
+from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Solid, TopoDS_Shell
 from OCC.Core.TopLoc import TopLoc_Location
+from OCC.Core.ChFi3d import ChFi3d_Rational
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Fuse
+from OCC.Core.BRepFill import BRepFill_Filling
+from OCC.Core.BRepFilletAPI import BRepFilletAPI_MakeFillet, BRepFilletAPI_MakeChamfer
+from OCC.Core.LocOpe import LocOpe_FindEdges
+from OCC.Core.Message import Message_ProgressRange
 from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Common import vertex2pnt
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
@@ -38,6 +44,15 @@ if __name__ == '__main__':
     obj = dispocc(touch=True)
     axs = gp_Ax3()
 
+    box = make_box(gp_Pnt(0, 0, 0), 20, 20, 20)
+    box_faces = list(TopologyExplorer(box).faces())
+    print(box)
+    obj.selected_shape = [box_faces[0],
+                          box_faces[2], box_faces[4], box_faces[5]]
+    # obj.selected_shape = box_faces
+    box = obj.make_shell_selcted()
+    print(box)
+
     pts1 = [
         gp_Pnt(-20, 0, 0),
         gp_Pnt(30, 0, 0),
@@ -45,13 +60,40 @@ if __name__ == '__main__':
         gp_Pnt(-20, 30, 0),
     ]
     face1 = make_face(make_polygon(pts1, closed=True))
+    edge1 = list(TopologyExplorer(face1).vertices())
 
     face2 = make_face(make_polygon(pts1, closed=True))
     trsf2 = gp_Trsf()
-    trsf2.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), np.deg2rad(30))
+    trsf2.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), np.deg2rad(60))
     face2.Move(TopLoc_Location(trsf2))
-    face = BRepAlgoAPI_Fuse(face1, face2).Shape()
+    edge2 = list(TopologyExplorer(face2).vertices())
+
+    face3 = make_face(make_polygon(
+        [edge1[1], edge1[2], edge2[2]], closed=True))
+    face4 = make_face(make_polygon(
+        [edge1[0], edge1[3], edge2[3]], closed=True))
+
+    obj.selected_shape = [face1, face2, face3, face4]
+    face = obj.make_shell_selcted()
+    faces = list(TopologyExplorer(face).faces())
+    find_edge = LocOpe_FindEdges(faces[0], faces[1])
+    find_edge.InitIterator()
+    face_edge = find_edge.EdgeTo()
+    face_edge = list(TopologyExplorer(face).edges())[0]
+
+    pr = Message_ProgressRange()
+    fillet = BRepFilletAPI_MakeFillet(face, 2)
+    fillet.Add(5, face_edge)
+    # print(list(TopologyExplorer(face).faces_from_edge(face_edge)))
+    fillet.Build()
+    if fillet.IsDone():
+        obj.display.DisplayShape(fillet.Shape())
+    else:
+        print(fillet.IsDone())
+
+    print(list(takewhile(lambda x: x <= 20, accumulate(repeat(5), lambda x, _: x + 3))))
 
     # obj.display.DisplayShape([face1, face2])
-    obj.display.DisplayShape(face)
+    obj.display.DisplayShape(face_edge, color="BLUE1")
+    obj.display.DisplayShape(face, transparency=0.7)
     obj.ShowOCC()

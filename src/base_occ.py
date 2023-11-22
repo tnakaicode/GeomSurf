@@ -38,7 +38,7 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_XYZ
 from OCC.Core.gp import gp_Lin, gp_Elips, gp_Pln
 from OCC.Core.gp import gp_Mat, gp_GTrsf, gp_Trsf
-from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Face, topods_Face, topods_Solid
+from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Face, topods_Face, topods_Solid, TopoDS_Shell
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
@@ -652,6 +652,15 @@ class Viewer (object):
         bild = BRep_Builder()
         comp = TopoDS_Compound()
         bild.MakeCompound(comp)
+        for shp in self.selected_shape:
+            print(shp)
+            bild.Add(comp, shp)
+        return comp
+
+    def make_shell_selcted(self):
+        bild = BRep_Builder()
+        comp = TopoDS_Shell()
+        bild.MakeShell(comp)
         for shp in self.selected_shape:
             print(shp)
             bild.Add(comp, shp)
