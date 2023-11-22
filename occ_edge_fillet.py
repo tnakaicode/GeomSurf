@@ -96,8 +96,7 @@ if __name__ == '__main__':
 
     pr = Message_ProgressRange()
     fillet = BRepFilletAPI_MakeFillet(box, 0)
-    fillet.Add(face_edge)
-    fillet.SetRadius(5, 1, 1)
+    fillet.Add(5, face_edge)
     print(list(TopologyExplorer(box).faces_from_edge(face_edge)))
     fillet.Build()
     if fillet.IsDone():
