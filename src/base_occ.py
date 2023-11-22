@@ -43,7 +43,7 @@ from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
 from OCC.Core.TopAbs import TopAbs_FACE, TopAbs_SOLID, TopAbs_VERTEX, TopAbs_SHAPE
-from OCC.Core.TopoDS import TopoDS_Iterator, topods_Vertex
+from OCC.Core.TopoDS import TopoDS_Iterator, topods
 from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRep import BRep_Builder
@@ -679,7 +679,7 @@ class Viewer (object):
         brt = BRep_Tool()
         s = shape.ShapeType()
         if s == TopAbs_VERTEX:
-            pnt = brt.Pnt(topods_Vertex(shape))
+            pnt = brt.Pnt(topods.Vertex(shape))
             dmp = " " * level
             dmp += "%s - " % shapeTypeString(shape)
             dmp += "%.5e %.5e %.5e" % (pnt.X(), pnt.Y(), pnt.Z())

@@ -38,9 +38,9 @@ def make_spiral(r=1, z=1.0):
         y = np.sin(r * t)
         z = pz[i]
         pts.append(gp_Pnt(x, y, z))
-    curv = make_edge(spl_curv_pts(pts))
+    pts_col, curv = spl_curv_pts(pts)
     edge = make_edge(pts[0], pts[-1])
-    return make_wire(curv, edge)
+    return make_wire(make_edge(curv), edge)
 
 
 def make_helix(r=1, z=1.0):
