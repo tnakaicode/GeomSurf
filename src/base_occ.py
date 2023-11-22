@@ -1437,7 +1437,7 @@ class dispocc (OCCApp):
     def proj_rim_pln(self, wire, surf, axs=gp_Ax3(), idx=0):
         proj = BRepProj_Projection(wire, surf, axs.Direction())
         i = 0
-        while proj.More() or i <= idx:
+        while proj.More() and i <= idx:
             poly = proj.Current()
             proj.Next()
             i += 1
