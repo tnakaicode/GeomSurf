@@ -44,11 +44,20 @@ if __name__ == '__main__':
     obj = dispocc(touch=True)
     axs = gp_Ax3()
 
+    box_trsf = gp_Trsf()
+    box_trsf.SetRotation(
+        gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), np.deg2rad(0))
     box = make_box(gp_Pnt(0, 0, 0), 20, 20, 20)
     box_faces = list(TopologyExplorer(box).faces())
     print(box)
+    print(box_faces[0].HashCode(1000000))
+    print([vertex2pnt(v) for v in TopologyExplorer(box_faces[0]).vertices()])
+    box_faces[0].Move(TopLoc_Location(box_trsf), True)
+    # box_faces[0].Reverse()
+    print(box_faces[0].HashCode(1000000))
+    print([vertex2pnt(v) for v in TopologyExplorer(box_faces[0]).vertices()])
     obj.selected_shape = [box_faces[0],
-                          box_faces[2], box_faces[4], box_faces[5]]
+                          box_faces[2]]
     # obj.selected_shape = box_faces
     box = obj.make_shell_selcted()
     print(box)
@@ -76,15 +85,20 @@ if __name__ == '__main__':
     obj.selected_shape = [face1, face2, face3, face4]
     face = obj.make_shell_selcted()
     faces = list(TopologyExplorer(face).faces())
-    find_edge = LocOpe_FindEdges(faces[0], faces[1])
+    find_edge = LocOpe_FindEdges(box_faces[0], box_faces[2])
     find_edge.InitIterator()
     face_edge = find_edge.EdgeTo()
-    face_edge = list(TopologyExplorer(face).edges())[0]
+    print([vertex2pnt(v)
+          for v in TopologyExplorer(find_edge.EdgeFrom()).vertices()])
+    print([vertex2pnt(v)
+          for v in TopologyExplorer(find_edge.EdgeTo()).vertices()])
+    # face_edge = list(TopologyExplorer(box).edges())[0]
 
     pr = Message_ProgressRange()
-    fillet = BRepFilletAPI_MakeFillet(face, 2)
-    fillet.Add(5, face_edge)
-    # print(list(TopologyExplorer(face).faces_from_edge(face_edge)))
+    fillet = BRepFilletAPI_MakeFillet(box, 0)
+    fillet.Add(face_edge)
+    fillet.SetRadius(5, 1, 1)
+    print(list(TopologyExplorer(box).faces_from_edge(face_edge)))
     fillet.Build()
     if fillet.IsDone():
         obj.display.DisplayShape(fillet.Shape())
@@ -95,5 +109,5 @@ if __name__ == '__main__':
 
     # obj.display.DisplayShape([face1, face2])
     obj.display.DisplayShape(face_edge, color="BLUE1")
-    obj.display.DisplayShape(face, transparency=0.7)
+    obj.display.DisplayShape(box, transparency=0.7)
     obj.ShowOCC()
