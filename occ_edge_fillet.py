@@ -53,18 +53,18 @@ if __name__ == '__main__':
         gp_Pnt(-20, 30, 0),
     ]
     face1 = make_face(make_polygon(pts1, closed=True))
-    edge1 = list(TopologyExplorer(face1).vertices())
+    vert1 = list(TopologyExplorer(face1).vertices())
 
     face2 = make_face(make_polygon(pts1, closed=True))
     trsf2 = gp_Trsf()
     trsf2.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), np.deg2rad(60))
     face2.Move(TopLoc_Location(trsf2))
-    edge2 = list(TopologyExplorer(face2).vertices())
+    vert2 = list(TopologyExplorer(face2).vertices())
 
     face3 = make_face(make_polygon(
-        [edge1[1], edge1[2], edge2[2]], closed=True))
+        [vert1[1], gp_Pnt(30, 20, 0), gp_Pnt(31, 20, 10)], closed=True))
     face4 = make_face(make_polygon(
-        [edge1[0], edge1[3], edge2[3]], closed=True))
+        [vert1[0], vert1[3], vert2[3]], closed=True))
 
     # Make Shell by only two faces that are sewed
     sew = BRepBuilderAPI_Sewing()
@@ -90,6 +90,7 @@ if __name__ == '__main__':
     fillet.Build()
     if fillet.IsDone():
         obj.display.DisplayShape(fillet.Shape())
+        # obj.export_stp(fillet.Shape())
     else:
         print(fillet.IsDone())
 
