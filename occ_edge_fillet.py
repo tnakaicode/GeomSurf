@@ -20,6 +20,8 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3, gp_Trsf, gp_Translation
 from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Solid, TopoDS_Shell
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.ChFi3d import ChFi3d_Rational
+from OCC.Core.BRep import BRep_Builder
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Sewing
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Fuse
 from OCC.Core.BRepFill import BRepFill_Filling
 from OCC.Core.BRepFilletAPI import BRepFilletAPI_MakeFillet, BRepFilletAPI_MakeChamfer
@@ -64,23 +66,28 @@ if __name__ == '__main__':
     face4 = make_face(make_polygon(
         [edge1[0], edge1[3], edge2[3]], closed=True))
 
-    obj.selected_shape = [face1, face2, face3, face4]
-    face = obj.make_shell_selcted()
-    faces = list(TopologyExplorer(face).faces())
-    find_edge = LocOpe_FindEdges(faces[0], faces[2])
+    # Make Shell by only two faces that are sewed
+    sew = BRepBuilderAPI_Sewing()
+    for face in [face1, face2, face3]:
+        sew.Add(face)
+    sew.Perform()
+    sewed = sew.SewedShape()
+
+    # Find Edge that the two faces share
+    find_edge = LocOpe_FindEdges(face1, face2)
     find_edge.InitIterator()
     face_edge = find_edge.EdgeTo()
-    print([vertex2pnt(v)
-          for v in TopologyExplorer(find_edge.EdgeFrom()).vertices()])
-    print([vertex2pnt(v)
-          for v in TopologyExplorer(find_edge.EdgeTo()).vertices()])
-    # face_edge = list(TopologyExplorer(box).edges())[0]
+
+    # Find Edge of sewed shape that is shared with common_edge
+    find_edge = LocOpe_FindEdges(face_edge, sewed)
+    find_edge.InitIterator()
+    face_edge = find_edge.EdgeTo()
 
     pr = Message_ProgressRange()
-    fillet = BRepFilletAPI_MakeFillet(face, 0)
+    fillet = BRepFilletAPI_MakeFillet(sewed, 0)
     fillet.Add(5, face_edge)
-    print(list(TopologyExplorer(face).faces_from_edge(face_edge)))
-    # fillet.Build()
+    print(list(TopologyExplorer(sewed).faces_from_edge(face_edge)))
+    fillet.Build()
     if fillet.IsDone():
         obj.display.DisplayShape(fillet.Shape())
     else:
@@ -90,5 +97,5 @@ if __name__ == '__main__':
 
     # obj.display.DisplayShape([face1, face2])
     obj.display.DisplayShape(face_edge, color="BLUE1")
-    obj.display.DisplayShape(face, transparency=0.7)
+    obj.display.DisplayShape(sewed, transparency=0.7)
     obj.ShowOCC()
