@@ -44,24 +44,6 @@ if __name__ == '__main__':
     obj = dispocc(touch=True)
     axs = gp_Ax3()
 
-    box_trsf = gp_Trsf()
-    box_trsf.SetRotation(
-        gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), np.deg2rad(0))
-    box = make_box(gp_Pnt(0, 0, 0), 20, 20, 20)
-    box_faces = list(TopologyExplorer(box).faces())
-    print(box)
-    print(box_faces[0].HashCode(1000000))
-    print([vertex2pnt(v) for v in TopologyExplorer(box_faces[0]).vertices()])
-    box_faces[0].Move(TopLoc_Location(box_trsf), True)
-    # box_faces[0].Reverse()
-    print(box_faces[0].HashCode(1000000))
-    print([vertex2pnt(v) for v in TopologyExplorer(box_faces[0]).vertices()])
-    obj.selected_shape = [box_faces[0],
-                          box_faces[2]]
-    # obj.selected_shape = box_faces
-    box = obj.make_shell_selcted()
-    print(box)
-
     pts1 = [
         gp_Pnt(-20, 0, 0),
         gp_Pnt(30, 0, 0),
@@ -85,7 +67,7 @@ if __name__ == '__main__':
     obj.selected_shape = [face1, face2, face3, face4]
     face = obj.make_shell_selcted()
     faces = list(TopologyExplorer(face).faces())
-    find_edge = LocOpe_FindEdges(box_faces[0], box_faces[2])
+    find_edge = LocOpe_FindEdges(faces[0], faces[2])
     find_edge.InitIterator()
     face_edge = find_edge.EdgeTo()
     print([vertex2pnt(v)
@@ -95,10 +77,10 @@ if __name__ == '__main__':
     # face_edge = list(TopologyExplorer(box).edges())[0]
 
     pr = Message_ProgressRange()
-    fillet = BRepFilletAPI_MakeFillet(box, 0)
+    fillet = BRepFilletAPI_MakeFillet(face, 0)
     fillet.Add(5, face_edge)
-    print(list(TopologyExplorer(box).faces_from_edge(face_edge)))
-    fillet.Build()
+    print(list(TopologyExplorer(face).faces_from_edge(face_edge)))
+    # fillet.Build()
     if fillet.IsDone():
         obj.display.DisplayShape(fillet.Shape())
     else:
@@ -108,5 +90,5 @@ if __name__ == '__main__':
 
     # obj.display.DisplayShape([face1, face2])
     obj.display.DisplayShape(face_edge, color="BLUE1")
-    obj.display.DisplayShape(box, transparency=0.7)
+    obj.display.DisplayShape(face, transparency=0.7)
     obj.ShowOCC()
