@@ -17,7 +17,7 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3, gp_Trsf, gp_Translation
-from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Solid, TopoDS_Shell
+from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Solid, TopoDS_Shell, TopoDS_Face
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.ChFi3d import ChFi3d_Rational
 from OCC.Core.BRep import BRep_Builder
@@ -33,6 +33,21 @@ from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon, make_face
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
+
+
+def find_fillet_edge(sewed=TopoDS_Shape(), face1=TopoDS_Face(), face2=TopoDS_Face()):
+    # Find Edge that the two faces share
+    find_edge = LocOpe_FindEdges(face1, face2)
+    find_edge.InitIterator()
+    face_edge = find_edge.EdgeTo()
+
+    # Find Edge of sewed shape that is shared with common_edge
+    find_edge = LocOpe_FindEdges(face_edge, sewed)
+    find_edge.InitIterator()
+    face_edge = find_edge.EdgeTo()
+    print(list(TopologyExplorer(sewed).faces_from_edge(face_edge)))
+    return face_edge
+
 
 if __name__ == '__main__':
     argvs = sys.argv
@@ -68,25 +83,18 @@ if __name__ == '__main__':
 
     # Make Shell by only two faces that are sewed
     sew = BRepBuilderAPI_Sewing()
-    for face in [face1, face2, face3]:
+    for face in [face1, face2, face3, face4]:
         sew.Add(face)
     sew.Perform()
     sewed = sew.SewedShape()
 
-    # Find Edge that the two faces share
-    find_edge = LocOpe_FindEdges(face1, face2)
-    find_edge.InitIterator()
-    face_edge = find_edge.EdgeTo()
-
-    # Find Edge of sewed shape that is shared with common_edge
-    find_edge = LocOpe_FindEdges(face_edge, sewed)
-    find_edge.InitIterator()
-    face_edge = find_edge.EdgeTo()
+    fillet_edge12 = find_fillet_edge(sewed, face1, face2)
+    fillet_edge14 = find_fillet_edge(sewed, face1, face4)
 
     pr = Message_ProgressRange()
     fillet = BRepFilletAPI_MakeFillet(sewed, 0)
-    fillet.Add(5, face_edge)
-    print(list(TopologyExplorer(sewed).faces_from_edge(face_edge)))
+    fillet.Add(5, fillet_edge12)
+    fillet.Add(3, fillet_edge14)
     fillet.Build()
     if fillet.IsDone():
         obj.display.DisplayShape(fillet.Shape())
@@ -97,6 +105,7 @@ if __name__ == '__main__':
     print(list(takewhile(lambda x: x <= 20, accumulate(repeat(5), lambda x, _: x + 3))))
 
     # obj.display.DisplayShape([face1, face2])
-    obj.display.DisplayShape(face_edge, color="BLUE1")
+    obj.display.DisplayShape(fillet_edge12, color="BLUE1")
+    obj.display.DisplayShape(fillet_edge14, color="BLUE1")
     obj.display.DisplayShape(sewed, transparency=0.7)
     obj.ShowOCC()
