@@ -8,6 +8,7 @@ import argparse
 from OCC.Core.gp import gp_Pnt, gp_PntMirror, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections
+from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Construct import make_polygon
 
 sys.path.append(os.path.join("../"))
@@ -21,7 +22,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
     parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
     opt = parser.parse_args()
     print(opt, argvs)
 
@@ -38,9 +39,13 @@ if __name__ == '__main__':
     for i0, v0 in enumerate(v1):
         pts = []
         for j0, u0 in enumerate(u1):
-            pts.append(gp_Pnt(x[i0,j0], y[i0,j0], z[i0,j0]))        
+            pts.append(gp_Pnt(x[i0, j0], y[i0, j0], z[i0, j0]))
         wire = make_polygon(pts)
         api.AddWire(wire)
+    api.SetContinuity(1)
     api.Build()
+    shp = api.Shape()
+    print(list(TopologyExplorer(shp).faces()),
+          TopologyExplorer(shp).number_of_faces())
     obj.display.DisplayShape(api.Shape(), transparency=0.9)
     obj.ShowOCC()
