@@ -69,10 +69,9 @@ aSegment = GCE2d_MakeSegment(aLine2d, 0, 1).Value()
 t0, t1 = 0.0, uv * 2 * pi * ur
 helix_wire = make_helix_wire(aSegment, aCone, t0, t1)
 # face = make_face(aCone.Cone(), helix_wire)
-display.DisplayShape(make_face(aCone.Cone(), 0, 2 * pi, 0, 10))
+display.DisplayShape(make_face(aCone.Cone(), 0, 2 * pi, -10, 10))
 display.DisplayShape(helix_wire)
 # display.DisplayShape(face)
-
 
 # Cylinder
 t0, t1 = 0.0, uv * 2 * pi * ur

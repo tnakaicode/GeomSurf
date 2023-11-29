@@ -25,16 +25,16 @@ from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections, BRepOffsetAPI_Mak
 from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Interval
 from OCC.Core.BRepOffset import BRepOffset_Skin, BRepOffset_Pipe, BRepOffset_RectoVerso
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism
+from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Curve2d
+from OCC.Core.Geom import Geom_Parabola, Geom_Surface, Geom_Curve, Geom_TrimmedCurve, Geom_Hyperbola
 from OCC.Core.GeomAbs import GeomAbs_C0
 from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc, GeomAbs_Tangent
-from OCC.Core.Geom import Geom_Parabola, Geom_Surface, Geom_Curve, Geom_TrimmedCurve, Geom_Hyperbola
 from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Common import vertex2pnt
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
-from OCCUtils.Construct import make_wire, make_edge, make_polygon, make_face
 
 
 def make_parabola(axs=gp_Ax3(), dst=100, width=[-50, 50], hight=[-50, 50], xyz="z"):
@@ -82,8 +82,12 @@ if __name__ == '__main__':
     obj = dispocc(touch=True)
 
     axs = gp_Ax3()
-    surf = Geom_Hyperbola(axs.Ax2(), 1000, 1000)
+    curv = Geom_Hyperbola(axs.Ax2(), 11, 10)
+    edg1 = make_edge(curv.Hypr(), -1, 2)
+    edg2 = make_edge(curv.ConjugateBranch1(), -2, 1)
+    print(BRepAdaptor_Curve(edg1).FirstParameter())
 
     obj.show_axs_pln()
-    obj.display.DisplayShape(surf)
+    obj.display.DisplayShape(edg1)
+    obj.display.DisplayShape(edg2)
     obj.ShowOCC()
