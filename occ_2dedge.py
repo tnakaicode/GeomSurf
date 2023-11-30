@@ -49,30 +49,39 @@ if __name__ == '__main__':
     ax2 = gp_Ax3(gp_Pnt(1, 0, 2), ax1.Direction())
     trf = gp_Trsf()
     trf.SetTransformation(ax1, gp_Ax3())
+    trf_2d = gp_Trsf2d()
+    trf_2d.SetRotation(gp_Pnt2d(0,0), np.deg2rad(45))
 
-    dat = [[pt, np.sin(pt)/2+1, 0] for pt in np.linspace(0, 2 * np.pi, 10)]
+    dat = [[pt, np.sin(pt) / 2 + 1, 0] for pt in np.linspace(0, 2 * np.pi, 10)]
     pts = [gp_Pnt(*d).Transformed(trf) for d in dat]
-    pts_2d = [gp_Pnt2d(d[0], d[1]).Transformed(gp_Trsf2d(trf)) for d in dat]
+    pts_2d = [gp_Pnt2d(d[0], d[1]).Transformed(trf_2d) for d in dat]
 
     col_pts = TColgp_Array1OfPnt(1, len(dat))
     col_pts_2d = TColgp_Array1OfPnt2d(1, len(dat))
     for i, xyz in enumerate(dat):
         col_pts.SetValue(i + 1, pts[i])
-        col_pts_2d.SetValue(i + 1, gp_Pnt2d(xyz[0], xyz[1]))
+        col_pts_2d.SetValue(i + 1, pts_2d[i])
 
     curv = GeomAPI_PointsToBSpline(col_pts, 3, 8).Curve()
     curv_2d = Geom2dAPI_PointsToBSpline(col_pts_2d, 3, 8).Curve()
 
     pln = obj.make_plane_axs(ax1, rx=[-1, 10], ry=[1.5, -1.5])
-    pln_surf = BRepAdaptor_Surface(pln, True).Surface()
+    pln_surf = BRepAdaptor_Surface(pln, True)
+    pln_surf1 = pln_surf.Surface()
+    pln_surf2 = pln_surf1.Surface()
+    print(pln, pln_surf, pln_surf1, pln_surf2)
+    print(pln_surf.FirstUParameter(), pln_surf.LastUParameter())
+    print(pln_surf.FirstVParameter(), pln_surf.LastVParameter())
 
     obj.display.DisplayShape(make_polygon(pts))
     # obj.display.DisplayShape(make_face(pln, make_polygon(pts)))
-    obj.display.DisplayShape(make_face(pln, make_wire(make_edge(curv, curv.FirstParameter(), curv.LastParameter()))))
+    obj.display.DisplayShape(make_face(pln, make_wire(
+        make_edge(curv, curv.FirstParameter(), curv.LastParameter()))))
     # [obj.display.DisplayShape(p) for p in pts_2d]
     obj.display.DisplayShape(curv)
     obj.display.DisplayShape(curv_2d)
-    obj.display.DisplayShape(make_edge(curv_2d, Geom_Plane(ax2)), color="BLUE1")
+    #obj.display.DisplayShape(make_edge(curv_2d, Geom_Plane(ax2)), color="BLUE1")
+    obj.display.DisplayShape(make_edge(curv_2d, pln_surf2), color="BLUE1")
 
     obj.show_axs_pln(scale=1)
     obj.ShowOCC()
