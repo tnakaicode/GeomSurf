@@ -20,9 +20,9 @@ pts.append(gp_Pnt(1, 1, -0.1))
 pts.append(gp_Pnt(1, 0, 0))
 pts.append(pts[0])
 
-face = obj.make_FaceByOrder(pts)
+_, face = obj.make_FaceByOrder(pts)
 sold = BRepPrimAPI_MakePrism(face, gp_Vec(0, 0, 2)).Shape()
 
 obj.display.DisplayShape(sold)
-obj.export_stp(sold)
+#obj.export_stp(sold)
 obj.ShowOCC()

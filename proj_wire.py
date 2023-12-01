@@ -15,18 +15,18 @@ logging.getLogger('matplotlib').setLevel(logging.ERROR)
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Pnt, gp_Dir, gp_Vec
 from OCC.Core.BRep import BRep_Tool
+from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor
 from OCC.Core.BRepProj import BRepProj_Projection
-from OCC.Core.GeomProjLib import geomprojlib_Project
 from OCCUtils.Topology import Topo
 from OCCUtils.Construct import vec_to_dir, dir_to_vec
-from OCCUtils.Construct import make_polygon
+from OCCUtils.Construct import make_polygon, make_wire
 
 if __name__ == '__main__':
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
     parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
     opt = parser.parse_args()
     print(opt, argvs)
 
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     pts.append(gp_Pnt(+100, +200, 0))
     pts.append(gp_Pnt(-400, +500, 0))
     poly = make_polygon(pts, closed=True)
-    #poly.Location(set_loc(gp_Ax3(), axs))
+    # poly.Location(set_loc(gp_Ax3(), axs))
 
     proj = BRepProj_Projection(poly, face, axs.Direction())
     proj_poly = proj.Current()
@@ -55,9 +55,14 @@ if __name__ == '__main__':
     obj.display.DisplayShape(face, color="BLUE", transparency=0.9)
     obj.display.DisplayShape(poly)
     obj.display.DisplayShape(proj_poly, color="BLUE")
+    tri = BRep_Tool.Triangulation(face, face.Location())
+    tri_list = BRep_Tool.Triangulations(face, face.Location())
+    print(tri.NbNodes(), tri.NbTriangles())
+    print(tri_list.Size())
 
     for i, e in enumerate(Topo(proj_poly).edges()):
         e_curve, u0, u1 = BRep_Tool.Curve(e)
+        e_curve_2d, _, _ = BRep_Tool.CurveOnSurface(e, face)
         u = (u0 + u1) / 2
         u01, u11 = (u + u0) / 2, (u + u1) / 2
         print(e, u0, u1)
@@ -77,6 +82,21 @@ if __name__ == '__main__':
         obj.display.DisplayVector(v0, p2)
         obj.display.DisplayMessage(p3, "u0")
         obj.display.DisplayMessage(p4, "u1")
+
+    print(proj_poly.Closed())
+    api_face = BRepAlgo_FaceRestrictor()
+    api_face.Init(face, False, True)
+    api_face.Add(proj_poly)
+    api_face.Perform()
+    while api_face.More():
+        trim_face = api_face.Current()
+        tri = BRep_Tool.Triangulation(trim_face, trim_face.Location())
+        tri_list = BRep_Tool.Triangulations(trim_face, trim_face.Location())
+        # print(tri.NbNodes(), tri.NbTriangles())
+        print(tri_list.Size())
+        obj.display.DisplayShape(trim_face)
+        # obj.export_stp(trim_face)
+        api_face.Next()
 
     obj.show_axs_pln(gp_Ax3(), scale=25, name="axs")
     obj.show_axs_pln(axs, scale=25, name="axs-surf")

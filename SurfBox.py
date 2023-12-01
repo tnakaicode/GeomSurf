@@ -21,7 +21,7 @@ from OCC.Core.GeomProjLib import geomprojlib
 from OCC.Core.TopoDS import TopoDS_Compound
 from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.TopAbs import TopAbs_FACE
-from OCC.Core.ShapeAnalysis import ShapeAnalysis_Surface, shapeanalysis_GetFaceUVBounds
+from OCC.Core.ShapeAnalysis import ShapeAnalysis_Surface, shapeanalysis
 from OCC.Extend.DataExchange import read_step_file, write_step_file
 from OCCUtils.Construct import make_n_sided, make_n_sections
 from OCCUtils.Construct import make_edge, make_polygon
@@ -44,7 +44,7 @@ class SurfBox (dispocc):
         print(self.face)
         self.surf = BRep_Tool.Surface(self.face)
 
-        u0, u1, v0, v1 = shapeanalysis_GetFaceUVBounds(self.face)
+        u0, u1, v0, v1 = shapeanalysis.GetFaceUVBounds(self.face)
         print(u0, u1, v0, v1)
         sas = ShapeAnalysis_Surface(self.surf)
         print(sas.Value(u0, v0))
