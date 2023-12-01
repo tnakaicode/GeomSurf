@@ -18,11 +18,11 @@ from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound
 from OCC.Core.TopLoc import TopLoc_Location
-from OCC.Core.BRepAdaptor import BRepAdaptor_CompCurve, BRepAdaptor_HCompCurve
+from OCC.Core.BRepAdaptor import BRepAdaptor_CompCurve, BRepAdaptor_HArray1OfCurve
 from OCC.Core.Approx import Approx_Curve2d, Approx_Curve3d
 from OCC.Core.GeomAbs import GeomAbs_Shape
 from OCC.Core.GeomAdaptor import GeomAdaptor_Curve
-from OCC.Core.GCPnts import GCPnts_AbscissaPoint_Length
+from OCC.Core.GCPnts import GCPnts_AbscissaPoint
 from OCCUtils.Topology import Topo
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
 from OCCUtils.Construct import make_plane, make_polygon
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
     parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
     opt = parser.parse_args()
     print(opt, argvs)
 
@@ -50,14 +50,14 @@ if __name__ == '__main__':
     wire = make_polygon(pts, closed=False)
 
     sample_resolution = 10
-    c = BRepAdaptor_CompCurve()
-    c.Initialize(wire, True)
-    curve = BRepAdaptor_HCompCurve(c)
+    curve = BRepAdaptor_CompCurve()
+    curve.Initialize(wire, True)
+    # curve = BRepAdaptor_HCompCurve(c)
     # compute length of curve for sampling
     approx = Approx_Curve3d(curve, 0.001, GeomAbs_Shape.GeomAbs_C2, 1000, 25)
     geom_curve = approx.Curve()
     adaptor_curve = GeomAdaptor_Curve(geom_curve)
-    l = GCPnts_AbscissaPoint_Length(adaptor_curve)
+    l = GCPnts_AbscissaPoint.Length(adaptor_curve)
     # sample from curve using
     nr_sample_points = int(sample_resolution * l)
     sampled_curve = []

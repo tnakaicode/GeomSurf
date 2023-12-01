@@ -6,8 +6,9 @@ from scipy.linalg import lu, svd
 np.random.seed(10)
 
 # ランダムな要素をもつ行列を生成
-n = 100
-A = np.random.randint(1, 10, (n, n))
+n1 = 1000
+n2 = 988
+A = np.random.randint(1, 10, (n1, n2))
 
 # PA=LU分解
 c = time.time()
@@ -24,14 +25,14 @@ print(time.time() - c)
 # print("U:\n{}".format(U))
 
 from OCC.Core.math import math_Matrix, math_Vector
-from OCC.Core.math import math_GaussLeastSquare, math_SVD
+from OCC.Core.math import math_GaussLeastSquare, math_SVD, math_BFGS
 
-vec_b = math_Vector(1, n, 1)
+vec_b = math_Vector(1, n1, 1)
 print(vec_b.Value(1))
 vec_b.Set(1, 1, math_Vector(1, 1, 0))
 print(vec_b.Value(1))
-vec_x = math_Vector(1, n, 0)
-mat = math_Matrix(1, n, 1, n)
+vec_x = math_Vector(1, n2, 0)
+mat = math_Matrix(1, n1, 1, n2)
 for (i, j), v in np.ndenumerate(A):
     mat.SetValue(i + 1, j + 1, float(v))
 
@@ -39,11 +40,15 @@ c = time.time()
 mat_LU = math_GaussLeastSquare(mat)
 mat_LU.Solve(vec_b, vec_x)
 print(time.time() - c)
+# print([vec_b.Value(i+1) for i in range(vec_b.Length())])
+# print([vec_x.Value(i+1) for i in range(vec_x.Length())])
 
 c = time.time()
 mat_SVD = math_SVD(mat)
 mat_SVD.Solve(vec_b, vec_x)
 print(time.time() - c)
+# print([vec_b.Value(i+1) for i in range(vec_b.Length())])
+# print([vec_x.Value(i+1) for i in range(vec_x.Length())])
 
 # print(vec_b)
 # vec_txt = ""

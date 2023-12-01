@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
     parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
     opt = parser.parse_args()
     print(opt, argvs)
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     obj.display.DisplayShape(poly)
     obj.display.DisplayShape(face)
     obj.display.DisplayShape(sold, transparency=0.9, color="BLUE1")
-    #obj.display.DisplayShape(sold, transparency=0.9, color=255)
+    # obj.display.DisplayShape(sold, transparency=0.9, color=255)
     obj.show_axs_pln(scale=50)
     obj.ShowOCC()
 
