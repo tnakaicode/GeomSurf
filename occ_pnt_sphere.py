@@ -566,7 +566,6 @@ def diagonal(im1, ip1, n, prev_node, next_node, x, y):
     value3 = diagonalie(im1, ip1, n, next_node, x, y)
 
     value = value1 and value2 and value3
-
     return value
 
 
@@ -605,10 +604,8 @@ def angle_degree(x1, y1, x2, y2, x3, y3):
     #    in degrees.  0 <= VALUE < 360.  If either ray has zero length,
     #    then VALUE is set to 0.
     #
-    import numpy as np
 
     x = (x3 - x2) * (x1 - x2) + (y3 - y2) * (y1 - y2)
-
     y = (x3 - x2) * (y1 - y2) - (y3 - y2) * (x1 - x2)
 
     if x == 0.0 and y == 0.0:
@@ -616,12 +613,10 @@ def angle_degree(x1, y1, x2, y2, x3, y3):
         return value
 
     value = np.arctan2(y, x)
-
     if value < 0.0:
         value = value + 2.0 * np.pi
 
     value = 180.0 * value / np.pi
-
     return value
 
 
@@ -965,6 +960,44 @@ def polygon_sample(nv, v, n, seed):
     return s, seed
 
 
+def pyramid01_sample(n, seed):
+    # *****************************************************************************80
+    #
+    # PYRAMID01_SAMPLE: sample the unit pyramid.
+    #
+    #  Licensing:
+    #
+    #    This code is distributed under the GNU LGPL license.
+    #
+    #  Modified:
+    #
+    #    22 June 2015
+    #
+    #  Author:
+    #
+    #    John Burkardt
+    #
+    #  Parameters:
+    #
+    #    Input, integer N, the number of samples desired.
+    #
+    #    Input/output, integer SEED, a seed for the random
+    #    number generator.
+    #
+    #    Output, real X(3,N), the sample values.
+    #
+    one_third = 1.0 / 3.0
+
+    x, seed = r8mat_uniform_ab(n, 3, 0, 1, seed)
+
+    for j in range(0, n):
+        x[j, 2] = 1.0 - x[j, 2] ** one_third
+        x[j, 1] = (1.0 - x[j, 2]) * (2.0 * x[j, 1] - 1.0)
+        x[j, 0] = (1.0 - x[j, 2]) * (2.0 * x[j, 0] - 1.0)
+
+    return x, seed
+
+
 if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
@@ -982,10 +1015,13 @@ if __name__ == "__main__":
     nv = 4
     v = np.array([[-0.5, -0.5], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]])
     seed = 123456789
-    xyz, seed = polygon_sample(nv, v, n, seed)
-    # xyz = np.random.normal(0.0, 1.0, [n, 3])
+    xyz, seed = polygon_sample(nv, v, n, seed)  # xyz: (n, 2)
+    xyz, seed = pyramid01_sample(n, seed)  # xyz: (3, n)
     for p in xyz:
-        obj.display.DisplayShape(gp_Pnt(*p, 0))
+        if len(p) == 2:
+            obj.display.DisplayShape(gp_Pnt(*p, 0))
+        else:
+            obj.display.DisplayShape(gp_Pnt(*p))
 
     obj.show_axs_pln(scale=1)
     obj.ShowOCC()
