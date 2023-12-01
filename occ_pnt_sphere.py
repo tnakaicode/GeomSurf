@@ -998,6 +998,105 @@ def pyramid01_sample(n, seed):
     return x, seed
 
 
+def circle01_sample_ergodic(n, angle):
+    # *****************************************************************************80
+    #
+    # CIRCLE01_SAMPLE_ERGODIC samples points on the circumference of the unit circle in 2D.
+    #
+    #  Licensing:
+    #
+    #    This code is distributed under the GNU LGPL license.
+    #
+    #  Modified:
+    #
+    #    06 June 2017
+    #
+    #  Author:
+    #
+    #    John Burkardt
+    #
+    #  Parameters:
+    #
+    #    Input, integer N, the number of points.
+    #
+    #    Input/output, real ANGLE, an angle between 0 and 2 PI.
+    #
+    #    Output, real X(2,N), the points.
+    #
+
+    r = 1.0
+    c = np.zeros(2)
+
+    golden_ratio = (1.0 + np.sqrt(5.0)) / 2.0
+
+    golden_angle = 2.0 * np.pi / golden_ratio**2
+
+    x = np.zeros([n, 2])
+
+    for j in range(0, n):
+        x[j, 0] = c[0] + r * np.cos(angle)
+        x[j, 1] = c[1] + r * np.sin(angle)
+        angle = np.mod(angle + golden_angle, 2.0 * np.pi)
+
+    return x, angle
+
+
+def circle01_sample_random(n, seed):
+    # *****************************************************************************80
+    #
+    # CIRCLE01_SAMPLE_RANDOM samples points on the circumference of the unit circle in 2D.
+    #
+    #  Licensing:
+    #
+    #    This code is distributed under the GNU LGPL license.
+    #
+    #  Modified:
+    #
+    #    21 June 2015
+    #
+    #  Author:
+    #
+    #    John Burkardt
+    #
+    #  Reference:
+    #
+    #    Russell Cheng,
+    #    Random Variate Generation,
+    #    in Handbook of Simulation,
+    #    edited by Jerry Banks,
+    #    Wiley, 1998, pages 168.
+    #
+    #    Reuven Rubinstein,
+    #    Monte Carlo Optimization, Simulation, and Sensitivity
+    #    of Queueing Networks,
+    #    Krieger, 1992,
+    #    ISBN: 0894647644,
+    #    LC: QA298.R79.
+    #
+    #  Parameters:
+    #
+    #    Input, integer N, the number of points.
+    #
+    #    Input/output, integer SEED, a seed for the random
+    #    number generator.
+    #
+    #    Output, real X(2,N), the points.
+    #
+
+    r = 1.0
+    c = np.zeros(2)
+
+    theta, seed = r8mat_uniform_ab(1, n, 0, 1, seed)
+
+    x = np.zeros([n, 2])
+
+    for j in range(0, n):
+        x[j, 0] = c[0] + r * np.cos(2.0 * np.pi * theta[j])
+        x[j, 1] = c[1] + r * np.sin(2.0 * np.pi * theta[j])
+
+    return x, seed
+
+
 if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
@@ -1020,6 +1119,20 @@ if __name__ == "__main__":
     for p in xyz:
         if len(p) == 2:
             obj.display.DisplayShape(gp_Pnt(*p, 0))
+        else:
+            obj.display.DisplayShape(gp_Pnt(*p))
+
+    xyz, seed = circle01_sample_ergodic(n, np.pi / 16)
+    for p in xyz:
+        if len(p) == 2:
+            obj.display.DisplayShape(gp_Pnt(*p, 1))
+        else:
+            obj.display.DisplayShape(gp_Pnt(*p))
+
+    xyz, seed = circle01_sample_random(n, seed)
+    for p in xyz:
+        if len(p) == 2:
+            obj.display.DisplayShape(gp_Pnt(*p, 2))
         else:
             obj.display.DisplayShape(gp_Pnt(*p))
 
