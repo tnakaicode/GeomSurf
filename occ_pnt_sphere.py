@@ -1122,10 +1122,17 @@ if __name__ == "__main__":
         else:
             obj.display.DisplayShape(gp_Pnt(*p))
 
-    xyz, seed = circle01_sample_ergodic(n, np.pi / 16)
+    xyz, _ = circle01_sample_ergodic(100, np.pi / 16)
     for p in xyz:
         if len(p) == 2:
             obj.display.DisplayShape(gp_Pnt(*p, 1))
+        else:
+            obj.display.DisplayShape(gp_Pnt(*p))
+
+    xyz, _ = circle01_sample_ergodic(100, np.pi / 6)
+    for p in xyz:
+        if len(p) == 2:
+            obj.display.DisplayShape(gp_Pnt(*p, 1.1))
         else:
             obj.display.DisplayShape(gp_Pnt(*p))
 
