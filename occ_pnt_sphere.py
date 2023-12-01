@@ -735,7 +735,8 @@ def polygon_triangulate(n, x, y):
     for node2 in range(0, n):
         node3 = (node2 + 1) % n
 
-        angle = angle_degree(x[node1], y[node1], x[node2], y[node2], x[node3], y[node3])
+        angle = angle_degree(x[node1], y[node1], x[node2],
+                             y[node2], x[node3], y[node3])
 
         if abs(angle) <= 1.0:
             print("")
@@ -780,7 +781,8 @@ def polygon_triangulate(n, x, y):
     #
     ear = np.zeros(n, dtype=bool)
     for i in range(0, n):
-        ear[i] = diagonal(prev_node[i], next_node[i], n, prev_node, next_node, x, y)
+        ear[i] = diagonal(prev_node[i], next_node[i],
+                          n, prev_node, next_node, x, y)
 
     triangle_num = 0
 
