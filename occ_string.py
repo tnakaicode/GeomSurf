@@ -78,7 +78,7 @@ if __name__ == '__main__':
     ]
     pts_axs = gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1))
     plate = obj.make_plate(pts, skin=-5.0, axs=pts_axs)
-    # obj.display.DisplayShape(plate)
+    obj.display.DisplayShape(plate, transparency=0.9)
 
     surf = obj.make_trimmedcylinder(axs, 100, 50, [-np.pi / 6, np.pi / 6])
     api = BRepOffset_MakeOffset(
@@ -130,6 +130,7 @@ if __name__ == '__main__':
                 False, False, GeomAbs_Arc,
                 True, True
             )
+            #obj.display.DisplayShape(api.Shape())
             obj.selected_shape.append(api.Shape())
         sold_string = obj.make_comp_selcted()
         obj.selected_shape = []
@@ -137,7 +138,7 @@ if __name__ == '__main__':
         sold_string = api.Shape()
 
     # obj.display.DisplayShape(brep_string)
-    #obj.display.DisplayShape(sold_string)
+    obj.display.DisplayShape(sold_string)
 
     plate_counterbore = boolean_cut(plate, sold_string)
     # obj.display.DisplayShape(plate_counterbore)
@@ -145,5 +146,5 @@ if __name__ == '__main__':
     surf_counterbore = boolean_common(surf_soild, sold_string)
     obj.display.DisplayShape(surf_counterbore)
 
-    # obj.show_axs_pln(scale=15)
+    obj.show_axs_pln(scale=15)
     obj.ShowOCC()
