@@ -136,4 +136,9 @@ if __name__ == '__main__':
     poly = make_wire(edg)
     obj.display.DisplayShape(poly, color="BLUE1")
 
+    e1, e2 = edg[1], edg[2]
+    edges = make_fillet(e1, e2, 5.0, pln)
+    obj.display.DisplayShape(edges)
+    # RuntimeError: Standard_TypeMismatchA segment or an arc of circle is expected. raised from method Init of class ChFi2d_AnaFilletAlgo
+
     obj.ShowOCC()
