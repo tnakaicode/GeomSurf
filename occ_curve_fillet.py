@@ -61,7 +61,7 @@ def edge_endpoint(edg=TopoDS_Edge()):
     return tool.Value(BRepAdaptor_Curve(edg), u1)
 
 
-def edge_rndpont(edg=TopoDS_Edge(), n=3):
+def edge_spline(edg=TopoDS_Edge(), n=3):
     from OCC.Core.BRepGProp import BRepGProp_EdgeTool
     from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
     from OCC.Core.BRepGProp import brepgprop
@@ -95,8 +95,9 @@ def edge_rndpont(edg=TopoDS_Edge(), n=3):
 
 
 def make_fillet(e1=TopoDS_Edge(), e2=TopoDS_Edge(), radii=10, pln=gp_Pln()):
+    w = make_wire([e1, e2])
     f = ChFi2d_AnaFilletAlgo()
-    f.Init(e1, e2, pln)
+    f.Init(w, pln)
     if radii == 0 or radii == None or f.Perform(radii) != True:
         return [e1, e2]
     else:
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     pts = [gp_Pnt(*dat) for (dat, r) in data]
     pln = gp_Pln(axs)
     edg = [make_edge(pts[i], pts[(i + 1) % len(pts)]) for i in range(len(pts))]
-    edg[0] = edge_rndpont(edg[0], 5)
+    edg[0] = edge_spline(edg[0], 3)
 
     poly = make_wire(edg)
     obj.display.DisplayShape(poly, color="BLUE1")
