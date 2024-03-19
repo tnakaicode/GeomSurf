@@ -40,7 +40,7 @@ if __name__ == "__main__":
     obj = dispocc(touch=True)
     axs = gp_Ax3()
 
-    e1 = make_edge([gp_Pnt(-1, -1, 0), gp_Pnt(1, 1, 0)])
-    e2 = make_edge([gp_Pnt(0, -1, -1), gp_Pnt(0, 1, 1)])
+    e1 = make_edge(gp_Pnt(-1, -1, 0), gp_Pnt(1, 1, 0))
+    e2 = make_edge(gp_Pnt(0, -1, -1), gp_Pnt(0, 1, 1))
 
     obj.ShowOCC()
