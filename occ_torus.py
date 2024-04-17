@@ -18,6 +18,7 @@ from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_Trsf
 from OCC.Core.gp import gp_Circ
+from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
 from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound
@@ -62,6 +63,9 @@ if __name__ == '__main__':
     shll = api.Shape()
     face = [f for f in TopologyExplorer(shll).faces()][0]
     surf = BRepAdaptor_Surface(face)
+    print(surf.FirstUParameter(), surf.LastUParameter())
+    surf1 = BRep_Tool.Surface(face)
+    print(surf1.Bounds())
 
     trsf = gp_Trsf()
     trsf.SetDisplacement(gp_Ax3(), tok)
