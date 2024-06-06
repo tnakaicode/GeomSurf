@@ -23,7 +23,7 @@ def make_offsetface(dat, axs=gp_Ax3()):
     pts = []
     for xyz in dat + [pts[0]]:
         pts.append(gp_Pnt(*xyz))
-    face = dispocc.make_FaceByOrder(pts)
+    _, face = dispocc.make_FaceByOrder(pts)
 
 
 if __name__ == '__main__':
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         pts.append(gp_Pnt(*xyz))
     br1 = make_polygon(pts, closed=True)
     br1.Location(set_loc(gp_Ax3(), ax1))
-    fc1 = obj.make_FaceByOrder(pts)
+    _, fc1 = obj.make_FaceByOrder(pts)
     fc1.Location(set_loc(gp_Ax3(), ax1))
     print(fc1)
     obj.display.DisplayShape(br1)
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         pts.append(gp_Pnt(*xyz))
     br2 = make_polygon(pts, closed=True)
     br2.Location(set_loc(gp_Ax3(), ax2))
-    fc2 = obj.make_FaceByOrder(pts)
+    _, fc2 = obj.make_FaceByOrder(pts)
     fc2.Location(set_loc(gp_Ax3(), ax2))
     print(fc2)
     obj.display.DisplayShape(br2)
