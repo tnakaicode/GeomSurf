@@ -42,8 +42,8 @@ if __name__ == '__main__':
     axs = gp_Ax3()
 
     sph = BRepPrimAPI_MakeSphere(axs.Ax2(), 100).Shape()
-    lin = gp_Lin(gp_Pnt(0, 0, 0), gp_Dir(0, 0.5, 1))
-    c1 = gp_Circ(axs.Ax2(), 50.0)
+    lin = gp_Lin(gp_Pnt(0, 0, 0), gp_Dir(0.1, 0.501, 1))
+    c1 = gp_Circ(gp_Ax2(gp_Pnt(0, 10, 0), gp_Dir(0, 0, 1)), 50.0)
     w1 = make_wire(make_edge(c1))
 
     proj = BRepProj_Projection(w1, sph, lin.Direction())
@@ -52,11 +52,13 @@ if __name__ == '__main__':
         proj_wire.append(proj.Current())
         proj.Next()
 
-    api = BRepOffsetAPI_ThruSections(True, False, 1.0E-6)
+    api = BRepOffsetAPI_ThruSections(True, True, 1.0E-6)
+    api.CheckCompatibility(True)
     api.AddWire(proj_wire[0])
     api.AddWire(proj_wire[1])
     api.Build()
     sol = api.Shape()
+    # fce = api.GeneratedFace()
 
     obj.display.DisplayShape(sph, transparency=0.9)
     obj.display.DisplayShape(sol, transparency=0.9, color="BLUE1")
