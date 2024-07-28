@@ -38,16 +38,17 @@ if __name__ == '__main__':
 
     obj = dispocc(touch=True)
     axs = gp_Ax3()
-    
-    circ = make_edge(gp_Circ(gp_Ax2(gp_Pnt(0, 10, 0), gp_Dir(1,0,0)), 10), np.pi/2, np.pi/2+np.pi/4)
+
+    circ = make_edge(gp_Circ(gp_Ax2(gp_Pnt(0, 50, 0), gp_Dir(1, 0, 0)), 50),
+                     np.pi / 2, np.pi / 2 + np.pi / 2)
     edg1 = make_edge(gp_Pnt(), gp_Pnt(0, 0, 100))
 
-    wire = make_wire(make_edge(gp_Pnt(), gp_Pnt(0, 0, 100)), circ)
+    wire = make_wire(edg1, circ)
     face = make_face(make_wire(make_edge(gp_Circ(gp_Ax2(), 50))))
     cylinder = BRepOffsetAPI_MakePipe(wire, face).Shape()
 
     obj.display.DisplayShape(cylinder, transparency=0.9)
     obj.display.DisplayShape(circ)
     obj.display.DisplayShape(edg1)
-    #obj.show_axs_pln()
+    # obj.show_axs_pln()
     obj.ShowOCC()
