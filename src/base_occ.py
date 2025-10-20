@@ -17,81 +17,142 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
-logging.getLogger('parso').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
+logging.getLogger("parso").setLevel(logging.ERROR)
 
 from PyQt5.QtWidgets import QApplication, qApp
 from PyQt5.QtWidgets import QDialog, QCheckBox
 from PyQt5.QtWidgets import QFileDialog
+
 # pip install PyQt5
 # pip install --upgrade --force-reinstall PyQt5
 
 sys.path.append(os.path.join("../"))
 from src.base import SetDir, plot2d, which, create_tempnum
 from src.base_qtOCC import init_QDisplay
-from base_qtOCC import init_QDisplay
 from src.OCCGui import init_qtdisplay
 
 from OCC.Display.SimpleGui import init_display
-from OCC.Core.gp import gp_Cylinder, gp_Pnt, gp_Vec, gp_Dir
+from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_XYZ
-from OCC.Core.gp import gp_Lin, gp_Elips, gp_Pln
+from OCC.Core.gp import gp_Lin, gp_Elips, gp_Pln, gp_Cylinder
 from OCC.Core.gp import gp_Mat, gp_GTrsf, gp_Trsf
-from OCC.Core.TopoDS import TopoDS_Iterator, topods
-from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Face, TopoDS_Shell
 from OCC.Core.TopLoc import TopLoc_Location
-from OCC.Core.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
-from OCC.Core.TColgp import TColgp_HArray1OfPnt, TColgp_HArray2OfPnt
-from OCC.Core.TopAbs import TopAbs_FACE, TopAbs_SOLID, TopAbs_VERTEX, TopAbs_SHAPE
+from OCC.Core.TopAbs import (
+    TopAbs_FACE,
+    TopAbs_SOLID,
+    TopAbs_VERTEX,
+    TopAbs_SHAPE,
+    TopAbs_EDGE,
+)
+from OCC.Core.TopoDS import (
+    TopoDS_Shape,
+    TopoDS_Compound,
+    TopoDS_Face,
+    TopoDS_Iterator,
+    topods,
+)
+from OCC.Core.TColgp import (
+    TColgp_Array1OfPnt,
+    TColgp_Array2OfPnt,
+    TColgp_HArray1OfPnt,
+    TColgp_HArray2OfPnt,
+)
+from OCC.Core.TColStd import TColStd_HArray1OfReal
 from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.BRep import BRep_Tool, BRep_Builder
 from OCC.Core.BRepProj import BRepProj_Projection
 from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor
 from OCC.Core.BRepFill import BRepFill_Filling, BRepFill_CurveConstraint
 from OCC.Core.BRepTools import breptools
-from OCC.Core.BRepOffset import BRepOffset_MakeOffset, BRepOffset_Skin, BRepOffset_Interval
-from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections, BRepOffsetAPI_MakeOffset, BRepOffsetAPI_MakeEvolved, BRepOffsetAPI_MakePipe, BRepOffsetAPI_MakePipeShell
+from OCC.Core.BRepOffset import (
+    BRepOffset_MakeOffset,
+    BRepOffset_Skin,
+    BRepOffset_Interval,
+)
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeSphere, BRepPrimAPI_MakeBox
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_GTransform
-from OCC.Core.BRepIntCurveSurface import BRepIntCurveSurface_Inter
+from OCC.Core.BRepOffsetAPI import (
+    BRepOffsetAPI_ThruSections,
+    BRepOffsetAPI_MakeOffset,
+    BRepOffsetAPI_MakeEvolved,
+    BRepOffsetAPI_MakePipe,
+    BRepOffsetAPI_MakePipeShell,
+)
+from OCC.Core.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeWire,
+    BRepBuilderAPI_MakeFace,
+    BRepBuilderAPI_GTransform,
+)
+from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
 from OCC.Core.BRepLProp import BRepLProp_SurfaceTool, BRepLProp_SLProps
 from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
-from OCC.Core.BRepBndLib import brepbndlib
-from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCC.Core.BRepIntCurveSurface import BRepIntCurveSurface_Inter
 from OCC.Core.Bnd import Bnd_Box, Bnd_OBB
+from OCC.Core.BRepBndLib import brepbndlib
 from OCC.Core.Geom import Geom_Plane, Geom_Surface, Geom_BSplineSurface
 from OCC.Core.Geom import Geom_Curve, Geom_Line, Geom_Ellipse, Geom_Circle
 from OCC.Core.Geom import Geom_RectangularTrimmedSurface, Geom_ToroidalSurface
-from OCC.Core.Geom import Geom_Curve, Geom_Plane, Geom_Line
-from OCC.Core.GeomAPI import GeomAPI_ProjectPointOnSurf, GeomAPI_ProjectPointOnCurve
-from OCC.Core.GeomAPI import geomapi
-from OCC.Core.GeomAPI import GeomAPI_IntCS, GeomAPI_IntSS
-from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
-from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
-from OCC.Core.GeomAPI import GeomAPI_Interpolate
-from OCC.Core.GeomAbs import GeomAbs_C0, GeomAbs_C1, GeomAbs_C2
-from OCC.Core.GeomAbs import GeomAbs_G1, GeomAbs_G2
-from OCC.Core.GeomAbs import GeomAbs_Intersection, GeomAbs_Arc
-from OCC.Core.GeomFill import GeomFill_BoundWithSurf
-from OCC.Core.GeomFill import GeomFill_BSplineCurves
-from OCC.Core.GeomFill import GeomFill_StretchStyle, GeomFill_CoonsStyle, GeomFill_CurvedStyle
+from OCC.Core.GeomAPI import (
+    geomapi,
+    GeomAPI_ProjectPointOnSurf,
+    GeomAPI_ProjectPointOnCurve,
+    GeomAPI_IntCS,
+    GeomAPI_IntSS,
+    GeomAPI_PointsToBSplineSurface,
+    GeomAPI_PointsToBSpline,
+    GeomAPI_Interpolate,
+)
+from OCC.Core.GeomAbs import (
+    GeomAbs_C0,
+    GeomAbs_C1,
+    GeomAbs_C2,
+    GeomAbs_G1,
+    GeomAbs_G2,
+    GeomAbs_Intersection,
+    GeomAbs_Arc,
+)
+from OCC.Core.GeomFill import (
+    GeomFill_BoundWithSurf,
+    GeomFill_BSplineCurves,
+    GeomFill_StretchStyle,
+    GeomFill_CoonsStyle,
+    GeomFill_CurvedStyle,
+)
 from OCC.Core.AIS import AIS_Manipulator
 from OCC.Core.V3d import V3d_SpotLight, V3d_XnegYnegZpos, V3d_XposYposZpos
-from OCC.Core.Graphic3d import Graphic3d_NOM_ALUMINIUM, Graphic3d_NOM_COPPER, Graphic3d_NOM_BRASS
-from OCC.Core.Quantity import Quantity_Color, Quantity_NOC_WHITE, Quantity_NOC_CORAL2, Quantity_NOC_BROWN
+from OCC.Core.Graphic3d import (
+    Graphic3d_NOM_ALUMINIUM,
+    Graphic3d_NOM_COPPER,
+    Graphic3d_NOM_BRASS,
+)
+from OCC.Core.Quantity import (
+    Quantity_Color,
+    Quantity_NOC_WHITE,
+    Quantity_NOC_CORAL2,
+    Quantity_NOC_BROWN,
+)
 from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCC.Extend.DataExchange import write_iges_file, read_iges_file
 from OCC.Extend.DataExchange import write_stl_file, read_stl_file
 from OCC.Extend.ShapeFactory import midpoint
-from OCCUtils.Topology import Topo
-from OCCUtils.Topology import shapeTypeString, dumpTopology
-from OCCUtils.Construct import make_box, make_face, make_line, make_wire, make_edge
-from OCCUtils.Construct import make_plane, make_polygon
-from OCCUtils.Construct import point_to_vector, vector_to_point
-from OCCUtils.Construct import dir_to_vec, vec_to_dir
+from OCCUtils.Common import point_in_solid
+from OCCUtils.Topology import Topo, shapeTypeString, dumpTopology
+from OCCUtils.Construct import (
+    make_box,
+    make_face,
+    make_line,
+    make_wire,
+    make_edge,
+    make_plane,
+    make_polygon,
+    point_to_vector,
+    vector_to_point,
+    dir_to_vec,
+    vec_to_dir,
+)
 
 
 def _gmsh_path():
@@ -115,9 +176,9 @@ def pnt_to_xyz(p):
 
 def float_to_string(number):
     if number == 0 or abs(np.log10(abs(number))) < 100:
-        return ' {: 0.10E}'.format(number)
+        return " {: 0.10E}".format(number)
     else:
-        return ' {: 0.10E}'.format(number).replace('E', '')
+        return " {: 0.10E}".format(number).replace("E", "")
 
 
 def rotate_xyz(axs=gp_Ax3(), deg=0.0, xyz="x"):
@@ -137,8 +198,7 @@ def line_from_axs(axs=gp_Ax3(), length=100):
 
 
 def pnt_from_axs(axs=gp_Ax3(), length=100):
-    vec = point_to_vector(axs.Location()) + \
-        dir_to_vec(axs.Direction()) * length
+    vec = point_to_vector(axs.Location()) + dir_to_vec(axs.Direction()) * length
     return vector_to_point(vec)
 
 
@@ -150,7 +210,10 @@ def pnt_trf_vec(pnt=gp_Pnt(), vec=gp_Vec()):
 
 def set_trf(ax1=gp_Ax3(), ax2=gp_Ax3()):
     trf = gp_Trsf()
-    trf.SetTransformation(ax2, ax1)
+    if ax1 == None:
+        trf.SetTransformation(ax2)
+    else:
+        trf.SetTransformation(ax2, ax1)
     return trf
 
 
@@ -169,11 +232,7 @@ def trsf_scale(axs=gp_Ax3(), scale=1):
 def gen_ellipsoid(axs=gp_Ax3(), rxyz=[10, 20, 30]):
     sphere = BRepPrimAPI_MakeSphere(gp_Ax2(), 1).Solid()
     loc = set_loc(gp_Ax3(), axs)
-    mat = gp_Mat(
-        rxyz[0], 0, 0,
-        0, rxyz[1], 0,
-        0, 0, rxyz[2]
-    )
+    mat = gp_Mat(rxyz[0], 0, 0, 0, rxyz[1], 0, 0, 0, rxyz[2])
     gtrf = gp_GTrsf(mat, gp_XYZ(0, 0, 0))
     ellips = BRepBuilderAPI_GTransform(sphere, gtrf).Shape()
     ellips.Location(loc)
@@ -206,10 +265,8 @@ def get_deg(axs=gp_Ax3(), vec=gp_Vec(0, 0, 1)):
     vx = dir_to_vec(axs.XDirection())
     vy = dir_to_vec(axs.YDirection())
     vz = dir_to_vec(axs.Direction())
-    pln_x = Geom_Plane(gp_Ax3(axs.Location(),
-                              axs.YDirection(), axs.Direction()))
-    pln_y = Geom_Plane(gp_Ax3(axs.Location(),
-                              axs.XDirection(), axs.Direction()))
+    pln_x = Geom_Plane(gp_Ax3(axs.Location(), axs.YDirection(), axs.Direction()))
+    pln_y = Geom_Plane(gp_Ax3(axs.Location(), axs.XDirection(), axs.Direction()))
     vec_p = gp_Pnt((gp_Vec(axs.Location().XYZ()) + vec).XYZ())
     pnt_x = GeomAPI_ProjectPointOnSurf(vec_p, pln_x).Point(1)
     pnt_y = GeomAPI_ProjectPointOnSurf(vec_p, pln_y).Point(1)
@@ -225,10 +282,8 @@ def get_diff(axis=gp_Ax3(), beam=gp_Ax3()):
     vx = dir_to_vec(axis.XDirection())
     vy = dir_to_vec(axis.YDirection())
     vz = dir_to_vec(axis.Direction())
-    pln_x = Geom_Plane(gp_Ax3(axis.Location(),
-                              axis.YDirection(), axis.Direction()))
-    pln_y = Geom_Plane(gp_Ax3(axis.Location(),
-                              axis.XDirection(), axis.Direction()))
+    pln_x = Geom_Plane(gp_Ax3(axis.Location(), axis.YDirection(), axis.Direction()))
+    pln_y = Geom_Plane(gp_Ax3(axis.Location(), axis.XDirection(), axis.Direction()))
     vec = dir_to_vec(beam.Direction())
     vec_p = gp_Pnt((gp_Vec(axis.Location().XYZ()) + vec).XYZ())
     pnt_x = GeomAPI_ProjectPointOnSurf(vec_p, pln_x).Point(1)
@@ -253,11 +308,11 @@ def occ_to_grasp_cor(axs, name="name", filename="pln.cor"):
     v_x = axs.XDirection()
     v_y = axs.YDirection()
     fp = open(filename, "w")
-    fp.write(' {:s}\n'.format(name))
-    fp.write(' {:s}\n'.format("mm"))
-    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(pnt)]) + '\n')
-    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_x)]) + '\n')
-    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_y)]) + '\n')
+    fp.write(" {:s}\n".format(name))
+    fp.write(" {:s}\n".format("mm"))
+    fp.write("".join([float_to_string(v) for v in pnt_to_xyz(pnt)]) + "\n")
+    fp.write("".join([float_to_string(v) for v in pnt_to_xyz(v_x)]) + "\n")
+    fp.write("".join([float_to_string(v) for v in pnt_to_xyz(v_y)]) + "\n")
     fp.close()
 
 
@@ -270,11 +325,11 @@ def occ_to_grasp_cor_ref(axs, ref=gp_Ax3(), name="name", filename="pln.cor"):
     v_x = ax1.XDirection()
     v_y = ax1.YDirection()
     fp = open(filename, "w")
-    fp.write(' {:s}\n'.format(name))
-    fp.write(' {:s}\n'.format("mm"))
-    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(pnt)]) + '\n')
-    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_x)]) + '\n')
-    fp.write(''.join([float_to_string(v) for v in pnt_to_xyz(v_y)]) + '\n')
+    fp.write(" {:s}\n".format(name))
+    fp.write(" {:s}\n".format("mm"))
+    fp.write("".join([float_to_string(v) for v in pnt_to_xyz(pnt)]) + "\n")
+    fp.write("".join([float_to_string(v) for v in pnt_to_xyz(v_x)]) + "\n")
+    fp.write("".join([float_to_string(v) for v in pnt_to_xyz(v_y)]) + "\n")
     fp.close()
 
 
@@ -291,12 +346,12 @@ def occ_to_grasp_rim(axs, pts, filename="pln.rim", name="name", nxy=5):
         px.extend(p_x), py.extend(p_y)
 
     fp = open(filename, "w")
-    fp.write(' {:s}\n'.format(name))
-    fp.write('{:12d}{:12d}{:12d}\n'.format(len(px), 1, 1))
+    fp.write(" {:s}\n".format(name))
+    fp.write("{:12d}{:12d}{:12d}\n".format(len(px), 1, 1))
     # fp.write(' {:s}\n'.format("mm"))
     for i in range(len(px)):
         data = [px[i], py[i]]
-        fp.write(''.join([float_to_string(val) for val in data]) + '\n')
+        fp.write("".join([float_to_string(val) for val in data]) + "\n")
 
 
 def grasp_sfc(mesh, surf, sfc_file="surf.sfc"):
@@ -323,8 +378,7 @@ def surf_spl_pcd(px, py, pz):
             pnt = gp_Pnt(px[i, j], py[i, j], pz[i, j])
             pnt_2d.SetValue(row, col, pnt)
 
-    curv = GeomAPI_PointsToBSplineSurface(
-        pnt_2d, 3, 8, GeomAbs_G2, 0.001).Surface()
+    curv = GeomAPI_PointsToBSplineSurface(pnt_2d, 3, 8, GeomAbs_G2, 0.001).Surface()
     surf = BRepBuilderAPI_MakeFace(curv, 1e-6).Face()
     return surf, pnt_2d
 
@@ -382,7 +436,8 @@ def get_boundxyz_pts(pts, axs=gp_Ax3()):
 
     face = n_sided.Face()
     solid = BRepOffset_MakeOffset(
-        face, 10.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+        face, 10.0, 1.0e-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True
+    )
     shape = solid.Shape()
 
     bbox = Bnd_Box()
@@ -401,7 +456,8 @@ def get_boundxyz_rim(rim, axs=gp_Ax3()):
 
     face = n_sided.Face()
     solid = BRepOffset_MakeOffset(
-        face, 10.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+        face, 10.0, 1.0e-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True
+    )
     shape = solid.Shape()
 
     bbox = Bnd_Box()
@@ -415,14 +471,15 @@ def get_boundxyz_rim(rim, axs=gp_Ax3()):
 def get_boundxyz_face(face, axs=gp_Ax3()):
     """
     Args:
-        face (TopoDS_Shape): 
+        face (TopoDS_Shape):
         axs (gp_Ax3): Defaults to gp_Ax3().
 
     Returns:
         [float x6]:
     """
     solid = BRepOffset_MakeOffset(
-        face, 10.0, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+        face, 10.0, 1.0e-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True
+    )
     shape = solid.Shape()
 
     bbox = Bnd_Box()
@@ -434,7 +491,7 @@ def get_boundxyz_face(face, axs=gp_Ax3()):
 
 
 def get_aligned_boundingbox_ratio(shape, tol=1e-6, optimal_BB=True, ratio=1):
-    """ return the bounding box of the TopoDS_Shape `shape`
+    """return the bounding box of the TopoDS_Shape `shape`
 
     Parameters
     ----------
@@ -465,8 +522,7 @@ def get_aligned_boundingbox_ratio(shape, tol=1e-6, optimal_BB=True, ratio=1):
     if optimal_BB:
         use_triangulation = True
         use_shapetolerance = True
-        brepbndlib.AddOptimal(
-            shape, bbox, use_triangulation, use_shapetolerance)
+        brepbndlib.AddOptimal(shape, bbox, use_triangulation, use_shapetolerance)
     else:
         brepbndlib.Add(shape, bbox)
 
@@ -482,21 +538,25 @@ def get_aligned_boundingbox_ratio(shape, tol=1e-6, optimal_BB=True, ratio=1):
     center = midpoint(corner1, corner2)
 
     rim0 = make_polygon(
-        [gp_Pnt(x0, y0, z0),
-         gp_Pnt(x1, y0, z0),
-         gp_Pnt(x1, y1, z0),
-         gp_Pnt(x0, y1, z0)],
-        closed=True
+        [
+            gp_Pnt(x0, y0, z0),
+            gp_Pnt(x1, y0, z0),
+            gp_Pnt(x1, y1, z0),
+            gp_Pnt(x0, y1, z0),
+        ],
+        closed=True,
     )
 
     rim1 = make_polygon(
-        [gp_Pnt(x0, y0, z1),
-         gp_Pnt(x1, y0, z1),
-         gp_Pnt(x1, y1, z1),
-         gp_Pnt(x0, y1, z1)],
-        closed=True
+        [
+            gp_Pnt(x0, y0, z1),
+            gp_Pnt(x1, y0, z1),
+            gp_Pnt(x1, y1, z1),
+            gp_Pnt(x0, y1, z1),
+        ],
+        closed=True,
     )
-    api = BRepOffsetAPI_ThruSections(True, False, 1.0E-9)
+    api = BRepOffsetAPI_ThruSections(True, False, 1.0e-9)
     api.AddWire(rim0)
     api.AddWire(rim1)
     box_shp = api.Shape()
@@ -505,7 +565,7 @@ def get_aligned_boundingbox_ratio(shape, tol=1e-6, optimal_BB=True, ratio=1):
 
 
 def get_oriented_boundingbox_ratio(shape, optimal_OBB=True, ratio=1.0):
-    """ return the oriented bounding box of the TopoDS_Shape `shape`
+    """return the oriented bounding box of the TopoDS_Shape `shape`
 
     Parameters
     ----------
@@ -514,7 +574,7 @@ def get_oriented_boundingbox_ratio(shape, optimal_OBB=True, ratio=1.0):
         the shape to compute the bounding box from
 
     optimal_OBB : bool, True by default. If set to True, compute the
-        optimal (i.e. the smallest oriented bounding box). 
+        optimal (i.e. the smallest oriented bounding box).
         Optimal OBB is a bit longer.
 
     ratio : float, 1.0 by default.
@@ -530,8 +590,9 @@ def get_oriented_boundingbox_ratio(shape, optimal_OBB=True, ratio=1.0):
         is_triangulationUsed = True
         is_optimal = True
         is_shapeToleranceUsed = False
-        brepbndlib.AddOBB(shape, obb, is_triangulationUsed,
-                          is_optimal, is_shapeToleranceUsed)
+        brepbndlib.AddOBB(
+            shape, obb, is_triangulationUsed, is_optimal, is_shapeToleranceUsed
+        )
     else:
         brepbndlib.AddOBB(shape, obb)
 
@@ -569,13 +630,11 @@ def face_mesh_triangle(comp=TopoDS_Shape(), isR=0.1, thA=0.1):
         face = topods.Face(ex.Current())
         location = TopLoc_Location()
         facing = bt.Triangulation(face, location)
-        tab = facing.Nodes()
-        tri = facing.Triangles()
         print(facing.NbTriangles(), facing.NbNodes())
         for i in range(1, facing.NbTriangles() + 1):
-            trian = tri.Value(i)
+            trian = facing.Triangle(i)
             index1, index2, index3 = trian.Get()
-            pnts = [tab.Value(index1), tab.Value(index2), tab.Value(index3)]
+            pnts = [facing.Node(index1), facing.Node(index2), facing.Node(index3)]
             poly = make_polygon(pnts, closed=True)
             ftri = make_face(poly, True)
             bild1.Add(comp1, poly)
@@ -595,7 +654,7 @@ def face_mesh_triangle(comp=TopoDS_Shape(), isR=0.1, thA=0.1):
     return comp1
 
 
-class GenCompound (object):
+class GenCompound(object):
 
     def __init__(self):
         self.builder = BRep_Builder()
@@ -607,16 +666,19 @@ class GenCompound (object):
             self.builder.Add(self.compound, shp)
 
 
-class Viewer (object):
+class Viewer(object):
 
-    def __init__(self, disp=True):
+    def __init__(self, disp=True, touch=True):
+        self.touch = touch
+        self.selected_shape = []
         if disp == True:
             from OCC.Display.qtDisplay import qtViewer3d
+
             # self.app = self.get_app()
             # self.wi = self.app.topLevelWidgets()[0]
             self.vi = self.findChild(qtViewer3d, "qt_viewer_3d")
             # self.vi = self.wi.findChild(qtViewer3d, "qt_viewer_3d")
-        self.selected_shape = []
+            # self.on_select()
 
     def get_app(self):
         app = QApplication.instance()
@@ -625,6 +687,13 @@ class Viewer (object):
         if not app:
             app = QApplication(sys.argv)
         return app
+
+    def set_touch(self):
+        if self.touch == True:
+            self.touch = False
+        else:
+            self.touch = True
+        print("Touch:", self.touch)
 
     def on_select(self):
         self.vi.sig_topods_selected.connect(self._on_select)
@@ -638,26 +707,18 @@ class Viewer (object):
         ----------
         shape : TopoDS_Shape
         """
-        for shape in shapes:
-            print()
-            print(shape.Location().Transformation())
-            # print(shape.Location().Transformation().TranslationPart().Coord())
-            self.selected_shape.append(shape)
-            self.DumpTop(shape)
+        if self.touch == True:
+            for shape in shapes:
+                print()
+                print(shape.Location().Transformation())
+                # print(shape.Location().Transformation().TranslationPart().Coord())
+                self.selected_shape.append(shape)
+                self.DumpTop(shape)
 
     def make_comp_selcted(self):
         bild = BRep_Builder()
         comp = TopoDS_Compound()
         bild.MakeCompound(comp)
-        for shp in self.selected_shape:
-            print(shp)
-            bild.Add(comp, shp)
-        return comp
-
-    def make_shell_selcted(self):
-        bild = BRep_Builder()
-        comp = TopoDS_Shell()
-        bild.MakeShell(comp)
         for shp in self.selected_shape:
             print(shp)
             bild.Add(comp, shp)
@@ -699,35 +760,30 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         self.base_axs = gp_Ax3()
         self.disp = disp
         self.touch = touch
-        self.colors = ["BLUE1", "RED", "GREEN",
-                       "YELLOW", "BLACK", "WHITE",
-                       "BROWN"]
+        self.colors = ["BLUE1", "RED", "GREEN", "YELLOW", "BLACK", "WHITE", "BROWN"]
         self.colorn = 0
 
         # OCC Viewer
         if disp == True:
             # self.display, self.start_display, self.add_menu, self.add_function, self.wi = init_qtdisplay()
             init_QDisplay.__init__(self)
-            if touch == True:
-                Viewer.__init__(self, disp=True)
-                self.on_select()
+            Viewer.__init__(self, disp=True, touch=touch)
+            self.on_select()
 
             self.SaveMenu()
             self.ViewMenu()
             self.SelectMenu()
             self.SelectMesh()
         else:
-            Viewer.__init__(self, disp=False)
+            Viewer.__init__(self, disp=False, touch=touch)
+            # self.on_select()
 
         # GMSH
         self.gmsh = _gmsh_path()
 
     def AddManipulator(self):
         self.manip = AIS_Manipulator(self.base_axs.Ax2())
-        ais_shp = self.display.DisplayShape(
-            self.base_axs.Location(),
-            update=True
-        )
+        ais_shp = self.display.DisplayShape(self.base_axs.Location(), update=True)
         self.manip.Attach(ais_shp[0])
 
     def SaveMenu(self):
@@ -755,10 +811,12 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         self.add_function("View", self.display.View_Left)  # YZ-Plane(-)
         self.add_function("View", self.View_XZPlane)
         self.add_function("View", self.View_YZPlane)
+        self.add_function("View", self.View_ZYPlane)
         self.add_function("View", self.ray_tracing_mode)
         self.add_function("View", self.display.SetRasterizationMode)
         self.add_function("View", self.get_view_dir)
         self.add_function("View", self.save_view_axis)
+        # self.add_function("View", self.View_Erase)
 
     def SelectMenu(self):
         self.add_menu("Select")
@@ -814,6 +872,56 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         self.display.View.SetProj(0, -1, 0)
         self.display.View.SetUp(1, 0, 0)
 
+    def View_ZYPlane(self):
+        self.display.View.SetProj(-1, 0, 0)
+        self.display.View.SetUp(0, 1, 0)
+
+    def View_Erase(self):
+        self.display.EraseAll()
+        self.display.Viewer.SetViewOff()
+        # self.display._struc_mgr.Erase() # stop viewer
+        # self.display._struc_mgr.Remove() # stop viewer
+        # Graphic3d_StructureManager.Clear(None, self.display._struc_mgr, True)
+        # structure = self.display._struc_mgr.Display()
+        # structure.Clear()
+
+    def DisplayMessageText(
+        self,
+        point,
+        text_to_write,
+        height=14.0,
+        message_color=(0.0, 0.0, 0.0),
+        update=False,
+    ):
+        """
+        :point: a gp_Pnt or gp_Pnt2d instance
+        :text_to_write: a string
+        :height: font height, 12 by defaults
+        :message_color: triple with the range 0-1, default to black
+        """
+        from OCC.Core.Graphic3d import Graphic3d_Structure, Graphic3d_GraphicDriver
+        from OCC.Core.Aspect import Aspect_DisplayConnection
+        from OCC.Core.Prs3d import Prs3d_TextAspect, Prs3d_Text
+        from OCC.Core.gp import gp_Pnt2d
+        from OCC.Core.TCollection import TCollection_ExtendedString
+
+        # driver = Graphic3d_GraphicDriver(Aspect_DisplayConnection())
+        # self.display.Viewer.Driver(driver)
+        aStructure = Graphic3d_Structure(self.canvas._display.struc_mgr)
+
+        text_aspect = Prs3d_TextAspect()
+        # text_aspect.SetColor(rgb_color(*message_color))
+        text_aspect.SetHeight(height)
+        if isinstance(point, gp_Pnt2d):
+            point = gp_Pnt(point.X(), point.Y(), 0)
+
+        Prs3d_Text.Draw(aStructure.CurrentGroup(), text_aspect, text_to_write, point)
+        aStructure.Display()
+        # @TODO: it would be more coherent if a AIS_InteractiveObject is be returned
+        if update:
+            self.Repaint()
+        return aStructure
+
     def gen_mesh_face(self):
         self.export_cap()
         comp = self.make_comp_selcted()
@@ -842,7 +950,7 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         spot_light = V3d_SpotLight(
             gp_Pnt(-1000, -1000, 1000),
             V3d_XnegYnegZpos,
-            Quantity_Color(Quantity_NOC_WHITE)
+            Quantity_Color(Quantity_NOC_WHITE),
         )
         # display the spotlight in rasterized mode
         self.display.Viewer.AddLight(spot_light)
@@ -916,15 +1024,18 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
             # sys.exit(0)
 
         if disp == True:
-            self.display.DisplayShape(
-                shpe, update=True, color=col, transparency=trs)
+            self.display.DisplayShape(shpe, update=True, color=col, transparency=trs)
         return shpe
 
     def import_cadfile(self):
         options = QFileDialog.Options()
-        fileNames, _ = QFileDialog.getOpenFileNames(self, 'QFileDialog.getOpenFileName()', '',
-                                                    'CAD files (*.stp *.step *.stl *.igs *.iges, *.brep. *.geo)',
-                                                    options=options)
+        fileNames, _ = QFileDialog.getOpenFileNames(
+            self,
+            "QFileDialog.getOpenFileName()",
+            "",
+            "CAD files (*.stp *.step *.stl *.igs *.iges *.brep *.geo)",
+            options=options,
+        )
         for fileName in fileNames:
             print(fileName)
             self.read_cadfile(fileName, disp=True, trs=None)
@@ -999,7 +1110,7 @@ class OCCApp(plot2d, init_QDisplay, Viewer):
         self.start_display()
 
 
-class dispocc (OCCApp):
+class dispocc(OCCApp):
 
     def __init__(self, temp=True, disp=True, touch=False):
         OCCApp.__init__(self, temp, disp, touch)
@@ -1027,10 +1138,7 @@ class dispocc (OCCApp):
 
     def show_box(self, axs=gp_Ax3(), lxyz=[100, 100, 100]):
         box = make_box(*lxyz)
-        ax1 = gp_Ax3(
-            gp_Pnt(-lxyz[0] / 2, -lxyz[1] / 2, -lxyz[2] / 2),
-            gp_Dir(0, 0, 1)
-        )
+        ax1 = gp_Ax3(gp_Pnt(-lxyz[0] / 2, -lxyz[1] / 2, -lxyz[2] / 2), gp_Dir(0, 0, 1))
         trf = gp_Trsf()
         trf.SetTransformation(axs, gp_Ax3())
         trf.SetTransformation(ax1, gp_Ax3())
@@ -1057,7 +1165,7 @@ class dispocc (OCCApp):
         print(vec.Magnitude())
         self.display.DisplayVector(vec, pnt)
 
-    def show_ellipsoid(self, axs=gp_Ax3(), rxyz=[10., 10., 10.], trans=0.5):
+    def show_ellipsoid(self, axs=gp_Ax3(), rxyz=[10.0, 10.0, 10.0], trans=0.5):
         shape = gen_ellipsoid(axs, rxyz)
         self.display.DisplayShape(shape, transparency=trans, color="BLUE1")
         return shape
@@ -1079,14 +1187,13 @@ class dispocc (OCCApp):
         pnt_x = pnt_trf_vec(pnt, vx)
         pnt_y = pnt_trf_vec(pnt, vy)
         pnt_z = pnt_trf_vec(pnt, vz)
-        lx, ly, lz = make_line(pnt, pnt_x), make_line(
-            pnt, pnt_y), make_line(pnt, pnt_z)
+        lx, ly, lz = make_line(pnt, pnt_x), make_line(pnt, pnt_y), make_line(pnt, pnt_z)
         self.display.DisplayShape(pnt)
         self.display.DisplayShape(lx, color="RED")
         self.display.DisplayShape(ly, color="GREEN")
         self.display.DisplayShape(lz, color="BLUE1")
         if name != None:
-            self.display.DisplayMessage(axs.Location(), name)
+            self.DisplayMessageText(axs.Location(), name)
         return [lx, ly, lz]
 
     def show_plane(self, axs=gp_Ax3(), scale=100):
@@ -1119,29 +1226,58 @@ class dispocc (OCCApp):
         return axs.Translated(vec)
 
     def make_plane_axs(self, axs=gp_Ax3(), rx=[0, 500], ry=[0, 500]):
-        pln = BRepBuilderAPI_MakeFace(
-            gp_Pln(axs),
-            rx[0], rx[1], ry[0], ry[1]
-        ).Face()
+        pln = BRepBuilderAPI_MakeFace(gp_Pln(axs), rx[0], rx[1], ry[0], ry[1]).Face()
         return pln
 
     def make_circle(self, axs=gp_Ax3(), radi=100, skin=None):
         poly = make_wire(make_edge(Geom_Circle(axs.Ax2(), radi)))
-        if skin == None:
-            return poly
-        elif skin == 0:
-            return make_face(poly)
-        else:
-            face = make_face(poly)
-            solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
-            return solid.Shape()
+        return self.make_wire2soild(poly, skin, False)
+
+    def make_ellips(self, axs=gp_Ax3(), rxy=[10, 10], t0=0.0, nt=100, skin=None):
+        nt = int(2 * np.max(rxy) * np.pi / 0.1)
+        pt = np.linspace(0, 2 * np.pi, nt) + np.deg2rad(t0)
+        px = np.empty_like(pt)
+        py = np.empty_like(pt)
+        for i, t in enumerate(pt):
+            x = rxy[0] * np.cos(t)
+            y = rxy[1] * np.sin(t)
+            px[i] = x * np.cos(np.deg2rad(t0)) + y * np.sin(np.deg2rad(t0))
+            py[i] = x * -np.sin(np.deg2rad(t0)) + y * np.cos(np.deg2rad(t0))
+
+        pts = TColgp_HArray1OfPnt(1, nt - 1)
+        dat = TColStd_HArray1OfReal(1, nt - 1)
+        for i in range(nt - 1):
+            pts.SetValue(i + 1, gp_Pnt(px[i], py[i], 0))
+        for i in range(nt - 1):
+            dat.SetValue(i + 1, 1)
+
+        api = GeomAPI_Interpolate(pts, True, 0.1e-3)
+        api.Perform()
+        crv = api.Curve()
+        poly = make_edge(crv)
+        poly.Location(set_loc(gp_Ax3(), axs))
+        # return self.make_wire2soild(make_wire(crv), skin, False)
+        return poly
+
+    def make_plane(
+        self,
+        axs=gp_Ax3(),
+        extent_x_min=-100.0,
+        extent_x_max=100.0,
+        extent_y_min=-100.0,
+        extent_y_max=100.0,
+    ):
+        PL = gp_Pln(axs)
+        face = make_face(PL, extent_x_min, extent_x_max, extent_y_min, extent_y_max)
+        return face
 
     def make_torus(self, axs=gp_Ax3(), r0=6000, r1=1500):
         tok_surf = Geom_ToroidalSurface(axs, r0, r1)
-        return make_face(tok_surf, 1.0E-9)
+        return make_face(tok_surf, 1.0e-9)
 
-    def make_cylinder_surf(self, axs=gp_Ax3(), radii=700, hight=500, rng=[0, 0.1], xyz="y"):
+    def make_cylinder_surf(
+        self, axs=gp_Ax3(), radii=700, hight=500, rng=[0, 0.1], xyz="y"
+    ):
         loc = self.prop_axs(axs, radii, "z")
         if xyz == "y":
             rotate_xyz(loc, deg=90, xyz="y")
@@ -1153,13 +1289,13 @@ class dispocc (OCCApp):
             # loc = self.prop_axs(loc, -radii, "x")
 
         face = BRepBuilderAPI_MakeFace(
-            gp_Cylinder(loc, radii),
-            rng[0], rng[1],
-            -hight / 2, hight / 2
+            gp_Cylinder(loc, radii), rng[0], rng[1], -hight / 2, hight / 2
         ).Face()
         return face
 
-    def make_trimmedcylinder(self, axs=gp_Ax1(), radii=700, hight=500, rng=[0, 0.1], xyz="y"):
+    def make_trimmedcylinder(
+        self, axs=gp_Ax1(), radii=700, hight=500, rng=[0, 0.1], xyz="y"
+    ):
         loc = self.prop_axs(axs, radii, "z")
         if xyz == "y":
             rotate_xyz(loc, deg=90, xyz="y")
@@ -1171,9 +1307,7 @@ class dispocc (OCCApp):
             # loc = self.prop_axs(loc, -radii, "x")
 
         face = BRepBuilderAPI_MakeFace(
-            gp_Cylinder(loc, radii),
-            rng[0], rng[1],
-            -hight / 2, hight / 2
+            gp_Cylinder(loc, radii), rng[0], rng[1], -hight / 2, hight / 2
         ).Face()
         return face
 
@@ -1181,8 +1315,8 @@ class dispocc (OCCApp):
         """make trimmed face by projected poly
 
         Args:
-            poly (TopoDS_Wire): 
-            face (TopoDS_Face): 
+            poly (TopoDS_Wire):
+            face (TopoDS_Face):
             axs (gp_Ax3, optional): Defaults to gp_Ax3().
 
         Returns:
@@ -1204,7 +1338,7 @@ class dispocc (OCCApp):
         """make soild frok poly wire
 
         Args:
-            poly (TopoDS_Wire): 
+            poly (TopoDS_Wire):
             skin (float, optional): size of depth of solid. Defaults to None.
             fit (bool, optional): fitting. Defaults to False.
 
@@ -1230,8 +1364,17 @@ class dispocc (OCCApp):
         elif skin == 0:
             return face
         else:
-            solid = BRepOffset_MakeOffset(face, skin, 1.0E-5, BRepOffset_Skin,
-                                          False, True, GeomAbs_Arc, True, True)
+            solid = BRepOffset_MakeOffset(
+                face,
+                skin,
+                1.0e-5,
+                BRepOffset_Skin,
+                False,
+                True,
+                GeomAbs_Arc,
+                True,
+                True,
+            )
             return solid.Shape()
 
     def make_plate(self, pts=[], axs=gp_Ax3(), skin=None):
@@ -1263,7 +1406,16 @@ class dispocc (OCCApp):
         else:
             face = make_face(poly)
             solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                face,
+                skin,
+                1.0e-5,
+                BRepOffset_Skin,
+                False,
+                True,
+                GeomAbs_Arc,
+                True,
+                True,
+            )
             return solid.Shape()
 
     def make_RectWire(self, lxy=[1, 1], sxy=[0, 0], shft=0.0, axs=gp_Ax3(), skin=None):
@@ -1287,7 +1439,16 @@ class dispocc (OCCApp):
             return face
         else:
             solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                face,
+                skin,
+                1.0e-5,
+                BRepOffset_Skin,
+                False,
+                True,
+                GeomAbs_Arc,
+                True,
+                True,
+            )
             return solid.Shape()
 
     def make_PolyWire(self, num=6, radi=1.0, shft=0.0, axs=gp_Ax3(), skin=None):
@@ -1313,7 +1474,16 @@ class dispocc (OCCApp):
             return face
         else:
             solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                face,
+                skin,
+                1.0e-5,
+                BRepOffset_Skin,
+                False,
+                True,
+                GeomAbs_Arc,
+                True,
+                True,
+            )
             return solid.Shape()
 
     def make_StarWire(self, num=5, radi=[2.0, 1.0], shft=0.0, axs=gp_Ax3(), skin=None):
@@ -1342,7 +1512,16 @@ class dispocc (OCCApp):
             return face
         else:
             solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                face,
+                skin,
+                1.0e-5,
+                BRepOffset_Skin,
+                False,
+                True,
+                GeomAbs_Arc,
+                True,
+                True,
+            )
             return solid.Shape()
 
     def make_Wire_pts(self, dat=[], axs=gp_Ax3()):
@@ -1388,7 +1567,8 @@ class dispocc (OCCApp):
         n_sided.Build()
         face = n_sided.Face()
         solid = BRepOffset_MakeOffset(
-            face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+            face, skin, 1.0e-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True
+        )
         return solid.Shape()
 
     def make_skin_wire(self, poly, axs=gp_Ax3(), skin=1.0):
@@ -1403,7 +1583,16 @@ class dispocc (OCCApp):
             return face
         else:
             solid = BRepOffset_MakeOffset(
-                face, skin, 1.0E-5, BRepOffset_Skin, False, True, GeomAbs_Arc, True, True)
+                face,
+                skin,
+                1.0e-5,
+                BRepOffset_Skin,
+                False,
+                True,
+                GeomAbs_Arc,
+                True,
+                True,
+            )
             return solid.Shape()
 
     def make_FaceByOrder(self, pts=[]):
@@ -1412,7 +1601,7 @@ class dispocc (OCCApp):
             dat.append([p.X(), p.Y(), p.Z()])
 
         dat = np.array(dat)
-        cov = ConvexHull(dat, qhull_options='QJ')
+        cov = ConvexHull(dat, qhull_options="QJ")
 
         # pts_ord = []
         # print(cov)
@@ -1434,7 +1623,7 @@ class dispocc (OCCApp):
     def proj_rim_pln(self, wire, surf, axs=gp_Ax3(), idx=0):
         proj = BRepProj_Projection(wire, surf, axs.Direction())
         i = 0
-        while proj.More() and i <= idx:
+        while proj.More() or i <= idx:
             poly = proj.Current()
             proj.Next()
             i += 1
@@ -1443,6 +1632,20 @@ class dispocc (OCCApp):
     def proj_pnt_pln(self, pnt, surf, axs=gp_Ax3()):
         lin = gp_Lin(pnt, axs.Direction())
         api = GeomAPI_IntCS(Geom_Line(lin), BRep_Tool.Surface(surf))
+        dst = np.inf
+        sxy = pnt
+        num = api.NbPoints()
+        for i in range(num):
+            p0 = api.Point(i + 1)
+            dst0 = pnt.Distance(p0)
+            if dst0 < dst:
+                dst = dst0
+                sxy = p0
+        return sxy
+
+    def proj_vec_pln(self, pnt=gp_Pnt(), vec=gp_Vec(), axs=gp_Ax3()):
+        lin = gp_Lin(pnt.Translated(vec), axs.Direction())
+        api = GeomAPI_IntCS(Geom_Line(lin), Geom_Plane(axs))
         dst = np.inf
         sxy = pnt
         num = api.NbPoints()
@@ -1465,7 +1668,9 @@ class dispocc (OCCApp):
                 self.display.DisplayShape(p0)
                 self.display.DisplayShape(p1)
 
-    def proj_pln_showup(self, face, nxy=[10, 10], lx=[-10, 10], ly=[-10, 10], axs=gp_Ax3()):
+    def proj_pln_showup(
+        self, face, nxy=[10, 10], lx=[-10, 10], ly=[-10, 10], axs=gp_Ax3()
+    ):
         trf = set_trf(gp_Ax3(), axs)
         nx, ny = nxy
         xs, xe = lx
@@ -1491,13 +1696,13 @@ class dispocc (OCCApp):
         Args:
             shpe (TopoDS_Shape): The reflection shape. Defaults to TopoDS_Shape().
             beam0 (gp_Ax3): Defaults to gp_Ax3().
-            tr (int): 
+            tr (int):
                 0 : reflection (Default)
                 1 : transmission
                 2 : normal on face.
 
         Returns:
-            beam1 [gp_Ax3]: 
+            beam1 [gp_Ax3]:
         """
         v0 = dir_to_vec(beam0.Direction())
         v1 = dir_to_vec(beam0.XDirection())
@@ -1505,7 +1710,7 @@ class dispocc (OCCApp):
         d0 = beam0.Direction()
         lin = gp_Lin(p0, d0)
         api = BRepIntCurveSurface_Inter()
-        api.Init(shpe, lin, 1.0E-9)
+        api.Init(shpe, lin, 1.0e-9)
         dst = np.inf
         num = 0
         sxy = p0
@@ -1515,7 +1720,7 @@ class dispocc (OCCApp):
             p1 = api.Pnt()
             dst1 = p0.Distance(p1)
             print(api.Transition(), p1)
-            if dst1 < dst and api.W() > 1.0E-6:
+            if dst1 < dst and api.W() > 1.0e-6:
                 dst = dst1
                 uvw = [api.U(), api.V(), api.W()]
                 sxy = api.Pnt()
@@ -1527,7 +1732,7 @@ class dispocc (OCCApp):
         print(*uvw)
         u, v, w = uvw
         surf = BRepAdaptor_Surface(fce)
-        prop = BRepLProp_SLProps(surf, u, v, 2, 1.0E-9)
+        prop = BRepLProp_SLProps(surf, u, v, 2, 1.0e-9)
         p1, vx, vy = prop.Value(), prop.D1U(), prop.D1V()
         vz = vx.Crossed(vy)
         if vz.Dot(v0) > 0:
@@ -1535,16 +1740,8 @@ class dispocc (OCCApp):
         vx.Normalize()
         vy.Normalize()
         vz.Normalize()
-        beam1 = gp_Ax3(
-            p1,
-            vec_to_dir(v0.Reversed()),
-            vec_to_dir(v1.Reversed())
-        )
-        norm1 = gp_Ax3(
-            p1,
-            vec_to_dir(vz),
-            vec_to_dir(vx)
-        )
+        beam1 = gp_Ax3(p1, vec_to_dir(v0.Reversed()), vec_to_dir(v1.Reversed()))
+        norm1 = gp_Ax3(p1, vec_to_dir(vz), vec_to_dir(vx))
         if tr == 0:
             # Reflection
             beam1.Mirror(norm1.Ax2())
@@ -1579,135 +1776,252 @@ class dispocc (OCCApp):
         v1 = dir_to_vec(ax1.Direction())
         return p0.Distance(p1), v0.Dot(v1)
 
-    def calc_tor_angle1(self, ax0=gp_Ax3(), ax1=gp_Ax3()):
-        # img/tok_angle_def1.png
-        print(dir_to_vec(ax1.Direction()))
-        # Base plane on ax0
-        pln = self.make_plane_axs(ax0, [-1, 1], [-1, 1])
+    def calc_tor_angle1(self, axis=gp_Ax3(), beam=gp_Ax3(), show=False):
+        """
+        Calculate toroidal and poloidal angles between the given axis and beam.
 
+        Parameters:
+        - axis: The reference axis (gp_Ax3)
+        - beam: The beam axis (gp_Ax3)
+        - show: Boolean to display results visually (default: False)
+
+        Returns:
+        - rad_pxz: Toroidal angle in radians
+        - rad_pyz: Poloidal angle in radians
+        """
         # Beam Project to Base plane
-        ax1_prj = self.proj_pnt_pln(ax1.Location(), pln, ax0)
-        ax1_dst = self.prop_axs(ax1, scale=1).Location()
+        beam_prj = self.proj_vec_pln(beam.Location(), gp_Vec(0, 0, 0), axis)
+        beam_dst = self.prop_axs(beam, scale=1).Location()
+        beam_lin = make_edge(gp_Lin(beam.Axis()), -1, 2)
+        beam_vec = dir_to_vec(beam.Direction())
+        print("Def1", beam_vec)
 
-        # Ref Coord
-        # Z Direction: ax1-pnt -> ax0-Z-Ax
-        # Y Direction: ax0-ZDir
-        ax1_loc = gp_Ax3(ax1.Ax2())
-        ax1_loc.SetDirection(vec_to_dir(gp_Vec(ax1_prj, ax0.Location())))
-        ax1_loc.SetYDirection(ax0.Direction())
-        v_z = dir_to_vec(ax1_loc.Direction())
-        v_x = dir_to_vec(ax1_loc.XDirection())
-        v_y = dir_to_vec(ax1_loc.YDirection())
+        # Reference Coordinate
+        # Z Direction: projected beam Location -> axis Location
+        # Y Direction: axis-ZDir
+        beam_axs = gp_Ax3(beam.Ax2())
+        beam_axs.SetDirection(vec_to_dir(gp_Vec(beam_prj, axis.Location())))
+        beam_axs.SetYDirection(axis.Direction())
+        beam_axs_vz = dir_to_vec(beam_axs.Direction())
+        beam_axs_vx = dir_to_vec(beam_axs.XDirection())
+        beam_axs_vy = dir_to_vec(beam_axs.YDirection())
 
-        # Ref Coord XY-Plane (Poloidal)
-        ax1_axy = gp_Ax3(ax1.Location(),
-                         ax1_loc.Direction(),
-                         ax1_loc.XDirection())
-        ax1_pxy = self.make_plane_axs(ax1_axy, [-1, 1], [-1, 1])
-        pnt_pxy = self.proj_pnt_pln(ax1_dst, ax1_pxy, ax1_loc)
+        # Toroidal: Project XZ-Plane & Angle between Vz
+        beam_axz = gp_Ax3(beam.Location(), beam_axs.YDirection(), beam_axs.XDirection())
+        pnt_pxz = self.proj_vec_pln(beam.Location(), beam_vec, beam_axz)
+        lin_pxz = make_edge(beam_axs.Location(), pnt_pxz)
+        vec_pxz = gp_Vec(beam_axs.Location(), pnt_pxz)
+        rad_pxz = beam_axs_vz.Angle(vec_pxz)
+        rad_pxz = beam_axs_vz.AngleWithRef(vec_pxz, beam_axs_vy)
+        txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(rad_pxz))
+        print("Tor: ", np.rad2deg(rad_pxz))
 
-        # Ref Coord XZ-Plane (Toroidal)
-        ax1_axz = gp_Ax3(ax1.Location(),
-                         ax1_loc.YDirection(),
-                         ax1_loc.XDirection())
-        ax1_pxz = self.make_plane_axs(ax1_axz, [-1, 1], [-1, 1])
-        pnt_pxz = self.proj_pnt_pln(ax1_dst, ax1_pxz, ax1_axz)
-        lin_pxz = make_edge(ax1_loc.Location(), pnt_pxz)
-        vec_pxz = gp_Vec(ax1_loc.Location(), pnt_pxz)
-        deg_pxz = v_z.AngleWithRef(vec_pxz, v_y.Reversed())
-        txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(deg_pxz))
-        print("Tor: ", np.rad2deg(deg_pxz))
+        # Poloidal: Project YZ-Plane & Angle between Vz
+        ax1_ayz = gp_Ax3(beam.Location(), beam_axs.XDirection(), beam_axs.Direction())
+        pnt_pyz = self.proj_vec_pln(beam.Location(), beam_vec, ax1_ayz)
+        lin_pyz = make_edge(beam_axs.Location(), pnt_pyz)
+        vec_pyz = gp_Vec(beam_axs.Location(), pnt_pyz)
+        rad_pyz = beam_axs_vz.Angle(vec_pyz)
+        rad_pyz = -beam_axs_vz.AngleWithRef(vec_pyz, beam_axs_vx)
+        txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(rad_pyz))
+        print("Pol: ", np.rad2deg(rad_pyz))
 
-        # Ref Coord YZ-Plane (Poloidal)
-        ax1_ayz = gp_Ax3(ax1.Location(),
-                         ax1_loc.XDirection(),
-                         ax1_loc.Direction())
-        ax1_pyz = self.make_plane_axs(ax1_ayz, [-1, 1], [-1, 1])
-        pnt_pyz = self.proj_pnt_pln(ax1_dst, ax1_pyz, ax1_ayz)
-        lin_pyz = make_edge(ax1_loc.Location(), pnt_pyz)
-        vec_pyz = gp_Vec(ax1_loc.Location(), pnt_pyz)
-        deg_pyz = np.pi / 2 - v_y.AngleWithRef(vec_pyz, v_x)
-        txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(deg_pyz))
-        print("Pol: ", np.rad2deg(deg_pyz))
+        if show == True:
+            self.show_axs_pln(beam_axs, scale=1)
+            self.display.DisplayShape(beam_lin, color="BLACK")
 
-        # self.show_axs_pln(ax0, scale=0.5)
-        # self.show_axs_pln(ax1_loc, scale=1)
-        # self.display.DisplayShape(lin_pxz, color="BLUE1")
-        # self.display.DisplayShape(ax1_pxz, color="BLUE1", transparency=0.9)
-        # self.display.DisplayShape(lin_pyz, color="GREEN")
-        # self.display.DisplayShape(ax1_pyz, color="GREEN", transparency=0.9)
-        # self.display.DisplayShape(
-        #   make_edge(ax1.Location(), ax1_dst), color="YELLOW")
-        # self.display.DisplayVector(dir_to_vec(
-        #   ax1.Direction()).Scaled(0.5), ax1_dst)
-        return deg_pxz, deg_pyz
+            # Toroidal
+            self.display.DisplayShape(lin_pxz, color="RED")
 
-    def calc_tor_angle2(self, ax0=gp_Ax3(), ax1=gp_Ax3()):
+            # Poloidal
+            self.display.DisplayShape(lin_pyz, color="GREEN")
+        return rad_pxz, rad_pyz
+
+    def calc_tor_angle2(self, axis=gp_Ax3(), beam=gp_Ax3(), show=False):
         # img/tok_angle_def2.png
-        print(dir_to_vec(ax1.Direction()))
-        # Base plane on ax0
-        pln = self.make_plane_axs(ax0, [-1, 1], [-1, 1])
 
         # Beam Project to Base plane
-        ax1_prj = self.proj_pnt_pln(ax1.Location(), pln, ax0)
-        ax1_dst = self.prop_axs(ax1, scale=1).Location()
-        ax1_dst_prj = self.proj_pnt_pln(ax1_dst, pln, ax0)
+        beam_prj = self.proj_vec_pln(beam.Location(), gp_Vec(0, 0, 0), axis)
+        beam_lin = make_edge(gp_Lin(beam.Axis()), -1, 2)
+        beam_vec = dir_to_vec(beam.Direction())
+        beam_prj_vec = self.proj_vec_pln(beam.Location(), beam_vec, axis)
+        print("Def2", beam_vec)
 
         # Ref Coord
-        # Z Direction: ax1-dir (projected)
-        # Y Direction: ax0-ZDir
-        ax1_loc = gp_Ax3(ax1.Ax2())
-        ax1_loc.SetDirection(vec_to_dir(gp_Vec(ax1_prj, ax1_dst_prj)))
-        ax1_loc.SetYDirection(ax0.Direction())
-        v_z = dir_to_vec(ax1_loc.Direction())
-        v_x = dir_to_vec(ax1_loc.XDirection())
-        v_y = dir_to_vec(ax1_loc.YDirection())
+        # Z Direction: projected beam vec
+        # Y Direction: axis-ZDir
+        beam_axs = gp_Ax3(beam.Ax2())
+        beam_axs.SetDirection(vec_to_dir(gp_Vec(beam_prj, beam_prj_vec)))
+        beam_axs.SetYDirection(axis.Direction())
+        beam_axs_vz = dir_to_vec(beam_axs.Direction())
+        beam_axs_vx = dir_to_vec(beam_axs.XDirection())
+        beam_axs_vy = dir_to_vec(beam_axs.YDirection())
 
-        # Ref Coord XY-Plane (Poloidal)
-        ax1_axy = gp_Ax3(ax1.Location(),
-                         ax1_loc.Direction(),
-                         ax1_loc.XDirection())
-        ax1_pxy = self.make_plane_axs(ax1_axy, [-1, 1], [-1, 1])
-        pnt_pxy = self.proj_pnt_pln(ax1_dst, ax1_pxy, ax1_loc)
+        # Toroidal: Project XZ-Plane & Angle between Vz
+        beam_axz = gp_Ax3(beam.Location(), beam_axs.YDirection(), beam_axs.XDirection())
+        tor_vec = gp_Vec(beam_prj, axis.Location())
+        pnt_pxz = self.proj_vec_pln(beam.Location(), beam_vec, beam_axz)
+        lin_pxz = make_edge(beam_axs.Location(), pnt_pxz)
+        vec_pxz = gp_Vec(beam_axs.Location(), pnt_pxz)
+        rad_pxz = tor_vec.Angle(vec_pxz)
+        rad_pxz = tor_vec.AngleWithRef(vec_pxz, beam_axs_vy)
+        txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(rad_pxz))
+        print("Tor: ", np.rad2deg(rad_pxz))
 
-        # Ref Coord XZ-Plane (Toroidal)
-        ax1_axz = gp_Ax3(ax1.Location(),
-                         ax1_loc.YDirection(),
-                         ax1_loc.XDirection())
-        ax1_pxz = self.make_plane_axs(ax1_axz, [-1, 1], [-1, 1])
-        pnt_pxz = self.proj_pnt_pln(ax1_dst, ax1_pxz, ax1_axz)
-        lin_pxz = make_edge(ax1_loc.Location(), pnt_pxz)
-        vec_pxz = gp_Vec(ax1_prj, ax0.Location())
-        deg_pxz = v_z.AngleWithRef(vec_pxz, v_y)
-        txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(deg_pxz))
-        print("Tor: ", np.rad2deg(deg_pxz))
+        # Poloidal: Project YZ-Plane & Angle between Vz
+        ax1_ayz = gp_Ax3(beam.Location(), beam_axs.XDirection(), beam_axs.Direction())
+        pnt_pyz = self.proj_vec_pln(beam.Location(), beam_vec, ax1_ayz)
+        lin_pyz = make_edge(beam_axs.Location(), pnt_pyz)
+        vec_pyz = gp_Vec(beam_axs.Location(), pnt_pyz)
+        rad_pyz = beam_axs_vz.Angle(vec_pyz)
+        rad_pyz = -beam_axs_vz.AngleWithRef(vec_pyz, beam_axs_vx)
+        txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(rad_pyz))
+        print("Pol: ", np.rad2deg(rad_pyz))
 
-        # Ref Coord YZ-Plane (Poloidal)
-        ax1_ayz = gp_Ax3(ax1.Location(),
-                         ax1_loc.XDirection(),
-                         ax1_loc.Direction())
-        ax1_pyz = self.make_plane_axs(ax1_ayz, [-1, 1], [-1, 1])
-        pnt_pyz = self.proj_pnt_pln(ax1_dst, ax1_pyz, ax1_ayz)
-        lin_pyz = make_edge(ax1_loc.Location(), pnt_pyz)
-        vec_pyz = dir_to_vec(ax1.Direction())
-        deg_pyz = vec_pyz.AngleWithRef(v_z, v_x)
-        txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(deg_pyz))
-        print("Pol: ", np.rad2deg(deg_pyz))
+        if show == True:
+            self.show_axs_pln(beam_axs, scale=1)
+            self.display.DisplayShape(beam_lin, color="BLACK")
 
-        # self.show_axs_pln(ax0, scale=0.5)
-        # self.show_axs_pln(ax1_loc, scale=1)
-        # self.display.DisplayShape(lin_pxz, color="BLUE1")
-        # self.display.DisplayShape(ax1_pxz, color="BLUE1", transparency=0.9)
-        # self.display.DisplayShape(lin_pyz, color="GREEN")
-        # self.display.DisplayShape(ax1_pyz, color="GREEN", transparency=0.9)
-        # self.display.DisplayShape(
-        #   make_edge(ax1.Location(), ax1_dst), color="YELLOW")
-        # self.display.DisplayVector(dir_to_vec(
-        #   ax1.Direction()).Scaled(0.5), ax1_dst)
-        return deg_pxz, deg_pyz
+            # Tor
+            self.display.DisplayShape(lin_pxz, color="RED")
+
+            # Pol
+            self.display.DisplayShape(lin_pyz, color="GREEN")
+        return rad_pxz, rad_pyz
+
+    def calc_tor_angle(self, axis=gp_Ax3(), beam=gp_Ax3(), show=False, mode="angle1"):
+        """
+        Calculate toroidal and poloidal angles between the given axis and beam,
+        using the specified calculation mode.
+
+        Parameters:
+        - axis: The reference axis (gp_Ax3)
+        - beam: The beam axis (gp_Ax3)
+        - show: Boolean to display results visually (default: False)
+        - mode: Calculation mode, either "angle1" or "angle2" (default: "angle1")
+
+        Returns:
+        - rad_pxz: Toroidal angle in radians
+        - rad_pyz: Poloidal angle in radians
+        """
+
+        if mode == "angle1":
+            # Calculation using the logic of calc_tor_angle1
+            # - Beam position is projected to the base plane
+            # - Reference coordinate system:
+            #   - Z direction: projected beam location -> axis location
+            #   - Y direction: axis-ZDir
+            # - Toroidal angle: Projected XZ-plane & angle between Vz
+            # - Poloidal angle: Projected YZ-plane & angle between Vz
+            # - Result visualization if 'show' is True
+
+            # Beam Project to Base plane
+            beam_prj = self.proj_vec_pln(beam.Location(), gp_Vec(0, 0, 0), axis)
+            beam_dst = self.prop_axs(beam, scale=1).Location()
+            beam_lin = make_edge(gp_Lin(beam.Axis()), -1, 2)
+            beam_vec = dir_to_vec(beam.Direction())
+            print("Def1", beam_vec)
+
+            # Reference Coordinate
+            # Z Direction: projected beam Location -> axis Location
+            # Y Direction: axis-ZDir
+            beam_axs = gp_Ax3(beam.Ax2())
+            beam_axs.SetDirection(vec_to_dir(gp_Vec(beam_prj, axis.Location())))
+            beam_axs.SetYDirection(axis.Direction())
+            beam_axs_vz = dir_to_vec(beam_axs.Direction())
+            beam_axs_vx = dir_to_vec(beam_axs.XDirection())
+            beam_axs_vy = dir_to_vec(beam_axs.YDirection())
+
+            # Toroidal: Project XZ-Plane & Angle between Vz
+            beam_axz = gp_Ax3(
+                beam.Location(), beam_axs.YDirection(), beam_axs.XDirection()
+            )
+            pnt_pxz = self.proj_vec_pln(beam.Location(), beam_vec, beam_axz)
+            lin_pxz = make_edge(beam_axs.Location(), pnt_pxz)
+            vec_pxz = gp_Vec(beam_axs.Location(), pnt_pxz)
+            rad_pxz = beam_axs_vz.Angle(vec_pxz)
+            rad_pxz = beam_axs_vz.AngleWithRef(vec_pxz, beam_axs_vy)
+            txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(rad_pxz))
+            print("Tor: ", np.rad2deg(rad_pxz))
+
+            # Poloidal: Project YZ-Plane & Angle between Vz
+            ax1_ayz = gp_Ax3(
+                beam.Location(), beam_axs.XDirection(), beam_axs.Direction()
+            )
+            pnt_pyz = self.proj_vec_pln(beam.Location(), beam_vec, ax1_ayz)
+            lin_pyz = make_edge(beam_axs.Location(), pnt_pyz)
+            vec_pyz = gp_Vec(beam_axs.Location(), pnt_pyz)
+            rad_pyz = beam_axs_vz.Angle(vec_pyz)
+            rad_pyz = -beam_axs_vz.AngleWithRef(vec_pyz, beam_axs_vx)
+            txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(rad_pyz))
+            print("Pol: ", np.rad2deg(rad_pyz))
+
+        elif mode == "angle2":
+            # Calculation using the logic of calc_tor_angle2
+            # - Beam position and direction vector are projected to the base plane
+            # - Reference coordinate system:
+            #   - Z direction: projected beam vector
+            #   - Y direction: axis-ZDir
+            # - Toroidal angle: Projected XZ-plane & angle between Vz
+            # - Poloidal angle: Projected YZ-plane & angle between Vz
+            # - Result visualization if 'show' is True
+
+            # Beam Project to Base plane
+            beam_prj = self.proj_vec_pln(beam.Location(), gp_Vec(0, 0, 0), axis)
+            beam_lin = make_edge(gp_Lin(beam.Axis()), -1, 2)
+            beam_vec = dir_to_vec(beam.Direction())
+            beam_prj_vec = self.proj_vec_pln(beam.Location(), beam_vec, axis)
+            print("Def2", beam_vec)
+
+            # Reference Coordinate
+            # Z Direction: projected beam vec
+            # Y Direction: axis-ZDir
+            beam_axs = gp_Ax3(beam.Ax2())
+            beam_axs.SetDirection(vec_to_dir(gp_Vec(beam_prj, beam_prj_vec)))
+            beam_axs.SetYDirection(axis.Direction())
+            beam_axs_vz = dir_to_vec(beam_axs.Direction())
+            beam_axs_vx = dir_to_vec(beam_axs.XDirection())
+            beam_axs_vy = dir_to_vec(beam_axs.YDirection())
+
+            # Toroidal: Project XZ-Plane & Angle between Vz
+            beam_axz = gp_Ax3(
+                beam.Location(), beam_axs.YDirection(), beam_axs.XDirection()
+            )
+            tor_vec = gp_Vec(beam_prj, axis.Location())
+            pnt_pxz = self.proj_vec_pln(beam.Location(), beam_vec, beam_axz)
+            lin_pxz = make_edge(beam_axs.Location(), pnt_pxz)
+            vec_pxz = gp_Vec(beam_axs.Location(), pnt_pxz)
+            rad_pxz = tor_vec.Angle(vec_pxz)
+            rad_pxz = tor_vec.AngleWithRef(vec_pxz, beam_axs_vy)
+            txt_pxz = "pnt_pxy: {:.1f}".format(np.rad2deg(rad_pxz))
+            print("Tor: ", np.rad2deg(rad_pxz))
+
+            # Poloidal: Project YZ-Plane & Angle between Vz
+            ax1_ayz = gp_Ax3(
+                beam.Location(), beam_axs.XDirection(), beam_axs.Direction()
+            )
+            pnt_pyz = self.proj_vec_pln(beam.Location(), beam_vec, ax1_ayz)
+            lin_pyz = make_edge(beam_axs.Location(), pnt_pyz)
+            vec_pyz = gp_Vec(beam_axs.Location(), pnt_pyz)
+            rad_pyz = beam_axs_vz.Angle(vec_pyz)
+            rad_pyz = -beam_axs_vz.AngleWithRef(vec_pyz, beam_axs_vx)
+            txt_pyz = "pnt_pyz: {:.1f}".format(np.rad2deg(rad_pyz))
+            print("Pol: ", np.rad2deg(rad_pyz))
+
+        if show == True:
+            self.show_axs_pln(beam_axs, scale=1)
+            self.display.DisplayShape(beam_lin, color="BLACK")
+
+            # Toroidal
+            self.display.DisplayShape(lin_pxz, color="RED")
+
+            # Poloidal
+            self.display.DisplayShape(lin_pyz, color="GREEN")
+
+        return rad_pxz, rad_pyz
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     obj = dispocc()
     obj.show_axs_pln()
     obj.display.DisplayShape(make_box(100, 100, 100))
@@ -1719,10 +2033,8 @@ if __name__ == '__main__':
 
     obj = dispocc(touch=True)
     obj.show_axs_pln()
-    obj.display.DisplayShape(make_box(100, 100, 100),
-                             material=Graphic3d_NOM_ALUMINIUM)
-    obj.display.DisplayShape(obj.make_plane_axs(),
-                             material=Graphic3d_NOM_COPPER)
+    obj.display.DisplayShape(make_box(100, 100, 100), material=Graphic3d_NOM_ALUMINIUM)
+    obj.display.DisplayShape(obj.make_plane_axs(), material=Graphic3d_NOM_COPPER)
     obj.ShowOCC()
 
     print(obj.base_axs)
