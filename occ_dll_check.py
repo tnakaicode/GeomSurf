@@ -2,8 +2,6 @@ import os
 import psutil
 
 from ctypes import cdll
-
-
 from OCC.Core.gp import gp_Pnt, gp_Vec
 
 pnt = gp_Pnt(0, 0, 0)

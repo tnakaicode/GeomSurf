@@ -72,8 +72,7 @@ if __name__ == "__main__":
     xv, yv = np.meshgrid(x, y)
     zv = np.sin(xv) + np.cos(yv)  # Z値を計算
     point_cloud = np.dstack([xv, yv, zv]).reshape(-1, 3)
-    point_cloud = generate_point_cloud(
-        np.array([0, 0, 0]), 0.5, size_u * size_v)
+    point_cloud = generate_point_cloud(np.array([0, 0, 0]), 0.5, size_u * size_v)
 
     # 点群をリスト形式に変換
     points = point_cloud.tolist()
@@ -84,17 +83,11 @@ if __name__ == "__main__":
     )
     exchange.export_stl(nurbs_surface, "occ_geomdl.stl")
 
-    occ_view = False
-    if occ_view:
-        display, start_display, add_menu, add_function_to_menu = init_display()
+    display, start_display, add_menu, add_function_to_menu = init_display()
 
-        # NURBS 曲面を pythonocc-core の形式に変換
-        occ_surface = convert_to_occ_surface(nurbs_surface)
+    # NURBS 曲面を pythonocc-core の形式に変換
+    occ_surface = convert_to_occ_surface(nurbs_surface)
 
-        # 描画
-        display.DisplayShape(occ_surface, update=True)
-        start_display()
-    else:
-        # geomdl の NURBS 曲面を可視化
-        nurbs_surface.vis = VisMPL.VisSurface()
-        nurbs_surface.render()
+    # 描画
+    display.DisplayShape(occ_surface, update=True)
+    start_display()

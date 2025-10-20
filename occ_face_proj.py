@@ -147,7 +147,7 @@ if __name__ == "__main__":
     while proj.More():
         poly = proj.Current()
         poly_face.append(poly)
-        poly_edge += ([e for e in TopologyExplorer(poly).edges()])
+        poly_edge += [e for e in TopologyExplorer(poly).edges()]
         proj.Next()
 
     adap = BRepAdaptor_Surface(face)
@@ -158,8 +158,7 @@ if __name__ == "__main__":
 
     poly_plan = make_face(poly_2d)
     face_edge = make_polygon(
-        [adap.Value(u, v)
-         for u, v in [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]],
+        [adap.Value(u, v) for u, v in [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]],
         closed=True,
     )
     face_edge = make_wire([e for e in TopologyExplorer(face).edges()])
@@ -174,13 +173,14 @@ if __name__ == "__main__":
         face_poly.append(proj.Current())
         proj.Next()
 
-#    wire = make_wire(poly_face)
+    #    wire = make_wire(poly_face)
     face_plan = make_face(face_poly[0])
     # obj.display.DisplayShape(face_plan)
     # obj.display.DisplayShape(poly_face)
     # obj.display.DisplayShape(poly_plan)
 
     from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+
     poly_plan = BRepAlgoAPI_Common(face_plan, poly_plan).Shape()
     poly_comm = make_wire([e for e in TopologyExplorer(poly_plan).edges()])
 
@@ -191,31 +191,30 @@ if __name__ == "__main__":
         poly_face.append(poly)
         proj.Next()
 
+    #    v0 = [v for v in TopologyExplorer(poly_face[0]).vertices()]
+    #    poly_face1 = [poly_face[0]]
 
-#    v0 = [v for v in TopologyExplorer(poly_face[0]).vertices()]
-#    poly_face1 = [poly_face[0]]
+    #    for i, wire in enumerate(poly_face[1:]):
+    #        # c = BRepAdaptor_Curve(wire)
+    #        v1 = [v for v in TopologyExplorer(wire).vertices()]
+    #        print(i, wire, *get_wire_ends(wire))
+    #        for v in v1:
+    #            print(
+    #                vertex2pnt(v),
+    #                [v.IsEqual(p) for p in v0],
+    #                [vertex2pnt(v).IsEqual(vertex2pnt(p), 0.1e-3) for p in v0],
+    #            )
+    #            # gp_Pnt().IsEqual()
+    #            # TopoDS_Vertex().IsEqual()
 
-#    for i, wire in enumerate(poly_face[1:]):
-#        # c = BRepAdaptor_Curve(wire)
-#        v1 = [v for v in TopologyExplorer(wire).vertices()]
-#        print(i, wire, *get_wire_ends(wire))
-#        for v in v1:
-#            print(
-#                vertex2pnt(v),
-#                [v.IsEqual(p) for p in v0],
-#                [vertex2pnt(v).IsEqual(vertex2pnt(p), 0.1e-3) for p in v0],
-#            )
-#            # gp_Pnt().IsEqual()
-#            # TopoDS_Vertex().IsEqual()
-
-#    idx = [0, 3, 1, 2]  # ok
-#    idx = [0, 2, 1, 3]  # ok
-#    idx = [0, 3, 2, 1]  # ok
-#    idx = [0, 1, 3, 2]  # ng
-#    idx = [0, 2, 3, 1]  # ng
-#    idx = [0, 1, 2, 3]  # ng
-#    poly_face1 = [poly_face[i] for i in idx]
-#
+    #    idx = [0, 3, 1, 2]  # ok
+    #    idx = [0, 2, 1, 3]  # ok
+    #    idx = [0, 3, 2, 1]  # ok
+    #    idx = [0, 1, 3, 2]  # ng
+    #    idx = [0, 2, 3, 1]  # ng
+    #    idx = [0, 1, 2, 3]  # ng
+    #    poly_face1 = [poly_face[i] for i in idx]
+    #
     poly_face = make_wire(poly_face)
     trim_face = BRepAlgo_FaceRestrictor()
     trim_face.Init(face, True, True)

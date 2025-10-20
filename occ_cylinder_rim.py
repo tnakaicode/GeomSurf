@@ -25,7 +25,8 @@ from OCCUtils.Construct import make_face, make_polygon, make_wire, make_edge
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 
 def make_spiral(r=1, z=1.0):
@@ -52,19 +53,19 @@ def make_helix(r=1, z=1.0):
     return BRepBuilderAPI_MakeEdge(aSegment.Value(), aCylinder, 0.0, 2 * np.pi).Edge()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt, argvs)
 
     obj = dispocc(touch=True)
     axs = gp_Ax3()
-    surf = obj.make_cylinder_surf(
-        axs, radii=1, hight=2.1, rng=[0, 2 * np.pi], xyz="z")
+    surf = obj.make_cylinder_surf(axs, radii=1, hight=2.1, rng=[0, 2 * np.pi], xyz="z")
     sprl = make_spiral(r=2)
     helx = make_helix(r=2)
     proj = BRepProj_Projection(sprl, surf, axs.Location())
@@ -73,8 +74,8 @@ if __name__ == '__main__':
 
     # https://dev.opencascade.org/doc/occt-7.5.0/refman/html/class_b_rep_builder_a_p_i___make_edge.html#details
     #
-    #proj = BRepProj_Projection(sprl, surf, axs.Location())
-    #i = 0
+    # proj = BRepProj_Projection(sprl, surf, axs.Location())
+    # i = 0
     # while proj.More():
     #    shpe = proj.Current()
     #    obj.display.DisplayShape(shpe, color=obj.colors[i % 5])

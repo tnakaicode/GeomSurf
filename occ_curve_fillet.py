@@ -12,7 +12,8 @@ sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -20,6 +21,12 @@ from OCC.Core.gp import gp_Pln, gp_Trsf
 from OCC.Core.ChFi2d import ChFi2d_AnaFilletAlgo
 from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Edge
 from OCC.Core.TopLoc import TopLoc_Location
+from OCC.Core.GProp import GProp_GProps
+from OCC.Core.BRepGProp import brepgprop
+from OCC.Core.BRepGProp import BRepGProp_EdgeTool
+from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
+from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
+from OCC.Core.TColgp import TColgp_Array1OfPnt
 from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Common import vertex2pnt, curve_length, midpoint
 from OCCUtils.Construct import make_box, make_line, make_wire, make_edge
@@ -29,16 +36,12 @@ from OCCUtils.Construct import dir_to_vec, vec_to_dir, vertex2pnt
 
 
 def edge_length(edg=TopoDS_Edge()):
-    from OCC.Core.GProp import GProp_GProps
-    from OCC.Core.BRepGProp import brepgprop
     prop = GProp_GProps()
     brepgprop.LinearProperties(edg, prop)
     return prop.Mass()
 
 
 def edge_midpoint(edg=TopoDS_Edge()):
-    from OCC.Core.BRepGProp import BRepGProp_EdgeTool
-    from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
     tool = BRepGProp_EdgeTool()
     u0 = tool.FirstParameter(BRepAdaptor_Curve(edg))
     u1 = tool.LastParameter(BRepAdaptor_Curve(edg))
@@ -46,28 +49,18 @@ def edge_midpoint(edg=TopoDS_Edge()):
 
 
 def edge_1stpoint(edg=TopoDS_Edge()):
-    from OCC.Core.BRepGProp import BRepGProp_EdgeTool
-    from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
     tool = BRepGProp_EdgeTool()
     u0 = tool.FirstParameter(BRepAdaptor_Curve(edg))
     return tool.Value(BRepAdaptor_Curve(edg), u0)
 
 
 def edge_endpoint(edg=TopoDS_Edge()):
-    from OCC.Core.BRepGProp import BRepGProp_EdgeTool
-    from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
     tool = BRepGProp_EdgeTool()
     u1 = tool.LastParameter(BRepAdaptor_Curve(edg))
     return tool.Value(BRepAdaptor_Curve(edg), u1)
 
 
 def edge_spline(edg=TopoDS_Edge(), n=3):
-    from OCC.Core.BRepGProp import BRepGProp_EdgeTool
-    from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
-    from OCC.Core.BRepGProp import brepgprop
-    from OCC.Core.GProp import GProp_GProps
-    from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
-    from OCC.Core.TColgp import TColgp_Array1OfPnt
     tool = BRepGProp_EdgeTool()
     c = BRepAdaptor_Curve(edg)
     u0 = tool.FirstParameter(c)
@@ -108,12 +101,13 @@ def make_fillet(e1=TopoDS_Edge(), e2=TopoDS_Edge(), radii=10, pln=gp_Pln()):
         return [e1, f2, e2]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt)
 

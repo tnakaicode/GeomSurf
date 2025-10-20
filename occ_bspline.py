@@ -9,10 +9,11 @@ from linecache import getline, clearcache, updatecache
 basename = os.path.dirname(__file__)
 
 sys.path.append(os.path.join("./"))
-from base_occ import dispocc, spl_face
+from src.base_occ import dispocc, spl_face
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -30,12 +31,13 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt)
 

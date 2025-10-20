@@ -13,11 +13,18 @@ sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3, gp_Trsf, gp_Translation
-from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Compound, TopoDS_Solid, TopoDS_Shell, TopoDS_Face
+from OCC.Core.TopoDS import (
+    TopoDS_Shape,
+    TopoDS_Compound,
+    TopoDS_Solid,
+    TopoDS_Shell,
+    TopoDS_Face,
+)
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.ChFi3d import ChFi3d_Rational
 from OCC.Core.BRep import BRep_Builder
@@ -49,12 +56,13 @@ def find_fillet_edge(sewed=TopoDS_Shape(), face1=TopoDS_Face(), face2=TopoDS_Fac
     return face_edge
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt)
 
@@ -76,10 +84,10 @@ if __name__ == '__main__':
     face2.Move(TopLoc_Location(trsf2))
     vert2 = list(TopologyExplorer(face2).vertices())
 
-    face3 = make_face(make_polygon(
-        [vert1[1], gp_Pnt(30, 20, 0), gp_Pnt(31, 20, 10)], closed=True))
-    face4 = make_face(make_polygon(
-        [vert1[0], vert1[3], vert2[3]], closed=True))
+    face3 = make_face(
+        make_polygon([vert1[1], gp_Pnt(30, 20, 0), gp_Pnt(31, 20, 10)], closed=True)
+    )
+    face4 = make_face(make_polygon([vert1[0], vert1[3], vert2[3]], closed=True))
 
     # Make Shell by only two faces that are sewed
     sew = BRepBuilderAPI_Sewing()

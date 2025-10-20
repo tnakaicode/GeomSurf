@@ -16,7 +16,11 @@ from OCC.Core.gp import gp_Circ, gp_Lin
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
 from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor
 from OCC.Core.BRepProj import BRepProj_Projection
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeEdge2d, BRepBuilderAPI_MakeFace
+from OCC.Core.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeEdge2d,
+    BRepBuilderAPI_MakeFace,
+)
 from OCC.Core.Geom import Geom_CylindricalSurface
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
@@ -25,23 +29,29 @@ from OCC.Core.GCE2d import GCE2d_MakeSegment
 from OCC.Core.Geom2d import Geom2d_Curve, Geom2d_Line
 from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCC.Extend.DataExchange import write_stl_file, read_stl_file
-from OCCUtils.Construct import make_face, make_polygon, make_wire, make_edge, make_edge2d
+from OCCUtils.Construct import (
+    make_face,
+    make_polygon,
+    make_wire,
+    make_edge,
+    make_edge2d,
+)
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 
-def make_cylindal(axs=gp_Ax3(), rad=100, u=[-np.pi / 2, np.pi / 2], v=[-200, 200], xyz="x"):
+def make_cylindal(
+    axs=gp_Ax3(), rad=100, u=[-np.pi / 2, np.pi / 2], v=[-200, 200], xyz="x"
+):
     if xyz == "x":
-        axr = gp_Ax3(gp_Pnt(0, 0, rad),
-                     gp_Dir(-1, 0, 0))
+        axr = gp_Ax3(gp_Pnt(0, 0, rad), gp_Dir(-1, 0, 0))
     elif xyz == "y":
-        axr = gp_Ax3(gp_Pnt(0, 0, rad),
-                     gp_Dir(0, -1, 0))
+        axr = gp_Ax3(gp_Pnt(0, 0, rad), gp_Dir(0, -1, 0))
     elif xyz == "z":
-        axr = gp_Ax3(gp_Pnt(0, 0, 0),
-                     gp_Dir(0, 0, 1))
+        axr = gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1))
     cir = make_edge(gp_Circ(axr.Ax2(), rad), *u)
     lin = make_wire(make_edge(gp_Lin(axr.Axis()), *v))
     api = BRepOffsetAPI_MakePipe(lin, cir)
@@ -51,12 +61,13 @@ def make_cylindal(axs=gp_Ax3(), rad=100, u=[-np.pi / 2, np.pi / 2], v=[-200, 200
     return face
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt, argvs)
 

@@ -9,7 +9,7 @@ from linecache import getline, clearcache, updatecache
 basename = os.path.dirname(__file__)
 
 sys.path.append(os.path.join("./"))
-from base_occ import dispocc, spl_curv
+from src.base_occ import dispocc, spl_curv
 
 import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)

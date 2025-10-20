@@ -9,10 +9,11 @@ from linecache import getline, clearcache, updatecache
 basename = os.path.dirname(__file__)
 
 sys.path.append(os.path.join("./"))
-from base_occ import dispocc
+from src.base_occ import dispocc
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -30,7 +31,7 @@ from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 
-class BeamReflect (dispocc):
+class BeamReflect(dispocc):
 
     def __init__(self, temp=True, disp=True, touch=False):
         super().__init__(temp, disp, touch)
@@ -76,18 +77,19 @@ class BeamReflect (dispocc):
         return self.us + u * (self.ue - self.us), self.vs + v * (self.ve - self.vs)
 
     def display_uv(self, u=0, v=0):
-        prop = BRepLProp_SLProps(self.surf, *self.calc_uv(u, v), 2, 1.0E-9)
+        prop = BRepLProp_SLProps(self.surf, *self.calc_uv(u, v), 2, 1.0e-9)
         p1, vx, vy = prop.Value(), prop.D1U(), prop.D1V()
         print(u, v, p1)
         self.display.DisplayShape(p1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt)
 
@@ -99,8 +101,7 @@ if __name__ == '__main__':
     obj.display_uv(0.1, 0.0)
     obj.show_axs_pln(scale=10)
 
-    beam0 = gp_Ax3(gp_Pnt(0, 0, 0),
-                   gp_Dir(1, 1, 1))
+    beam0 = gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(1, 1, 1))
     pts = [beam0.Location()]
     for i in range(20):
         beam0 = obj.reflect_beam(obj.shll, beam0=beam0, tr=0)

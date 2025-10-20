@@ -10,7 +10,8 @@ sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc, spl_curv, spl_face
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -27,12 +28,13 @@ from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                      default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt, argvs)
 
@@ -48,10 +50,10 @@ if __name__ == '__main__':
         pts.append(gp_Pnt(x, y, z))
 
     p_array = TColgp_Array1OfPnt(1, num)
-    #p_array = TColgp_Array1OfPnt(1, num + 1)
+    # p_array = TColgp_Array1OfPnt(1, num + 1)
     for idx, t in enumerate(pts):
         p_array.SetValue(idx + 1, pts[idx])
-    #p_array.SetValue(num + 1, pts[0])
+    # p_array.SetValue(num + 1, pts[0])
     api = GeomAPI_PointsToBSpline(p_array)
     crv = api.Curve()
     obj.display.DisplayShape(crv)
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     px = np.linspace(-1, 1, 100) * 1.5
     py = np.linspace(-1, 1, 200) * 1.5
     mesh = np.meshgrid(px, py)
-    face = spl_face(*mesh, mesh[0]**2 / 1000)
+    face = spl_face(*mesh, mesh[0] ** 2 / 1000)
     rim = make_polygon(pts, closed=True)
 
     n_sided = BRepFill_Filling()

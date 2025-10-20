@@ -12,7 +12,8 @@ sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
@@ -29,12 +30,13 @@ from OCCUtils.Construct import make_plane, make_polygon
 from OCCUtils.Construct import point_to_vector, vector_to_point
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt)
 
@@ -63,8 +65,7 @@ if __name__ == '__main__':
 
     obj.show_axs_pln(axs, scale=10)
     obj.display.DisplayShape(pln, transparency=0.9)
-    [obj.display.DisplayShape(pnt.Value(i))
-     for i in range(pnt.Lower(), pnt.Upper())]
+    [obj.display.DisplayShape(pnt.Value(i)) for i in range(pnt.Lower(), pnt.Upper())]
     obj.display.DisplayShape(pnt_pln_face, transparency=0.9)
     obj.show_axs_pln(gp_Ax3(pnt_ax1.Location(), pnt_ax1.Direction()), scale=10)
     obj.ShowOCC()

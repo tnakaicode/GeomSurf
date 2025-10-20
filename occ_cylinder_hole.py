@@ -14,7 +14,11 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.gp import gp_XOY, gp_Pnt2d, gp_Dir2d, gp_Lin2d, gp_Vec2d
 from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor
 from OCC.Core.BRepProj import BRepProj_Projection
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeEdge2d, BRepBuilderAPI_MakeFace
+from OCC.Core.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeEdge2d,
+    BRepBuilderAPI_MakeFace,
+)
 from OCC.Core.Geom import Geom_CylindricalSurface
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
@@ -23,19 +27,27 @@ from OCC.Core.GCE2d import GCE2d_MakeSegment
 from OCC.Core.Geom2d import Geom2d_Curve, Geom2d_Line
 from OCC.Extend.DataExchange import write_step_file, read_step_file
 from OCC.Extend.DataExchange import write_stl_file, read_stl_file
-from OCCUtils.Construct import make_face, make_polygon, make_wire, make_edge, make_edge2d
+from OCCUtils.Construct import (
+    make_face,
+    make_polygon,
+    make_wire,
+    make_edge,
+    make_edge2d,
+)
 from OCCUtils.Construct import dir_to_vec, vec_to_dir
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     argvs = sys.argv
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", dest="dir", default="./")
-    parser.add_argument("--pxyz", dest="pxyz",
-                        default=[0.0, 0.0, 0.0], type=float, nargs=3)
+    parser.add_argument(
+        "--pxyz", dest="pxyz", default=[0.0, 0.0, 0.0], type=float, nargs=3
+    )
     opt = parser.parse_args()
     print(opt, argvs)
 
@@ -72,10 +84,11 @@ if __name__ == '__main__':
         # obj.display.DisplayShape(api_face.Current(), transparency=0.9)
         api_face.Next()
 
-    rim = make_polygon([gp_Pnt(0, 0, 0), gp_Pnt(20, 0, 0),
-                       gp_Pnt(30, 0, 20), gp_Pnt(0, 0, 20)], closed=True)
-    rim_proj = obj.proj_rim_pln(rim, face, gp_Ax3(gp_Pnt(0, 0, 0),
-                                                  gp_Dir(0, 1, 0)), 1)
+    rim = make_polygon(
+        [gp_Pnt(0, 0, 0), gp_Pnt(20, 0, 0), gp_Pnt(30, 0, 20), gp_Pnt(0, 0, 20)],
+        closed=True,
+    )
+    rim_proj = obj.proj_rim_pln(rim, face, gp_Ax3(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0)), 1)
     api_face = BRepBuilderAPI_MakeFace(surf, rim_proj)
     # api_face.Init(face)
     # api_face.Add(rim)

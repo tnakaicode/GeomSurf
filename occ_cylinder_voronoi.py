@@ -12,7 +12,8 @@ from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 from OCC.Core.gp import gp_Pnt2d
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCone
 from OCCUtils.Construct import make_polygon
-from base_occ import dispocc
+
+from src.base_occ import dispocc
 
 
 def make_cylinder(axis, radius, height, taper_angle=0.0):
@@ -24,8 +25,7 @@ def make_cylinder(axis, radius, height, taper_angle=0.0):
     :param taper_angle: テーパー角度 (ラジアン, デフォルトは0で通常の円筒)
     :return: TopoDS_Face (円筒の表面)
     """
-    top_radius = radius - height * \
-        np.tan(taper_angle) if taper_angle != 0.0 else radius
+    top_radius = radius - height * np.tan(taper_angle) if taper_angle != 0.0 else radius
     if top_radius <= 0:
         raise ValueError("テーパー角度が大きすぎて上面半径が負になります。")
 
@@ -52,7 +52,7 @@ def generate_uv_points_random(num_points):
     :return: UVパラメータの点群 (numpy.ndarray)
     """
     u = np.random.uniform(0, 2 * np.pi, num_points)  # U方向 (0 ～ 2π)
-    v = np.random.uniform(0, 1, num_points)         # V方向 (0 ～ 1, 正規化された高さ)
+    v = np.random.uniform(0, 1, num_points)  # V方向 (0 ～ 1, 正規化された高さ)
     return np.column_stack((u, v))
 
 
@@ -85,20 +85,24 @@ def voronoi_on_cylinder(points, radius, height):
     projected_points = np.column_stack((angles, heights))
 
     # U方向の周期性を考慮するために、点群を複製
-    extended_points = np.vstack([
-        projected_points,
-        np.column_stack(
-            (projected_points[:, 0] + 2 * np.pi, projected_points[:, 1])),
-        np.column_stack(
-            (projected_points[:, 0] - 2 * np.pi, projected_points[:, 1]))
-    ])
+    extended_points = np.vstack(
+        [
+            projected_points,
+            np.column_stack(
+                (projected_points[:, 0] + 2 * np.pi, projected_points[:, 1])
+            ),
+            np.column_stack(
+                (projected_points[:, 0] - 2 * np.pi, projected_points[:, 1])
+            ),
+        ]
+    )
 
     # Voronoi分割を計算
     vor = Voronoi(extended_points)
 
     # 元の点群に対応する領域のみを返す
     valid_regions = []
-    for region_idx in vor.point_region[:len(projected_points)]:
+    for region_idx in vor.point_region[: len(projected_points)]:
         region = vor.regions[region_idx]
         if not region or -1 in region:
             continue  # 無効な領域をスキップ
@@ -118,18 +122,20 @@ def voronoi_on_uv(uv_points):
     :return: Voronoi分割結果 (scipy.spatial.Voronoi)
     """
     # U方向の周期性を考慮するために、点群を複製
-    extended_points = np.vstack([
-        uv_points,
-        np.column_stack((uv_points[:, 0] + 2 * np.pi, uv_points[:, 1])),
-        np.column_stack((uv_points[:, 0] - 2 * np.pi, uv_points[:, 1]))
-    ])
+    extended_points = np.vstack(
+        [
+            uv_points,
+            np.column_stack((uv_points[:, 0] + 2 * np.pi, uv_points[:, 1])),
+            np.column_stack((uv_points[:, 0] - 2 * np.pi, uv_points[:, 1])),
+        ]
+    )
 
     # Voronoi分割を計算
     vor = Voronoi(extended_points)
 
     # 元の点群に対応する領域のみを返す
     valid_regions = []
-    for region_idx in vor.point_region[:len(uv_points)]:
+    for region_idx in vor.point_region[: len(uv_points)]:
         region = vor.regions[region_idx]
         if not region or -1 in region:
             continue  # 無効な領域をスキップ
@@ -221,8 +227,7 @@ if __name__ == "__main__":
             z = v * height  # V方向を高さに変換
 
             # 半径を計算 (テーパーを考慮)
-            r = radius - z * \
-                np.tan(taper_angle) if taper_angle != 0.0 else radius
+            r = radius - z * np.tan(taper_angle) if taper_angle != 0.0 else radius
 
             # 円筒範囲外の頂点を除外
             if z < 0 or z > height or r <= 0:
