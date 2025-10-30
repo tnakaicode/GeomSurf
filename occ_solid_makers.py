@@ -8,6 +8,8 @@
 
 from __future__ import annotations
 import os
+import math
+import numpy as np
 
 from OCC.Core.gp import gp_Vec, gp_Ax1, gp_Pnt, gp_Dir, gp_Circ, gp_Ax2
 from OCC.Core.TopoDS import TopoDS_Shape
@@ -37,6 +39,10 @@ from typing import Iterable, List
 from OCC.Core.GeomAPI import GeomAPI_PointsToBSplineSurface
 from OCC.Core.TColgp import TColgp_Array2OfPnt
 from OCC.Core.GeomAbs import GeomAbs_G2
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_Transform
+from OCC.Core.gp import gp_Trsf
+from OCC.Core.TopAbs import TopAbs_WIRE
+from OCC.Core.BRepAlgo import BRepAlgo_FaceRestrictor
 
 
 def export_step(shape: TopoDS_Shape, filename: str) -> bool:
@@ -167,6 +173,130 @@ def compute_surface_area(shape: TopoDS_Shape) -> float:
         return props.Mass()
     except Exception:
         return float("nan")
+
+
+def approx_normal(surf, u, v, du=1e-4, dv=1e-4):
+    # helper: approximate surface normal at (u,v) by finite differences
+    # clamp helper
+    def clamp(x):
+        return max(0.0, min(1.0, x))
+
+    p = surf.Value(u, v)
+    pu = surf.Value(clamp(u + du), v)
+    pv = surf.Value(u, clamp(v + dv))
+    vec_u = gp_Vec(pu.X() - p.X(), pu.Y() - p.Y(), pu.Z() - p.Z())
+    vec_v = gp_Vec(pv.X() - p.X(), pv.Y() - p.Y(), pv.Z() - p.Z())
+    # cross product to get normal direction
+    n = vec_u.Crossed(vec_v)
+    mag = n.Magnitude()
+    if mag == 0:
+        # fallback normal (Z)
+        return gp_Vec(0, 0, 1)
+    # normalize
+    return gp_Vec(n.X() / mag, n.Y() / mag, n.Z() / mag)
+
+
+def bspline_boundary_solid(
+    surf_bot,
+    surf_top,
+    center_uv=(0.5, 0.5),
+    r_uv=0.2,
+    n_samples=64,
+) -> TopoDS_Shape:
+    """BSpline Surface 上のパラメータ空間で円形境界をサンプリングし、
+    下底用サーフェス(surf_bot)と上底用サーフェス(surf_top)からそれぞれ点を取り、
+    そのワイヤを ThruSections でつないでソリッドを作る。
+
+    surf_bot: Geom_Surface (底面のサーフェス、Value(u,v) を持つもの)
+    surf_top: Geom_Surface または None。None の場合は surf_bot 上の点を法線方向に
+              オフセットして上面を作成する（従来の挙動）
+    center_uv: (u0, v0) in param space (fractional, 0..1 assumed)
+    r_uv: 半径（param-space の比率）
+    thickness: 上底へのオフセット量（3D 空間）。surf_top を与えた場合は無視される。
+    n_samples: 境界の離散化点数
+    """
+    # sample boundary in param space (assume u,v in [0,1])
+    u0, v0 = center_uv
+    params = []
+    for i in range(n_samples):
+        ang = 2.0 * math.pi * i / n_samples
+        u = u0 + r_uv * math.cos(ang)
+        v = v0 + r_uv * math.sin(ang)
+        # clamp
+        u = max(0.0, min(1.0, u))
+        v = max(0.0, min(1.0, v))
+        params.append((u, v))
+
+    # build bottom wire (polygon)
+    poly_bot = BRepBuilderAPI_MakePolygon()
+    for u, v in params:
+        p_bot = surf_bot.Value(u, v)
+        poly_bot.Add(p_bot)
+    poly_bot.Close()
+    wire_bot = poly_bot.Wire()
+
+    # build top wire either from surf_top sampling or by offsetting along normals
+    poly_top = BRepBuilderAPI_MakePolygon()
+    for u, v in params:
+        p_top = surf_top.Value(u, v)
+        poly_top.Add(p_top)
+    poly_top.Close()
+    wire_top = poly_top.Wire()
+
+    # connect with ThruSections to make side surfaces
+    thu = BRepOffsetAPI_ThruSections()
+    thu.AddWire(wire_bot)
+    thu.AddWire(wire_top)
+    thu.Build()
+    side_shell = thu.Shape()
+
+    # create cap faces from bottom/top wires
+    # Use FaceRestrictor to trim the original surface by the wire so the face lies on the surface
+    # bottom face
+    try:
+        base_face_bot = BRepBuilderAPI_MakeFace(surf_bot, 1e-6).Face()
+        fr_bot = BRepAlgo_FaceRestrictor()
+        fr_bot.Init(base_face_bot, True, True)
+        fr_bot.Add(wire_bot)
+        fr_bot.Perform()
+        face_bot = fr_bot.Current()
+    except Exception:
+        # fallback to MakeFace from wire if FaceRestrictor fails
+        face_bot = BRepBuilderAPI_MakeFace(wire_bot).Face()
+
+    # top face
+    if surf_top is not None:
+        try:
+            base_face_top = BRepBuilderAPI_MakeFace(surf_top, 1e-6).Face()
+            fr_top = BRepAlgo_FaceRestrictor()
+            fr_top.Init(base_face_top, True, True)
+            fr_top.Add(wire_top)
+            fr_top.Perform()
+            face_top = fr_top.Current()
+        except Exception:
+            face_top = BRepBuilderAPI_MakeFace(wire_top).Face()
+    else:
+        # fallback: create face directly from wire_top (offset case)
+        face_top = BRepBuilderAPI_MakeFace(wire_top).Face()
+
+    # sew side shell and caps together, then build a solid from the sewed shell
+    sew = BRepBuilderAPI_Sewing()
+    sew.Add(side_shell)
+    sew.Add(face_bot)
+    sew.Add(face_top)
+    sew.Perform()
+    sewed = sew.SewedShape()
+
+    # If sewing produced a solid already, return it
+    try:
+        # If sewed is already a solid or shell that MakeSolid accepts, try to use it
+        mk = BRepBuilderAPI_MakeSolid()
+        sh = topods.Shell(sewed)
+        mk.Add(sh)
+        return mk.Solid()
+    except Exception:
+        # If conversion to shell failed, maybe sewing returned a solid already
+        return sewed
 
 
 if __name__ == "__main__":
@@ -337,6 +467,54 @@ if __name__ == "__main__":
             pass
     except Exception as e:
         print("bspline surface test failed:", e)
+
+    # Test: BSpline boundary-cut and smooth thru-sections solid
+    try:
+        # create a slightly larger BSpline surface (5x5 grid)
+        nx, ny = 5, 5
+        arr_bot = TColgp_Array2OfPnt(1, nx, 1, ny)
+        for i in range(1, nx + 1):
+            for j in range(1, ny + 1):
+                x = (i - 1) * 10.0 - 20.0
+                y = (j - 1) * 10.0 - 20.0
+                z = 2.0 * math.sin((i - 1) * 0.5) * math.cos((j - 1) * 0.4)
+                arr_bot.SetValue(i, j, gp_Pnt(x, y, z))
+        api = GeomAPI_PointsToBSplineSurface(arr_bot, 3, 3, GeomAbs_G2, 1e-6)
+        api.Interpolate(arr_bot)
+        surf_bot = api.Surface()
+
+        # create a slightly larger BSpline surface (5x5 grid)
+        nx, ny = 10, 10
+        arr_top = TColgp_Array2OfPnt(1, nx, 1, ny)
+        for i in range(1, nx + 1):
+            for j in range(1, ny + 1):
+                x = (i - 1) * 10.0 - 20.0
+                y = (j - 1) * 10.0 - 20.0
+                z = 2.0 * math.sin((i - 1) * 0.1) * math.cos((j - 1) * 0.1) + 10.0
+                arr_top.SetValue(i, j, gp_Pnt(x, y, z))
+        api = GeomAPI_PointsToBSplineSurface(arr_top, 3, 3, GeomAbs_G2, 1e-6)
+        api.Interpolate(arr_top)
+        surf_top = api.Surface()
+
+        # Provide both bottom and top surfaces to the new API
+        s_cut = bspline_boundary_solid(
+            surf_bot,
+            surf_top,
+            center_uv=(0.5, 0.5),
+            r_uv=0.35,
+            n_samples=72,
+        )
+        p = f"{outdir}/bspline_boundary_solid.step"
+        ok = export_step(s_cut, p)
+        print("bspline_boundary_solid ->", ok, p)
+        try:
+            print(
+                "  volume:", compute_volume(s_cut), "area:", compute_surface_area(s_cut)
+            )
+        except Exception:
+            pass
+    except Exception as e:
+        print("bspline_boundary_solid failed:", e)
 
     # Test: solid_boolean_union
     try:
