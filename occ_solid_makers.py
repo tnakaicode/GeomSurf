@@ -477,7 +477,7 @@ if __name__ == "__main__":
             for j in range(1, ny + 1):
                 x = (i - 1) * 10.0 - 20.0
                 y = (j - 1) * 10.0 - 20.0
-                z = 2.0 * math.sin((i - 1) * 0.5) * math.cos((j - 1) * 0.4)
+                z = 2.0 * math.sin((i - 1) * 5.0) * math.cos((j - 1) * 2.0)
                 arr_bot.SetValue(i, j, gp_Pnt(x, y, z))
         api = GeomAPI_PointsToBSplineSurface(arr_bot, 3, 3, GeomAbs_G2, 1e-6)
         api.Interpolate(arr_bot)
@@ -488,9 +488,9 @@ if __name__ == "__main__":
         arr_top = TColgp_Array2OfPnt(1, nx, 1, ny)
         for i in range(1, nx + 1):
             for j in range(1, ny + 1):
-                x = (i - 1) * 10.0 - 20.0
-                y = (j - 1) * 10.0 - 20.0
-                z = 2.0 * math.sin((i - 1) * 0.1) * math.cos((j - 1) * 0.1) + 10.0
+                x = (i - 1) * 10.0 - 40.0
+                y = (j - 1) * 10.0 - 40.0
+                z = 5.0 * math.sin((i - 1) * 2.0) * math.cos((j - 1) * 3.0) + 50.0
                 arr_top.SetValue(i, j, gp_Pnt(x, y, z))
         api = GeomAPI_PointsToBSplineSurface(arr_top, 3, 3, GeomAbs_G2, 1e-6)
         api.Interpolate(arr_top)
