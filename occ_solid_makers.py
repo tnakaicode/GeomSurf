@@ -352,15 +352,12 @@ if __name__ == "__main__":
             p = f"{outdir}/solid_from_faces_sewed.step"
             ok = export_step(s_sew, p)
             print("solid_from_faces_sewed ->", ok, p)
-            try:
-                print(
-                    "  volume:",
-                    compute_volume(s_sew),
-                    "area:",
-                    compute_surface_area(s_sew),
-                )
-            except Exception as _:
-                pass
+            print(
+                "  volume:",
+                compute_volume(s_sew),
+                "area:",
+                compute_surface_area(s_sew),
+            )
         except Exception as e:
             print("solid_from_faces_sewed failed:", e)
     else:
@@ -369,8 +366,6 @@ if __name__ == "__main__":
     # Test: solid_by_extrusion
     try:
         # Create a closed rectangular wire -> face, then extrude to form a proper solid
-        from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
-
         poly = BRepBuilderAPI_MakePolygon()
         poly.Add(gp_Pnt(0, 0, 0))
         poly.Add(gp_Pnt(40, 0, 0))
@@ -385,15 +380,12 @@ if __name__ == "__main__":
         ok = export_step(s_extr, p)
         print("solid_by_extrusion ->", ok, p)
         print("  expected volume:", 40 * 20 * 10)
-        try:
-            print(
-                "  volume:",
-                compute_volume(s_extr),
-                "area:",
-                compute_surface_area(s_extr),
-            )
-        except Exception:
-            pass
+        print(
+            "  volume:",
+            compute_volume(s_extr),
+            "area:",
+            compute_surface_area(s_extr),
+        )
     except Exception as e:
         print("solid_by_extrusion failed:", e)
 
@@ -404,12 +396,7 @@ if __name__ == "__main__":
         p = f"{outdir}/solid_by_revolution.step"
         ok = export_step(s_rev, p)
         print("solid_by_revolution ->", ok, p)
-        try:
-            print(
-                "  volume:", compute_volume(s_rev), "area:", compute_surface_area(s_rev)
-            )
-        except Exception:
-            pass
+        print("  volume:", compute_volume(s_rev), "area:", compute_surface_area(s_rev))
     except Exception as e:
         print("solid_by_revolution failed:", e)
 
@@ -425,15 +412,12 @@ if __name__ == "__main__":
         p = f"{outdir}/solid_by_thru_sections.step"
         ok = export_step(s_thru, p)
         print("solid_by_thru_sections ->", ok, p)
-        try:
-            print(
-                "  volume:",
-                compute_volume(s_thru),
-                "area:",
-                compute_surface_area(s_thru),
-            )
-        except Exception:
-            pass
+        print(
+            "  volume:",
+            compute_volume(s_thru),
+            "area:",
+            compute_surface_area(s_thru),
+        )
     except Exception as e:
         print("solid_by_thru_sections failed:", e)
 
@@ -464,15 +448,12 @@ if __name__ == "__main__":
         p2 = f"{outdir}/bspline_surface_extruded.step"
         ok2 = export_step(s_np_extr, p2)
         print("bspline extruded ->", ok2, p2)
-        try:
-            print(
-                "  volume:",
-                compute_volume(s_np_extr),
-                "area:",
-                compute_surface_area(s_np_extr),
-            )
-        except Exception:
-            pass
+        print(
+            "  volume:",
+            compute_volume(s_np_extr),
+            "area:",
+            compute_surface_area(s_np_extr),
+        )
     except Exception as e:
         print("bspline surface test failed:", e)
 
@@ -526,12 +507,7 @@ if __name__ == "__main__":
         p = f"{outdir}/bspline_boundary_solid.step"
         ok = export_step(s_cut, p)
         print("bspline_boundary_solid ->", ok, p)
-        try:
-            print(
-                "  volume:", compute_volume(s_cut), "area:", compute_surface_area(s_cut)
-            )
-        except Exception:
-            pass
+        print("  volume:", compute_volume(s_cut), "area:", compute_surface_area(s_cut))
     except Exception as e:
         print("bspline_boundary_solid failed:", e)
 
@@ -541,15 +517,12 @@ if __name__ == "__main__":
         p = f"{outdir}/solid_boolean_union.step"
         ok = export_step(s_fuse, p)
         print("solid_boolean_union ->", ok, p)
-        try:
-            print(
-                "  volume:",
-                compute_volume(s_fuse),
-                "area:",
-                compute_surface_area(s_fuse),
-            )
-        except Exception:
-            pass
+        print(
+            "  volume:",
+            compute_volume(s_fuse),
+            "area:",
+            compute_surface_area(s_fuse),
+        )
     except Exception as e:
         print("solid_boolean_union failed:", e)
 
