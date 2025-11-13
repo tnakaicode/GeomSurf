@@ -1,57 +1,141 @@
 import numpy as np
 import sys
 import os
-import argparse
 
 basename = os.path.dirname(__file__)
 sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
 
-import logging
-
-logging.getLogger("matplotlib").setLevel(logging.ERROR)
-
-from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir, gp_Ax1, gp_Ax2, gp_Ax3, gp_Circ
+from OCC.Core.gp import gp_Pnt, gp_Dir, gp_Ax2
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeCylinder
-from OCC.Core.BRepBuilderAPI import (
-    BRepBuilderAPI_MakeWire,
-    BRepBuilderAPI_MakeFace,
-    BRepBuilderAPI_MakeEdge,
-)
-from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections, BRepOffsetAPI_MakePipe
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeEdge
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_ThruSections
 from OCC.Core.Geom import Geom_Circle
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCC.Core.BRepFilletAPI import BRepFilletAPI_MakeFillet
-from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Edge
 from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.TopAbs import TopAbs_EDGE
-from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
-from OCC.Core.TColgp import TColgp_Array1OfPnt
 
 
-class HoleSpec:
-    """穴の仕様を定義するクラス"""
+def create_cylinder_with_holes():
+    """Cylinder側面に高さ・周方向・径違いの穴を開ける"""
+    # シリンダー作成
+    cylinder_axis = gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1))
+    cylinder = BRepPrimAPI_MakeCylinder(cylinder_axis, 50.0, 100.0).Shape()
+    
+    # 穴1: 高さ70mm, 角度0°, 径8mm
+    hole1_center = gp_Pnt(50, 0, 70)
+    hole1_axis = gp_Ax2(hole1_center, gp_Dir(-1, 0, 0))
+    hole1_cylinder = BRepPrimAPI_MakeCylinder(hole1_axis, 4.0, 25.0).Shape()
+    
+    # 穴2: 高さ40mm, 角度120°, 径6mm  
+    angle2 = np.radians(120)
+    hole2_center = gp_Pnt(50*np.cos(angle2), 50*np.sin(angle2), 40)
+    hole2_axis = gp_Ax2(hole2_center, gp_Dir(-np.cos(angle2), -np.sin(angle2), 0))
+    hole2_cylinder = BRepPrimAPI_MakeCylinder(hole2_axis, 3.0, 25.0).Shape()
+    
+    # 穴3: 高さ20mm, 角度240°, 径4mm
+    angle3 = np.radians(240) 
+    hole3_center = gp_Pnt(50*np.cos(angle3), 50*np.sin(angle3), 20)
+    hole3_axis = gp_Ax2(hole3_center, gp_Dir(-np.cos(angle3), -np.sin(angle3), 0))
+    hole3_cylinder = BRepPrimAPI_MakeCylinder(hole3_axis, 2.0, 25.0).Shape()
+    
+    # 穴を開ける
+    cut1 = BRepAlgoAPI_Cut(cylinder, hole1_cylinder)
+    cut1.Build()
+    cut2 = BRepAlgoAPI_Cut(cut1.Shape(), hole2_cylinder) 
+    cut2.Build()
+    cut3 = BRepAlgoAPI_Cut(cut2.Shape(), hole3_cylinder)
+    cut3.Build()
+    
+    # 穴の表面中心点
+    hole_centers = [
+        gp_Pnt(50, 0, 70),
+        gp_Pnt(50*np.cos(angle2), 50*np.sin(angle2), 40),
+        gp_Pnt(50*np.cos(angle3), 50*np.sin(angle3), 20)
+    ]
+    
+    return cut3.Shape(), hole_centers
 
-    def __init__(self, height, angle_deg, diameter, depth=20.0):
-        self.height = height  # Z座標での高さ
-        self.angle_deg = angle_deg  # 回転角度（度）
-        self.diameter = diameter  # 穴の直径
-        self.depth = depth  # 穴の深さ
 
-    def get_position(self, cylinder_radius):
-        """シリンダー表面での穴の位置を計算"""
-        angle_rad = np.radians(self.angle_deg)
-        x = cylinder_radius * np.cos(angle_rad)
-        y = cylinder_radius * np.sin(angle_rad)
-        z = self.height
-        return gp_Pnt(x, y, z)
+def create_smooth_connection(hole_centers):
+    """穴を滑らかにつなぐ"""
+    # 穴1の円
+    circle1_axis = gp_Ax2(hole_centers[0], gp_Dir(-1, 0, 0))
+    circle1_geom = Geom_Circle(circle1_axis, 4.0)
+    circle1_edge = BRepBuilderAPI_MakeEdge(circle1_geom).Edge()
+    wire1 = BRepBuilderAPI_MakeWire(circle1_edge).Wire()
+    
+    # 穴2の円
+    angle2 = np.radians(120)
+    circle2_axis = gp_Ax2(hole_centers[1], gp_Dir(-np.cos(angle2), -np.sin(angle2), 0))
+    circle2_geom = Geom_Circle(circle2_axis, 3.0)
+    circle2_edge = BRepBuilderAPI_MakeEdge(circle2_geom).Edge()
+    wire2 = BRepBuilderAPI_MakeWire(circle2_edge).Wire()
+    
+    # 穴3の円
+    angle3 = np.radians(240)
+    circle3_axis = gp_Ax2(hole_centers[2], gp_Dir(-np.cos(angle3), -np.sin(angle3), 0))
+    circle3_geom = Geom_Circle(circle3_axis, 2.0)
+    circle3_edge = BRepBuilderAPI_MakeEdge(circle3_geom).Edge()
+    wire3 = BRepBuilderAPI_MakeWire(circle3_edge).Wire()
+    
+    # ThruSectionsで滑らかに接続
+    thru_sections = BRepOffsetAPI_ThruSections(True, True)
+    thru_sections.AddWire(wire1)
+    thru_sections.AddWire(wire2)
+    thru_sections.AddWire(wire3)
+    thru_sections.Build()
+    
+    return thru_sections.Shape()
 
-    def get_direction(self):
-        """穴を開ける方向を計算（シリンダー中心向き）"""
-        angle_rad = np.radians(self.angle_deg)
-        dx = -np.cos(angle_rad)  # 中心向き
-        dy = -np.sin(angle_rad)
-        return gp_Dir(dx, dy, 0)
+
+def apply_fillet(cylinder_shape, connection_shape):
+    """CylinderとのFilletを適用"""
+    # 形状を結合
+    fuse = BRepAlgoAPI_Fuse(cylinder_shape, connection_shape)
+    fuse.Build()
+    fused_shape = fuse.Shape()
+    
+    # Fillet適用
+    fillet = BRepFilletAPI_MakeFillet(fused_shape)
+    
+    # エッジを探索してFilletを追加
+    explorer = TopExp_Explorer(fused_shape, TopAbs_EDGE)
+    while explorer.More():
+        edge = explorer.Current()
+        fillet.Add(2.0, edge)
+        explorer.Next()
+    
+    fillet.Build()
+    return fillet.Shape() if fillet.IsDone() else fused_shape
+
+
+def main():
+    """メイン実行"""
+    print("Cylinder側面に高さ・周方向・径違いの穴を開けて滑らかに接続")
+    
+    obj = dispocc(touch=True)
+    
+    # ステップ1: 穴あきシリンダー作成
+    cylinder_with_holes, hole_centers = create_cylinder_with_holes()
+    print(f"穴数: {len(hole_centers)}個")
+    
+    # ステップ2: 滑らか接続
+    connection = create_smooth_connection(hole_centers)
+    print("滑らか接続完了")
+    
+    # ステップ3: Fillet適用
+    final_shape = apply_fillet(cylinder_with_holes, connection)
+    print("Fillet適用完了")
+    
+    # 表示
+    obj.display.DisplayShape(final_shape, color="GREEN", transparency=0.2)
+    obj.ShowOCC()
+
+
+if __name__ == "__main__":
+    main()
 
 
 def create_cylinder_with_holes(
