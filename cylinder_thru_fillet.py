@@ -25,6 +25,8 @@ from OCC.Core.TopoDS import TopoDS_Shape, TopoDS_Edge
 from OCC.Core.TopExp import TopExp_Explorer
 from OCC.Core.TopAbs import TopAbs_EDGE
 from OCC.Core.Geom import Geom_Circle
+from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
+from OCC.Core.GeomAbs import GeomAbs_Circle
 from OCC.Extend.TopologyUtils import TopologyExplorer
 from OCCUtils.Construct import make_wire, make_face
 
@@ -43,12 +45,14 @@ def create_cylinder_with_holes():
     hole2_axis = gp_Ax2(gp_Pnt(-20, 0, 20), gp_Dir(0, 0, 1))
     hole2_cylinder = BRepPrimAPI_MakeCylinder(hole2_axis, 8.0, 20.0).Shape()
 
-    # 穴3: 側面の穴1（X軸方向）
-    hole3_axis = gp_Ax2(gp_Pnt(0, 0, 60), gp_Dir(1, 0, 0))
+    # 穴3: 側面の穴1（X軸方向）- 位置を記録
+    hole3_center = gp_Pnt(0, 0, 60)
+    hole3_axis = gp_Ax2(hole3_center, gp_Dir(1, 0, 0))
     hole3_cylinder = BRepPrimAPI_MakeCylinder(hole3_axis, 6.0, 60.0).Shape()
 
-    # 穴4: 側面の穴2（Y軸方向）
-    hole4_axis = gp_Ax2(gp_Pnt(0, 0, 40), gp_Dir(0, 1, 0))
+    # 穴4: 側面の穴2（Y軸方向）- 位置を記録
+    hole4_center = gp_Pnt(0, 0, 40)
+    hole4_axis = gp_Ax2(hole4_center, gp_Dir(0, 1, 0))
     hole4_cylinder = BRepPrimAPI_MakeCylinder(hole4_axis, 5.0, 60.0).Shape()
 
     # 順次穴を開ける
@@ -68,7 +72,13 @@ def create_cylinder_with_holes():
     cut4.Build()
     cylinder_with_holes = cut4.Shape()
 
-    return cylinder_with_holes, gp_Pnt(20, 0, 80), gp_Pnt(-20, 0, 20)
+    # 上下穴の中心と側面穴の情報を返す
+    side_holes_info = [
+        {"center": hole3_center, "radius": 6.0, "direction": gp_Dir(1, 0, 0)},
+        {"center": hole4_center, "radius": 5.0, "direction": gp_Dir(0, 1, 0)},
+    ]
+
+    return cylinder_with_holes, gp_Pnt(20, 0, 80), gp_Pnt(-20, 0, 20), side_holes_info
 
 
 def create_thru_section(pt1, pt2):
@@ -94,86 +104,102 @@ def create_thru_section(pt1, pt2):
     return thru_sections.Shape()
 
 
-def apply_fillet(shape1, shape2, radius=5.0):
-    """2つの形状を結合してFilletを適用"""
-    # 形状を結合
-    fuse = BRepAlgoAPI_Fuse(shape1, shape2)
-    fuse.Build()
-    fused_shape = fuse.Shape()
+def apply_side_hole_fillet(cylinder_shape, side_holes_info, radius=3.0):
+    """側面穴の周囲のエッジにFilletを適用"""
+    from OCC.Core.BRep import BRep_Tool
+    from OCC.Core.TopoDS import topods
 
-    # Filletを適用
-    fillet = BRepFilletAPI_MakeFillet(fused_shape)
-
-    # エッジを探してFilletを適用
-    explorer = TopExp_Explorer(fused_shape, TopAbs_EDGE)
-    edge_count = 0
-    while explorer.More() and edge_count < 20:  # より多くのエッジにFilletを適用
-        edge = explorer.Current()
-        try:
-            fillet.Add(radius, edge)
-            edge_count += 1
-        except:
-            pass  # Filletを適用できないエッジはスキップ
-        explorer.Next()
-
-    try:
-        fillet.Build()
-        return fillet.Shape()
-    except:
-        return fused_shape  # Filletが失敗した場合は結合された形状を返す
-
-
-def apply_cylinder_fillet(cylinder_shape, radius=3.0):
-    """シリンダー自体にFilletを適用"""
     fillet = BRepFilletAPI_MakeFillet(cylinder_shape)
 
-    # エッジを探してFilletを適用
+    # エッジを探して、側面穴の近くにあるエッジにFilletを適用
     explorer = TopExp_Explorer(cylinder_shape, TopAbs_EDGE)
-    edge_count = 0
-    while explorer.More() and edge_count < 15:
+    fillet_count = 0
+
+    while explorer.More():
         edge = explorer.Current()
-        try:
-            fillet.Add(radius, edge)
-            edge_count += 1
-        except:
-            pass  # Filletを適用できないエッジはスキップ
+
+        # エッジの中点を取得
+        curve = BRep_Tool.Curve(edge)
+        if curve[0] is not None:
+            u_start = curve[1]
+            u_end = curve[2]
+            u_mid = (u_start + u_end) / 2
+
+            # エッジの中点座標を取得
+            pt = curve[0].Value(u_mid)
+            edge_center = gp_Pnt(pt.X(), pt.Y(), pt.Z())
+
+            # 各側面穴の中心からの距離をチェック
+            for hole_info in side_holes_info:
+                hole_center = hole_info["center"]
+                hole_radius = hole_info["radius"]
+
+                # 穴の中心からエッジまでの距離
+                distance = edge_center.Distance(hole_center)
+
+                # 穴の半径の近くにあるエッジ（穴の境界部分）をFillet対象とする
+                if abs(distance - hole_radius) < 8.0:  # 許容範囲内
+                    fillet.Add(radius, edge)
+                    fillet_count += 1
+                    print(
+                        f"Fillet追加: 穴中心({hole_center.X():.1f}, {hole_center.Y():.1f}, {hole_center.Z():.1f}), 距離: {distance:.2f}"
+                    )
+                    break  # 一つの穴に対してマッチしたら次のエッジへ
+
         explorer.Next()
 
-    try:
+    print(f"Fillet対象エッジ数: {fillet_count}")
+
+    if fillet_count > 0:
         fillet.Build()
-        return fillet.Shape()
-    except:
-        return cylinder_shape  # Filletが失敗した場合は元の形状を返す
+        if fillet.IsDone():
+            print("Fillet適用成功")
+            return fillet.Shape()
+        else:
+            print(f"Fillet作成失敗: 半径{radius}が大きすぎる可能性があります")
+            return cylinder_shape
+    else:
+        print("Fillet対象エッジが見つかりませんでした")
+        return cylinder_shape
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--radius", dest="radius", default=5.0, type=float)
-    parser.add_argument(
-        "--cylinder_radius", dest="cylinder_radius", default=3.0, type=float
-    )
+    parser.add_argument("--radius", dest="radius", default=3.0, type=float)
     opt = parser.parse_args()
 
     obj = dispocc(touch=True)
 
     # ステップ1: シリンダーに穴を開ける
-    cylinder_with_holes, hole1_center, hole2_center = create_cylinder_with_holes()
+    cylinder_with_holes, hole1_center, hole2_center, side_holes_info = (
+        create_cylinder_with_holes()
+    )
 
-    # ステップ2: シリンダーにFilletを適用
-    cylinder_filleted = apply_cylinder_fillet(cylinder_with_holes, opt.cylinder_radius)
+    # ステップ2: 側面穴の部分だけにFilletを適用
+    cylinder_filleted = apply_side_hole_fillet(
+        cylinder_with_holes, side_holes_info, opt.radius
+    )
     obj.display.DisplayShape(cylinder_filleted, color="BLUE", transparency=0.3)
 
     # ステップ3: ThruSectionを作成
     thru_section = create_thru_section(hole1_center, hole2_center)
     obj.display.DisplayShape(thru_section, color="RED", transparency=0.3)
 
-    # ステップ4: Filletを適用した最終形状を作成
-    final_shape = apply_fillet(cylinder_filleted, thru_section, opt.radius)
-    obj.display.DisplayShape(final_shape, color="GREEN", transparency=0.8)
+    # ステップ4: 形状を結合（Filletは側面穴のみに適用済み）
+    fuse = BRepAlgoAPI_Fuse(cylinder_filleted, thru_section)
+    fuse.Build()
+
+    if fuse.IsDone():
+        final_shape = fuse.Shape()
+        obj.display.DisplayShape(final_shape, color="GREEN", transparency=0.8)
+        print("結合成功: Filletが保持されました")
+    else:
+        print("結合失敗: 個別に表示します")
+        # 結合が失敗した場合は個別に表示
+        obj.display.DisplayShape(cylinder_filleted, color="BLUE", transparency=0.3)
+        obj.display.DisplayShape(thru_section, color="RED", transparency=0.3)
 
     print(f"シリンダーに4つの穴（上下2つ、側面2つ）を開け、ThruSectionで接続し、")
-    print(
-        f"シリンダーFillet半径{opt.cylinder_radius}、結合Fillet半径{opt.radius}を適用しました。"
-    )
+    print(f"側面穴の部分のみにFillet半径{opt.radius}を適用しました。")
 
     obj.ShowOCC()
