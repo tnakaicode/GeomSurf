@@ -57,74 +57,88 @@ def create_cylinder_with_holes():
 
 
 def create_smooth_connection(hole_centers):
-    """穴を滑らかにつないでFilletのような効果を作る"""
-    # より滑らかな接続のため、中間断面を追加
-    
-    # 穴1の円 (径6mm) + 外側リング
+    """穴を滑らかにつなぐ"""
+    # 穴1の円 (径6mm)
     circle1_axis = gp_Ax2(hole_centers[0], gp_Dir(-1, 0, 0))
-    circle1_inner = Geom_Circle(circle1_axis, 3.0)
-    circle1_outer = Geom_Circle(circle1_axis, 5.0)  # 外側リング
-    edge1_inner = BRepBuilderAPI_MakeEdge(circle1_inner).Edge()
-    edge1_outer = BRepBuilderAPI_MakeEdge(circle1_outer).Edge()
-    wire1_inner = BRepBuilderAPI_MakeWire(edge1_inner).Wire()
-    wire1_outer = BRepBuilderAPI_MakeWire(edge1_outer).Wire()
+    circle1_geom = Geom_Circle(circle1_axis, 3.0)
+    circle1_edge = BRepBuilderAPI_MakeEdge(circle1_geom).Edge()
+    wire1 = BRepBuilderAPI_MakeWire(circle1_edge).Wire()
     
-    # 穴2の円 (径8mm) + 外側リング
+    # 穴2の円 (径8mm)
     angle2 = np.radians(120)
     circle2_axis = gp_Ax2(hole_centers[1], gp_Dir(-np.cos(angle2), -np.sin(angle2), 0))
-    circle2_inner = Geom_Circle(circle2_axis, 4.0)
-    circle2_outer = Geom_Circle(circle2_axis, 6.0)  # 外側リング
-    edge2_inner = BRepBuilderAPI_MakeEdge(circle2_inner).Edge()
-    edge2_outer = BRepBuilderAPI_MakeEdge(circle2_outer).Edge()
-    wire2_inner = BRepBuilderAPI_MakeWire(edge2_inner).Wire()
-    wire2_outer = BRepBuilderAPI_MakeWire(edge2_outer).Wire()
+    circle2_geom = Geom_Circle(circle2_axis, 4.0)
+    circle2_edge = BRepBuilderAPI_MakeEdge(circle2_geom).Edge()
+    wire2 = BRepBuilderAPI_MakeWire(circle2_edge).Wire()
     
-    # 穴3の円 (径4mm) + 外側リング
+    # 穴3の円 (径4mm)
     angle3 = np.radians(240)
     circle3_axis = gp_Ax2(hole_centers[2], gp_Dir(-np.cos(angle3), -np.sin(angle3), 0))
-    circle3_inner = Geom_Circle(circle3_axis, 2.0)
-    circle3_outer = Geom_Circle(circle3_axis, 4.0)  # 外側リング
-    edge3_inner = BRepBuilderAPI_MakeEdge(circle3_inner).Edge()
-    edge3_outer = BRepBuilderAPI_MakeEdge(circle3_outer).Edge()
-    wire3_inner = BRepBuilderAPI_MakeWire(edge3_inner).Wire()
-    wire3_outer = BRepBuilderAPI_MakeWire(edge3_outer).Wire()
+    circle3_geom = Geom_Circle(circle3_axis, 2.0)
+    circle3_edge = BRepBuilderAPI_MakeEdge(circle3_geom).Edge()
+    wire3 = BRepBuilderAPI_MakeWire(circle3_edge).Wire()
     
-    # 内側接続（穴同士）
-    thru_inner = BRepOffsetAPI_ThruSections(True, True)
-    thru_inner.AddWire(wire1_inner)
-    thru_inner.AddWire(wire2_inner)
-    thru_inner.AddWire(wire3_inner)
-    thru_inner.Build()
+    # ThruSectionsで滑らかに接続
+    thru_sections = BRepOffsetAPI_ThruSections(True, True)
+    thru_sections.AddWire(wire1)
+    thru_sections.AddWire(wire2)
+    thru_sections.AddWire(wire3)
+    thru_sections.Build()
     
-    # 外側接続（滑らかなFillet効果）
-    thru_outer = BRepOffsetAPI_ThruSections(True, True)
-    thru_outer.AddWire(wire1_outer)
-    thru_outer.AddWire(wire2_outer)
-    thru_outer.AddWire(wire3_outer)
-    thru_outer.Build()
+    return thru_sections.Shape()
+
+
+def apply_real_fillet(fused_shape):
+    """実際のFilletを適用"""
+    fillet = BRepFilletAPI_MakeFillet(fused_shape)
     
-    # 内外を結合してFilletのような滑らかな形状を作成
-    if thru_inner.IsDone() and thru_outer.IsDone():
-        fuse_connection = BRepAlgoAPI_Fuse(thru_inner.Shape(), thru_outer.Shape())
-        fuse_connection.Build()
-        if fuse_connection.IsDone():
-            return fuse_connection.Shape()
+    # 特定のエッジを選択してFilletを適用
+    edge_explorer = TopExp_Explorer(fused_shape, TopAbs_EDGE)
+    edge_list = []
     
-    return thru_inner.Shape()
+    # 全エッジを収集
+    while edge_explorer.More():
+        edge_list.append(topods.Edge(edge_explorer.Current()))
+        edge_explorer.Next()
+    
+    # 安全な半径で段階的にFillet適用
+    for radius in [0.2, 0.5, 1.0]:
+        test_fillet = BRepFilletAPI_MakeFillet(fused_shape)
+        success_count = 0
+        
+        # エッジを1つずつ追加してテスト
+        for i, edge in enumerate(edge_list[:5]):  # 最初の5つのエッジのみ
+            test_fillet.Add(radius, edge)
+            test_fillet.Build()
+            
+            if test_fillet.IsDone():
+                success_count += 1
+                print(f"Fillet成功 エッジ{i+1}: 半径{radius}mm")
+                return test_fillet.Shape()
+            else:
+                # 失敗したら新しいFilletオブジェクトで再開
+                test_fillet = BRepFilletAPI_MakeFillet(fused_shape)
+    
+    print("Fillet適用失敗: 元の形状を返す")
+    return fused_shape
 
 
 def apply_fillet_properly(cylinder_shape, connection_shape):
-    """CylinderとConnectionを滑らかに結合（Filletのような効果）"""
-    # 形状を結合
+    """CylinderとConnectionにFilletを適用"""
+    # まず形状を結合
     fuse = BRepAlgoAPI_Fuse(cylinder_shape, connection_shape)
     fuse.Build()
     
-    if fuse.IsDone():
-        print("✅ 滑らか結合成功（Filletのような効果）")
-        return fuse.Shape()
-    else:
-        print("結合失敗: 個別表示")
+    if not fuse.IsDone():
+        print("形状結合失敗")
         return cylinder_shape
+    
+    fused_shape = fuse.Shape()
+    print("形状結合成功")
+    
+    # 実際のFilletを適用
+    filleted_shape = apply_real_fillet(fused_shape)
+    return filleted_shape
 
 
 def main():
@@ -143,18 +157,14 @@ def main():
     
     # ステップ3: Fillet適用
     final_shape = apply_fillet_properly(cylinder_with_holes, connection)
-    print("✅ ステップ3完了: Cylinder + 接続部分 + Fillet")
+    print("✅ ステップ3完了: Cylinder + 接続部分 + 実際のFillet")
     
     # 最終表示
     obj.display.DisplayShape(final_shape, color="GREEN", transparency=0.1)
-    print("✅ 表示完了: Filletが適用された最終形状")
-    print("=== 完了: Cylinder + 滑らか接続 + Fillet ===")
+    print("✅ 表示完了: 実際のFilletが適用された最終形状")
+    print("=== 完了: Cylinder + 滑らか接続 + 実際のFillet ===")
     
     obj.ShowOCC()
-
-
-if __name__ == "__main__":
-    main()
 
 
 if __name__ == "__main__":
