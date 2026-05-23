@@ -17,6 +17,8 @@ from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_Make
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
 from OCC.Core.BRepCheck import BRepCheck_Analyzer
+from OCC.Core.TColgp import TColgp_HArray1OfPnt
+from OCC.Core.GeomAPI import GeomAPI_Interpolate
 from OCC.Extend.TopologyUtils import TopologyExplorer
 
 
@@ -50,17 +52,22 @@ def torus_surface_wire(
 ):
     """Build a closed wire around the torus tube with a slight tilt."""
     pts = []
-    for i in range(steps + 1):
+    for i in range(steps):
         t = 2.0 * np.pi * i / steps
         u = u0 + tilt * np.sin(t)
         v = t + v_phase
         pts.append(torus_surface_point(major_radius, minor_radius, u, v))
 
-    wire_builder = BRepBuilderAPI_MakeWire()
-    for i in range(steps):
-        edge = BRepBuilderAPI_MakeEdge(pts[i], pts[i + 1]).Edge()
-        wire_builder.Add(edge)
-    return wire_builder.Wire(), pts
+    pts_array = TColgp_HArray1OfPnt(1, len(pts))
+    for idx, p in enumerate(pts, start=1):
+        pts_array.SetValue(idx, p)
+
+    interp = GeomAPI_Interpolate(pts_array, True, 1e-6)
+    interp.Perform()
+    curve = interp.Curve()
+    edge = BRepBuilderAPI_MakeEdge(curve).Edge()
+    wire = BRepBuilderAPI_MakeWire(edge).Wire()
+    return wire, pts
 
 
 def make_section_face(section_width, section_height, p0, tangent_vec, normal_vec, bite_depth=1.5):
@@ -184,11 +191,26 @@ if __name__ == '__main__':
         debug_shape_info(wire, f"wire_{idx}")
         obj.display.DisplayShape(wire, color="RED", transparency=0.0)
 
+    common_shapes = []
     for idx, sweep in enumerate(sweeps, start=1):
         common = BRepAlgoAPI_Common(torus, sweep)
-        if common.IsDone():
-            common_shape = common.Shape()
+        if not common.IsDone():
+            print(f"[DEBUG] common_{idx}: operation failed")
+            continue
+        common_shape = common.Shape()
+        if common_shape.IsNull():
+            print(f"[DEBUG] common_{idx}: no intersection")
+            continue
+        print(f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})")
+        common_shapes.append(common_shape)
+
+    if common_shapes:
+        print(f"[DEBUG] Displaying {len(common_shapes)} common shape(s)")
+        for idx, common_shape in enumerate(common_shapes, start=1):
+            debug_shape_info(common_shape, f"common_{idx}")
             obj.display.DisplayShape(common_shape, color="GREEN", transparency=0.5)
+    else:
+        print("[DEBUG] No common intersection found for any sweep.")
 
     obj.show_axs_pln(gp_Ax3(), scale=major * 0.4)
     obj.ShowOCC()
