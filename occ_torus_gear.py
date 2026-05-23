@@ -140,6 +140,7 @@ def make_torus_wires(
     torus = BRepPrimAPI_MakeTorus(major_radius, minor_radius).Shape()
     sweep_list = []
     wire_list = []
+    common_shapes = []
     for i in range(wires):
         u0 = 2.0 * np.pi * i / wires
         v_phase = 0.0
@@ -203,25 +204,13 @@ def make_torus_wires(
         sweep_list.append(cutter)
         print(f"[DEBUG]   wire {i + 1}/{wires} cutter built (pipe shell sweep, type={cutter.ShapeType()})")
 
-    common_shapes = []
-    for idx, sweep in enumerate(sweep_list, start=1):
-        common = BRepAlgoAPI_Common(torus, sweep)
-        if not common.IsDone():
-            print(f"[DEBUG] common_{idx}: operation failed")
-            continue
-        common_shape = common.Shape()
-        if common_shape.IsNull():
-            print(f"[DEBUG] common_{idx}: no intersection")
-            continue
-        print(
-            f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})"
-        )
-        common_shapes.append(common_shape)
-
     result = torus
-    for idx, common_shape in enumerate(common_shapes, start=1):
-        print(f"[DEBUG] cut_{idx}: result type={type(result)}, common_shape type={type(common_shape)}, shapeType={common_shape.ShapeType()}")
-        cut_op = BRepAlgoAPI_Cut(result, common_shape)
+    for idx, cutter in enumerate(sweep_list, start=1):
+        print(
+            f"[DEBUG] cut_{idx}: result type={type(result)}, cutter type={type(cutter)}, cutter ShapeType={cutter.ShapeType()}"
+        )
+        cut_op = BRepAlgoAPI_Cut(result, cutter)
+        cut_op.Build()
         if not cut_op.IsDone():
             print(f"[DEBUG] cut_{idx}: operation failed")
             continue
@@ -230,7 +219,7 @@ def make_torus_wires(
             print(f"[DEBUG] cut_{idx}: result is null")
             continue
         result = new_result
-        print(f"[DEBUG] cut_{idx}: removed common region")
+        print(f"[DEBUG] cut_{idx}: removed cutter volume")
 
     print("[DEBUG] make_torus_wires end")
     return result, wire_list, sweep_list, common_shapes
@@ -277,12 +266,12 @@ if __name__ == "__main__":
         print("[DEBUG] final result displayed")
 
     debug_shape_info(final_shape, "final_shape")
-    for idx, wire in enumerate(wire_list, start=1):
-        obj.display.DisplayShape(wire, color="RED")
-    for idx, sweep in enumerate(sweep_list, start=1):
-        obj.display.DisplayShape(sweep, transparency=0.7, color="GREEN")
-    for idx, common_shape in enumerate(common_shapes, start=1):
-        obj.display.DisplayShape(common_shape, transparency=0.5, color="BLUE1")
+    #for idx, wire in enumerate(wire_list, start=1):
+    #    obj.display.DisplayShape(wire, color="RED")
+    #for idx, sweep in enumerate(sweep_list, start=1):
+    #    obj.display.DisplayShape(sweep, transparency=0.7, color="GREEN")
+    #for idx, common_shape in enumerate(common_shapes, start=1):
+    #    obj.display.DisplayShape(common_shape, transparency=0.5, color="BLUE1")
     obj.display.DisplayShape(final_shape, transparency=0.9)
     obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
     obj.save_view("debug")
