@@ -30,13 +30,14 @@ def torus_surface_wire(
     minor_radius,
     steps=144,
     u0=0.0,
+    skew=0.08,
     v_phase=0.0,
 ):
-    """Build a closed wire around the torus tube at a fixed major angle."""
+    """Build a closed wire around the torus tube with a slight major-angle slant."""
     pts = []
     for i in range(steps + 1):
         t = 2.0 * np.pi * i / steps
-        u = u0
+        u = u0 + skew * np.sin(t)
         v = t + v_phase
         pts.append(torus_surface_point(major_radius, minor_radius, u, v))
 
