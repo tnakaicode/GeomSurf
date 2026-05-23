@@ -77,7 +77,7 @@ def make_section_face(
     section_width,
     section_height,
     p0,
-    x_dir,
+    major_dir,
     tangent_vec,
     normal_vec,
 ):
@@ -87,26 +87,29 @@ def make_section_face(
         tangent_dir = gp_Vec(1, 0, 0)
     tangent_dir.Normalize()
 
-    x_dir = gp_Vec(x_dir.X(), x_dir.Y(), x_dir.Z())
+    normal_dir = gp_Vec(normal_vec.X(), normal_vec.Y(), normal_vec.Z())
+    if normal_dir.Magnitude() < 1e-9:
+        normal_dir = gp_Vec(0, 0, 1)
+    normal_dir.Normalize()
+
+    x_dir = normal_dir.Crossed(tangent_dir)
     if x_dir.Magnitude() < 1e-9:
-        x_dir = normal_vec.Crossed(tangent_dir)
-    else:
-        proj = tangent_dir.Scaled(x_dir.Dot(tangent_dir))
-        x_dir = x_dir.Subtracted(proj)
-    if x_dir.Magnitude() < 1e-9:
-        x_dir = normal_vec.Crossed(tangent_dir)
+        x_dir = gp_Vec(1, 0, 0)
     x_dir.Normalize()
 
-    y_dir = gp_Vec(normal_vec.X(), normal_vec.Y(), normal_vec.Z())
-    if y_dir.Magnitude() < 1e-9:
-        y_dir = tangent_dir.Crossed(x_dir)
-    y_dir.Reverse()
-    y_dir.Normalize()
+    major_dir = gp_Vec(major_dir.X(), major_dir.Y(), major_dir.Z())
+    if major_dir.Magnitude() < 1e-9:
+        major_dir = gp_Vec(p0.X(), p0.Y(), 0.0)
+    if x_dir.Dot(major_dir) > 0:
+        x_dir.Reverse()
 
-    p00 = p0
-    p01 = p0.Translated(x_dir.Scaled(section_width))
-    p10 = p0.Translated(y_dir.Scaled(section_height))
-    p11 = p10.Translated(x_dir.Scaled(section_width))
+    half_width = section_width
+    half_height = section_height
+
+    p00 = p0.Translated(x_dir.Scaled(-half_width)).Translated(normal_dir.Scaled(-half_height))
+    p10 = p0.Translated(x_dir.Scaled(half_width)).Translated(normal_dir.Scaled(-half_height))
+    p11 = p0.Translated(x_dir.Scaled(half_width)).Translated(normal_dir.Scaled(half_height))
+    p01 = p0.Translated(x_dir.Scaled(-half_width)).Translated(normal_dir.Scaled(half_height))
 
     wire_builder = BRepBuilderAPI_MakeWire()
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p00, p01).Edge())
@@ -140,6 +143,7 @@ def make_torus_wires(
     torus = BRepPrimAPI_MakeTorus(major_radius, minor_radius).Shape()
     sweep_list = []
     wire_list = []
+    section_list = []
     common_shapes = []
     for i in range(wires):
         u0 = 2.0 * np.pi * i / wires
@@ -187,10 +191,11 @@ def make_torus_wires(
             section_width,
             section_height,
             pts[0],
-            x_dir,
+            major_dir,
             tangent_vec,
             normal_vec,
         )
+        section_list.append(section)
 
         pipe_shell = BRepOffsetAPI_MakePipeShell(wire)
         pipe_shell.Add(section_wire, True)
@@ -222,7 +227,7 @@ def make_torus_wires(
         print(f"[DEBUG] cut_{idx}: removed cutter volume")
 
     print("[DEBUG] make_torus_wires end")
-    return result, wire_list, sweep_list, common_shapes
+    return torus, result, wire_list, section_list, sweep_list, common_shapes
 
 
 def debug_shape_info(shape, name="shape"):
@@ -251,7 +256,7 @@ if __name__ == "__main__":
 
     obj = dispocc(touch=True)
 
-    final_shape, wire_list, sweep_list, common_shapes = make_torus_wires(
+    torus, final_shape, wire_list, section_list, sweep_list, common_shapes = make_torus_wires(
         major_radius=major_radius,
         minor_radius=minor_radius,
         wires=wire_count,
@@ -261,18 +266,20 @@ if __name__ == "__main__":
         tilt=tilt
     )
 
-    if final_shape is not None and not final_shape.IsNull():
-        obj.display.DisplayShape(final_shape, transparency=0.5)
-        print("[DEBUG] final result displayed")
+    #if final_shape is not None and not final_shape.IsNull():
+    #    obj.display.DisplayShape(final_shape, transparency=0.5)
+    #    print("[DEBUG] final result displayed")
 
     debug_shape_info(final_shape, "final_shape")
-    #for idx, wire in enumerate(wire_list, start=1):
-    #    obj.display.DisplayShape(wire, color="RED")
+    for idx, wire in enumerate(wire_list, start=1):
+        obj.display.DisplayShape(wire, color="RED")
+    for idx, section in enumerate(section_list, start=1):
+        obj.display.DisplayShape(section, transparency=0.7, color="BLUE")
     #for idx, sweep in enumerate(sweep_list, start=1):
     #    obj.display.DisplayShape(sweep, transparency=0.7, color="GREEN")
     #for idx, common_shape in enumerate(common_shapes, start=1):
     #    obj.display.DisplayShape(common_shape, transparency=0.5, color="BLUE1")
-    obj.display.DisplayShape(final_shape, transparency=0.9)
+    obj.display.DisplayShape(torus)
     obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
     obj.save_view("debug")
     obj.ShowOCC()
