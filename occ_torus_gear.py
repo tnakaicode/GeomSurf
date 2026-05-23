@@ -15,7 +15,7 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
-from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
 
@@ -118,7 +118,6 @@ def make_torus_wires(
     print(f"[DEBUG]   tilt        : {tilt}")
 
     torus = BRepPrimAPI_MakeTorus(major_radius, minor_radius).Shape()
-    wires_list = []
     sweep_list = []
     for i in range(wires):
         u0 = 2.0 * np.pi * i / wires
@@ -131,7 +130,6 @@ def make_torus_wires(
             tilt=tilt,
             v_phase=v_phase,
         )
-        wires_list.append(wire)
 
         tangent_vec = gp_Vec(pts[0], pts[1])
         normal_vec = torus_surface_normal(u0, v_phase)
@@ -145,8 +143,26 @@ def make_torus_wires(
         sweep_list.append(sweep)
         print(f"[DEBUG]   wire {i + 1}/{wires} swept")
 
+    common_shapes = []
+    for idx, sweep in enumerate(sweep_list, start=1):
+        common = BRepAlgoAPI_Common(torus, sweep)
+        if not common.IsDone():
+            print(f"[DEBUG] common_{idx}: operation failed")
+            continue
+        common_shape = common.Shape()
+        if common_shape.IsNull():
+            print(f"[DEBUG] common_{idx}: no intersection")
+            continue
+        print(f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})")
+        common_shapes.append(common_shape)
+
+    result = torus
+    for idx, common_shape in enumerate(common_shapes, start=1):
+        result = BRepAlgoAPI_Cut(result, common_shape).Shape()
+        print(f"[DEBUG] cut_{idx}: removed common region")
+
     print("[DEBUG] make_torus_wires end")
-    return torus, wires_list, sweep_list
+    return result
 
 
 def debug_shape_info(shape, name="shape"):
@@ -155,68 +171,37 @@ def debug_shape_info(shape, name="shape"):
     print(f"[DEBUG] {name}.ShapeType: {shape.ShapeType()}")
 
 
-def compute_common_shapes(torus, sweeps):
-    common_shapes = []
-    for idx, sweep in enumerate(sweeps, start=1):
-        common = BRepAlgoAPI_Common(torus, sweep)
-        if not common.IsDone():
-            print(f"[DEBUG] common_{idx}: operation failed")
-            continue
-
-        common_shape = common.Shape()
-        if common_shape.IsNull():
-            print(f"[DEBUG] common_{idx}: no intersection")
-            continue
-
-        print(f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})")
-        common_shapes.append(common_shape)
-
-    return common_shapes
-
-
 if __name__ == '__main__':
-    major = 120.0
-    minor = 40.0
-    path_steps = 360
-    section_radius = 14.0
-    v_amplitude = 0.35
-    turns = 12
+    major_radius = 120.0
+    minor_radius = 40.0
+    wire_count = 5
+    wire_steps = 360
+    section_width = 16.0
+    section_height = 8.0
+    tilt = 0.2
 
     print("[DEBUG] Build parameters")
-    print(f"[DEBUG]   major        : {major}")
-    print(f"[DEBUG]   minor        : {minor}")
-    print(f"[DEBUG]   path_steps   : {path_steps}")
-    print(f"[DEBUG]   section_radius: {section_radius}")
-    print(f"[DEBUG]   v_amplitude  : {v_amplitude}")
-    print(f"[DEBUG]   tooth_count  : {turns}")
+    print(f"[DEBUG]   major_radius : {major_radius}")
+    print(f"[DEBUG]   minor_radius : {minor_radius}")
+    print(f"[DEBUG]   wire_count   : {wire_count}")
+    print(f"[DEBUG]   wire_steps   : {wire_steps}")
+    print(f"[DEBUG]   section_width: {section_width}")
+    print(f"[DEBUG]   section_height: {section_height}")
+    print(f"[DEBUG]   tilt         : {tilt}")
 
     obj = dispocc(touch=True)
 
-    torus, wires, sweeps = make_torus_wires(
-        major_radius=major,
-        minor_radius=minor,
-        wires=5,
-        steps=360,
-        section_width=16.0,
-        section_height=8.0,
-        tilt=0.2,
+    final_shape = make_torus_wires(
+        major_radius=major_radius,
+        minor_radius=minor_radius,
+        wires=wire_count,
+        steps=wire_steps,
+        section_width=section_width,
+        section_height=section_height,
+        tilt=tilt,
     )
 
-    debug_shape_info(torus, "torus")
-    obj.display.DisplayShape(torus, color="BLUE1", transparency=0.8)
-    for idx, wire in enumerate(wires, start=1):
-        debug_shape_info(wire, f"wire_{idx}")
-        obj.display.DisplayShape(wire, color="RED", transparency=0.0)
-
-    common_shapes = compute_common_shapes(torus, sweeps)
-
-    if common_shapes:
-        print(f"[DEBUG] Displaying {len(common_shapes)} common shape(s)")
-        for idx, common_shape in enumerate(common_shapes, start=1):
-            debug_shape_info(common_shape, f"common_{idx}")
-            obj.display.DisplayShape(common_shape, color="GREEN", transparency=0.5)
-    else:
-        print("[DEBUG] No common intersection found for any sweep.")
-
-    obj.show_axs_pln(gp_Ax3(), scale=major * 0.4)
+    debug_shape_info(final_shape, "final_shape")
+    obj.display.DisplayShape(final_shape, color="BLUE1", transparency=0.5)
+    obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
     obj.ShowOCC()
