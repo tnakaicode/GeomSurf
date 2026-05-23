@@ -22,7 +22,11 @@ from OCC.Core.BRepBuilderAPI import (
     BRepBuilderAPI_Sewing,
 )
 from OCC.Core.TopoDS import topods
-from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe, BRepOffsetAPI_MakePipeShell, BRepOffsetAPI_ThruSections
+from OCC.Core.BRepOffsetAPI import (
+    BRepOffsetAPI_MakePipe,
+    BRepOffsetAPI_MakePipeShell,
+    BRepOffsetAPI_ThruSections,
+)
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Common, BRepAlgoAPI_Fuse
 from OCC.Core.ShapeFix import ShapeFix_Solid, ShapeFix_Shape
 from OCC.Core.BRepGProp import brepgprop
@@ -130,10 +134,18 @@ def make_section_face(
     bite_depth = half_height
 
     center = p0.Translated(normal_dir.Reversed().Scaled(bite_depth))
-    p00 = center.Translated(x_dir.Scaled(-half_width)).Translated(y_dir.Scaled(-half_height))
-    p10 = center.Translated(x_dir.Scaled(half_width)).Translated(y_dir.Scaled(-half_height))
-    p11 = center.Translated(x_dir.Scaled(half_width)).Translated(y_dir.Scaled(half_height))
-    p01 = center.Translated(x_dir.Scaled(-half_width)).Translated(y_dir.Scaled(half_height))
+    p00 = center.Translated(x_dir.Scaled(-half_width)).Translated(
+        y_dir.Scaled(-half_height)
+    )
+    p10 = center.Translated(x_dir.Scaled(half_width)).Translated(
+        y_dir.Scaled(-half_height)
+    )
+    p11 = center.Translated(x_dir.Scaled(half_width)).Translated(
+        y_dir.Scaled(half_height)
+    )
+    p01 = center.Translated(x_dir.Scaled(-half_width)).Translated(
+        y_dir.Scaled(half_height)
+    )
 
     wire_builder = BRepBuilderAPI_MakeWire()
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p00, p01).Edge())
@@ -263,8 +275,8 @@ def make_torus_wires(
         # Section extends outside torus surface to avoid tangency issues in boolean ops.
         _n_cells = 16
         _half_w = section_width * 0.5
-        _inner_ext = section_height          # depth inside torus (groove depth)
-        _outer_ext = section_height * 0.5   # extension OUTSIDE torus surface
+        _inner_ext = section_height  # depth inside torus (groove depth)
+        _outer_ext = section_height * 0.5  # extension OUTSIDE torus surface
         _half_h_n = (_inner_ext + _outer_ext) * 0.5  # half total height along normal
         # center offset from surface: negative = inside torus
         _center_from_surf = (_outer_ext - _inner_ext) * 0.5  # = -section_height/4
@@ -273,18 +285,28 @@ def make_torus_wires(
             # Azimuthal direction: always perpendicular to torus normal, no singularity
             az = gp_Vec(-np.sin(u_k), np.cos(u_k), 0.0)
             dot_at = az.Dot(tk)
-            xk = gp_Vec(az.X() - dot_at * tk.X(),
-                        az.Y() - dot_at * tk.Y(),
-                        az.Z() - dot_at * tk.Z())
+            xk = gp_Vec(
+                az.X() - dot_at * tk.X(),
+                az.Y() - dot_at * tk.Y(),
+                az.Z() - dot_at * tk.Z(),
+            )
             if xk.Magnitude() < 1e-9:
                 xk = az
             xk.Normalize()
             # Center: slightly inside torus surface (outer edge is outside surface)
             ck = pk.Translated(nk.Scaled(_center_from_surf))
-            q00 = ck.Translated(xk.Scaled(-_half_w)).Translated(nk.Scaled(-_half_h_n))  # inner edge
-            q10 = ck.Translated(xk.Scaled( _half_w)).Translated(nk.Scaled(-_half_h_n))  # inner edge
-            q11 = ck.Translated(xk.Scaled( _half_w)).Translated(nk.Scaled( _half_h_n))  # outer edge
-            q01 = ck.Translated(xk.Scaled(-_half_w)).Translated(nk.Scaled( _half_h_n))  # outer edge
+            q00 = ck.Translated(xk.Scaled(-_half_w)).Translated(
+                nk.Scaled(-_half_h_n)
+            )  # inner edge
+            q10 = ck.Translated(xk.Scaled(_half_w)).Translated(
+                nk.Scaled(-_half_h_n)
+            )  # inner edge
+            q11 = ck.Translated(xk.Scaled(_half_w)).Translated(
+                nk.Scaled(_half_h_n)
+            )  # outer edge
+            q01 = ck.Translated(xk.Scaled(-_half_w)).Translated(
+                nk.Scaled(_half_h_n)
+            )  # outer edge
             wb = BRepBuilderAPI_MakeWire()
             wb.Add(BRepBuilderAPI_MakeEdge(q00, q01).Edge())
             wb.Add(BRepBuilderAPI_MakeEdge(q01, q11).Edge())
@@ -293,8 +315,9 @@ def make_torus_wires(
             return wb.Wire() if wb.IsDone() else None
 
         def _torus_tangent(u_k, v_k, dt=1e-5):
-            pn = torus_surface_point(major_radius, minor_radius,
-                                     u0 + tilt * np.sin(v_k + dt), v_k + dt)
+            pn = torus_surface_point(
+                major_radius, minor_radius, u0 + tilt * np.sin(v_k + dt), v_k + dt
+            )
             pk = torus_surface_point(major_radius, minor_radius, u_k, v_k)
             tv = gp_Vec(pk, pn)
             if tv.Magnitude() < 1e-9:
@@ -310,8 +333,10 @@ def make_torus_wires(
             _u1k = u0 + tilt * np.sin(_t1)
             _p0 = torus_surface_point(major_radius, minor_radius, _u0k, _t0)
             _p1 = torus_surface_point(major_radius, minor_radius, _u1k, _t1)
-            _n0 = torus_surface_normal(_u0k, _t0); _n0.Normalize()
-            _n1 = torus_surface_normal(_u1k, _t1); _n1.Normalize()
+            _n0 = torus_surface_normal(_u0k, _t0)
+            _n0.Normalize()
+            _n1 = torus_surface_normal(_u1k, _t1)
+            _n1.Normalize()
             _tv0 = _torus_tangent(_u0k, _t0)
             _tv1 = _torus_tangent(_u1k, _t1)
             _w0 = _make_rect_wire(_p0, _n0, _tv0, _u0k)
@@ -336,7 +361,9 @@ def make_torus_wires(
             total_cell_vol = sum(shape_volume(c) for c in _cells)
         else:
             print(f"[DEBUG]   wire {i + 1}/{wires} cell-loft failed, fallback to prism")
-            cutter = BRepPrimAPI_MakePrism(section, normal_vec.Reversed().Scaled(-section_height * 4)).Shape()
+            cutter = BRepPrimAPI_MakePrism(
+                section, normal_vec.Reversed().Scaled(-section_height * 4)
+            ).Shape()
             cutter = shape_fix_shape(cutter)
             _cutter_cells = [cutter] if cutter and not cutter.IsNull() else []
             total_cell_vol = shape_volume(cutter)
@@ -364,7 +391,9 @@ def make_torus_wires(
         sweep_list.append(cutter)
 
     result = torus
-    print(f"[DEBUG] before cuts: torus solids={count_solids(result)}, ShapeType={result.ShapeType()}")
+    print(
+        f"[DEBUG] before cuts: torus solids={count_solids(result)}, ShapeType={result.ShapeType()}"
+    )
     for idx, cells in enumerate(cutters_for_cut, start=1):
         n_cell_ok = 0
         for k, cell in enumerate(cells):
@@ -392,7 +421,9 @@ def make_torus_wires(
                 continue
             result = new_result
             n_cell_ok += 1
-        print(f"[DEBUG] wire_{idx}: {n_cell_ok}/{len(cells)} cells cut, result solids={count_solids(result)}, ShapeType={result.ShapeType()}")
+        print(
+            f"[DEBUG] wire_{idx}: {n_cell_ok}/{len(cells)} cells cut, result solids={count_solids(result)}, ShapeType={result.ShapeType()}"
+        )
 
     print("[DEBUG] make_torus_wires end")
     return torus, result, wire_list, section_list, sweep_list, common_shapes
@@ -424,17 +455,19 @@ if __name__ == "__main__":
 
     obj = dispocc(touch=True)
 
-    torus, final_shape, wire_list, section_list, sweep_list, common_shapes = make_torus_wires(
-        major_radius=major_radius,
-        minor_radius=minor_radius,
-        wires=wire_count,
-        steps=wire_steps,
-        section_width=section_width,
-        section_height=section_height,
-        tilt=tilt
+    torus, final_shape, wire_list, section_list, sweep_list, common_shapes = (
+        make_torus_wires(
+            major_radius=major_radius,
+            minor_radius=minor_radius,
+            wires=wire_count,
+            steps=wire_steps,
+            section_width=section_width,
+            section_height=section_height,
+            tilt=tilt,
+        )
     )
 
-    #if final_shape is not None and not final_shape.IsNull():
+    # if final_shape is not None and not final_shape.IsNull():
     #    obj.display.DisplayShape(final_shape, transparency=0.5)
     #    print("[DEBUG] final result displayed")
 
@@ -443,16 +476,18 @@ if __name__ == "__main__":
     final_vol = shape_volume(final_shape)
     print(f"[DEBUG] torus_volume : {torus_vol:.1f}")
     print(f"[DEBUG] final_volume : {final_vol:.1f}")
-    print(f"[DEBUG] removed vol  : {torus_vol - final_vol:.1f} ({100*(torus_vol-final_vol)/torus_vol:.2f}%)")
+    print(
+        f"[DEBUG] removed vol  : {torus_vol - final_vol:.1f} ({100*(torus_vol-final_vol)/torus_vol:.2f}%)"
+    )
     for idx, wire in enumerate(wire_list, start=1):
         obj.display.DisplayShape(wire, color="RED")
     for idx, section in enumerate(section_list, start=1):
         obj.display.DisplayShape(section, transparency=0.7, color="BLUE1")
-    for idx, sweep in enumerate(sweep_list, start=1):
-        obj.display.DisplayShape(sweep, transparency=0.2, color="GREEN")
-    #for idx, common_shape in enumerate(common_shapes, start=1):
+    # for idx, sweep in enumerate(sweep_list, start=1):
+    #    obj.display.DisplayShape(sweep, transparency=0.2, color="GREEN")
+    # for idx, common_shape in enumerate(common_shapes, start=1):
     #    obj.display.DisplayShape(common_shape, transparency=0.5, color="BLUE1")
-    obj.display.DisplayShape(torus, transparency=0.8, color="BLUE1")
+    # obj.display.DisplayShape(torus, transparency=0.8, color="BLUE1")
     obj.display.DisplayShape(final_shape)
     obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
     obj.save_view("debug")
