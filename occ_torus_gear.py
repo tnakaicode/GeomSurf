@@ -97,19 +97,17 @@ def make_section_face(
         x_dir = gp_Vec(1, 0, 0)
     x_dir.Normalize()
 
-    major_dir = gp_Vec(major_dir.X(), major_dir.Y(), major_dir.Z())
-    if major_dir.Magnitude() < 1e-9:
-        major_dir = gp_Vec(p0.X(), p0.Y(), 0.0)
-    if x_dir.Dot(major_dir) > 0:
-        x_dir.Reverse()
+    y_dir = normal_dir
 
-    half_width = section_width
-    half_height = section_height
+    half_width = section_width * 0.5
+    half_height = section_height * 0.5
+    bite_depth = section_height * 0.25
 
-    p00 = p0.Translated(x_dir.Scaled(-half_width)).Translated(normal_dir.Scaled(-half_height))
-    p10 = p0.Translated(x_dir.Scaled(half_width)).Translated(normal_dir.Scaled(-half_height))
-    p11 = p0.Translated(x_dir.Scaled(half_width)).Translated(normal_dir.Scaled(half_height))
-    p01 = p0.Translated(x_dir.Scaled(-half_width)).Translated(normal_dir.Scaled(half_height))
+    center = p0.Translated(normal_dir.Reversed().Scaled(bite_depth))
+    p00 = center.Translated(x_dir.Scaled(-half_width)).Translated(y_dir.Scaled(-half_height))
+    p10 = center.Translated(x_dir.Scaled(half_width)).Translated(y_dir.Scaled(-half_height))
+    p11 = center.Translated(x_dir.Scaled(half_width)).Translated(y_dir.Scaled(half_height))
+    p01 = center.Translated(x_dir.Scaled(-half_width)).Translated(y_dir.Scaled(half_height))
 
     wire_builder = BRepBuilderAPI_MakeWire()
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p00, p01).Edge())
@@ -169,18 +167,6 @@ def make_torus_wires(
         if tangent_dir.Magnitude() < 1e-9:
             tangent_dir = gp_Vec(1, 0, 0)
         tangent_dir.Normalize()
-
-        inward1 = normal_vec.Crossed(tangent_dir)
-        inward2 = tangent_dir.Crossed(normal_vec)
-        if inward1.Magnitude() < 1e-9:
-            x_dir = inward2
-        elif inward2.Magnitude() < 1e-9:
-            x_dir = inward1
-        else:
-            inward1.Normalize()
-            inward2.Normalize()
-            test_pt = pts[0].Translated(inward1.Scaled(section_width * 0.2))
-            x_dir = inward1 if torus_signed_distance(major_radius, minor_radius, test_pt) < 0 else inward2
 
         center = pts[0].Translated(normal_vec.Reversed().Scaled(2.0))
         sd = torus_signed_distance(major_radius, minor_radius, center)
@@ -274,12 +260,13 @@ if __name__ == "__main__":
     for idx, wire in enumerate(wire_list, start=1):
         obj.display.DisplayShape(wire, color="RED")
     for idx, section in enumerate(section_list, start=1):
-        obj.display.DisplayShape(section, transparency=0.7, color="BLUE")
-    #for idx, sweep in enumerate(sweep_list, start=1):
-    #    obj.display.DisplayShape(sweep, transparency=0.7, color="GREEN")
+        obj.display.DisplayShape(section, transparency=0.7, color="BLUE1")
+    for idx, sweep in enumerate(sweep_list, start=1):
+        obj.display.DisplayShape(sweep, transparency=0.7, color="GREEN")
     #for idx, common_shape in enumerate(common_shapes, start=1):
     #    obj.display.DisplayShape(common_shape, transparency=0.5, color="BLUE1")
-    obj.display.DisplayShape(torus)
+    #obj.display.DisplayShape(torus, transparency=0.8)
+    obj.display.DisplayShape(final_shape, transparency=0.8)
     obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
     obj.save_view("debug")
     obj.ShowOCC()
