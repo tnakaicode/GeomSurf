@@ -77,11 +77,9 @@ def make_section_face(
     section_width,
     section_height,
     p0,
-    major_tangent,
+    x_dir,
     tangent_vec,
     normal_vec,
-    tilt=0.0,
-    bite_depth=1.5,
 ):
     """Create a parallelogram section whose plane is perpendicular to the wire."""
     tangent_dir = gp_Vec(tangent_vec.X(), tangent_vec.Y(), tangent_vec.Z())
@@ -89,18 +87,20 @@ def make_section_face(
         tangent_dir = gp_Vec(1, 0, 0)
     tangent_dir.Normalize()
 
-    x_dir = gp_Vec(major_tangent.X(), major_tangent.Y(), major_tangent.Z())
+    x_dir = gp_Vec(x_dir.X(), x_dir.Y(), x_dir.Z())
     if x_dir.Magnitude() < 1e-9:
-        x_dir = gp_Vec(1, 0, 0)
-    proj = tangent_dir.Scaled(x_dir.Dot(tangent_dir))
-    x_dir = x_dir.Subtracted(proj)
+        x_dir = normal_vec.Crossed(tangent_dir)
+    else:
+        proj = tangent_dir.Scaled(x_dir.Dot(tangent_dir))
+        x_dir = x_dir.Subtracted(proj)
     if x_dir.Magnitude() < 1e-9:
         x_dir = normal_vec.Crossed(tangent_dir)
     x_dir.Normalize()
 
-    y_dir = tangent_dir.Crossed(x_dir)
+    y_dir = gp_Vec(normal_vec.X(), normal_vec.Y(), normal_vec.Z())
     if y_dir.Magnitude() < 1e-9:
-        y_dir = normal_vec.Crossed(tangent_dir)
+        y_dir = tangent_dir.Crossed(x_dir)
+    y_dir.Reverse()
     y_dir.Normalize()
 
     p00 = p0
@@ -115,8 +115,7 @@ def make_section_face(
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p10, p00).Edge())
     section_wire = wire_builder.Wire()
 
-    face_normal = tangent_dir
-    return BRepBuilderAPI_MakeFace(section_wire).Face(), section_wire, face_normal
+    return BRepBuilderAPI_MakeFace(section_wire).Face(), section_wire
 
 
 def make_torus_wires(
@@ -161,21 +160,35 @@ def make_torus_wires(
 
         normal_vec = torus_surface_normal(u0, v_phase)
         tangent_vec = gp_Vec(pts[-1], pts[1])
+        tangent_dir = gp_Vec(tangent_vec.X(), tangent_vec.Y(), tangent_vec.Z())
+        if tangent_dir.Magnitude() < 1e-9:
+            tangent_dir = gp_Vec(1, 0, 0)
+        tangent_dir.Normalize()
+
+        inward1 = normal_vec.Crossed(tangent_dir)
+        inward2 = tangent_dir.Crossed(normal_vec)
+        if inward1.Magnitude() < 1e-9:
+            x_dir = inward2
+        elif inward2.Magnitude() < 1e-9:
+            x_dir = inward1
+        else:
+            inward1.Normalize()
+            inward2.Normalize()
+            test_pt = pts[0].Translated(inward1.Scaled(section_width * 0.2))
+            x_dir = inward1 if torus_signed_distance(major_radius, minor_radius, test_pt) < 0 else inward2
 
         center = pts[0].Translated(normal_vec.Reversed().Scaled(2.0))
         sd = torus_signed_distance(major_radius, minor_radius, center)
         print(
             f"[DEBUG]   section center signed distance: {sd:.6f} ({'inside' if sd < 0 else 'outside' if sd > 0 else 'on surface'})"
         )
-        section, section_wire, section_normal = make_section_face(
+        section, section_wire = make_section_face(
             section_width,
             section_height,
             pts[0],
-            major_dir,
+            x_dir,
             tangent_vec,
             normal_vec,
-            tilt=tilt,
-            bite_depth=2.0,
         )
 
         pipe_shell = BRepOffsetAPI_MakePipeShell(wire)
@@ -258,6 +271,10 @@ if __name__ == "__main__":
         section_height=section_height,
         tilt=tilt
     )
+
+    if final_shape is not None and not final_shape.IsNull():
+        obj.display.DisplayShape(final_shape, transparency=0.5)
+        print("[DEBUG] final result displayed")
 
     debug_shape_info(final_shape, "final_shape")
     for idx, wire in enumerate(wire_list, start=1):
