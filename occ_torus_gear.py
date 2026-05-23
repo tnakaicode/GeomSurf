@@ -11,84 +11,99 @@ import logging
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
-from OCC.Core.gp import gp_Ax2, gp_Ax3
-from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus, BRepPrimAPI_MakeCylinder
+from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
+from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut
 from OCC.Core.BRepCheck import BRepCheck_Analyzer
+from OCC.Core.Geom import Geom_Circle
 from OCC.Extend.TopologyUtils import TopologyExplorer
 
 
-def _tooth_cutter(center, tangent, helix_dir, groove_radius, groove_length):
-    """Build one cylindrical cutter used to carve a tooth groove."""
-    axis_vec = tangent + helix_dir
-    axis_vec.Normalize()
-    offset = gp_Vec(axis_vec.X(), axis_vec.Y(), axis_vec.Z())
-    offset.Multiply(0.5 * groove_length)
-    start = gp_Pnt(center.X() - offset.X(), center.Y() - offset.Y(), center.Z() - offset.Z())
+def torus_surface_point(major_radius, minor_radius, u, v):
+    """Return a 3D point on the torus surface for parameters u and v."""
+    return gp_Pnt(
+        (major_radius + minor_radius * np.cos(v)) * np.cos(u),
+        (major_radius + minor_radius * np.cos(v)) * np.sin(u),
+        minor_radius * np.sin(v),
+    )
 
-    # Use radial direction as X-direction for a stable local frame.
-    radial = gp_Dir(center.X(), center.Y(), 0.0)
-    cutter_axs = gp_Ax2(start, gp_Dir(axis_vec.X(), axis_vec.Y(), axis_vec.Z()), radial)
-    return BRepPrimAPI_MakeCylinder(cutter_axs, groove_radius, groove_length).Shape()
+
+def torus_surface_wire(major_radius, minor_radius, steps=144, v_amplitude=0.12, tooth_count=24):
+    """Build a closed wire along the torus surface for one full major loop.
+
+    The path travels once around the major circle (u from 0 to 2π), while the
+    minor parameter v oscillates according to the tooth_count to create multiple
+    grooves in the small-radius direction.
+    """
+    pts = []
+    for i in range(steps + 1):
+        u = 2.0 * np.pi * i / steps
+        v = v_amplitude * np.sin(tooth_count * u)
+        pts.append(torus_surface_point(major_radius, minor_radius, u, v))
+
+    wire_builder = BRepBuilderAPI_MakeWire()
+    for i in range(steps):
+        edge = BRepBuilderAPI_MakeEdge(pts[i], pts[i + 1]).Edge()
+        wire_builder.Add(edge)
+    return wire_builder.Wire()
+
+
+def section_face(radius=9.0):
+    """Create a planar circle face to sweep along the path."""
+    circle = Geom_Circle(gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)), radius)
+    edge = BRepBuilderAPI_MakeEdge(circle).Edge()
+    wire = BRepBuilderAPI_MakeWire(edge).Wire()
+    face = BRepBuilderAPI_MakeFace(wire).Face()
+    return face
 
 
 def make_torus_gear(
     major_radius=120.0,
     minor_radius=40.0,
-    tooth_count=36,
-    groove_radius=9.0,
-    groove_length=320.0,
-    helix_angle_deg=28.0,
-    double_helix=True,
+    path_steps=360,
+    section_radius=25.0,
+    v_amplitude=0.6,
+    tooth_count=12,
 ):
-    """Create a torus gear by cutting repeated helical grooves on a torus."""
+    """Build a torus gear by sweeping a section along a torus surface wire and cutting the torus."""
     print("[DEBUG] make_torus_gear start")
-    print(f"[DEBUG]   major_radius   : {major_radius}")
-    print(f"[DEBUG]   minor_radius   : {minor_radius}")
-    print(f"[DEBUG]   tooth_count    : {tooth_count}")
-    print(f"[DEBUG]   groove_radius  : {groove_radius}")
-    print(f"[DEBUG]   groove_length  : {groove_length}")
-    print(f"[DEBUG]   helix_angle_deg: {helix_angle_deg}")
-    print(f"[DEBUG]   double_helix   : {double_helix}")
+    print(f"[DEBUG]   major_radius : {major_radius}")
+    print(f"[DEBUG]   minor_radius : {minor_radius}")
+    print(f"[DEBUG]   path_steps   : {path_steps}")
+    print(f"[DEBUG]   section_radius: {section_radius}")
+    print(f"[DEBUG]   v_amplitude  : {v_amplitude}")
+    print(f"[DEBUG]   tooth_count  : {tooth_count}")
 
-    gear = BRepPrimAPI_MakeTorus(major_radius, minor_radius).Shape()
-    print(f"[DEBUG]   base_torus_is_null: {gear.IsNull()}")
+    torus = BRepPrimAPI_MakeTorus(major_radius, minor_radius).Shape()
+    print(f"[DEBUG]   base_torus_is_null: {torus.IsNull()}")
 
-    helix_angle = np.deg2rad(helix_angle_deg)
-    helix_scale = np.tan(helix_angle)
-    print(f"[DEBUG]   helix_angle_rad: {helix_angle}")
-    print(f"[DEBUG]   helix_scale    : {helix_scale}")
+    path = torus_surface_wire(major_radius, minor_radius, path_steps, v_amplitude, tooth_count)
+    section = section_face(section_radius)
+    pipe = BRepOffsetAPI_MakePipe(path, section)
+    pipe.Build()
+    swept = pipe.Shape()
+    swept_null = swept is None or swept.IsNull()
+    print(f"[DEBUG]   swept_null: {swept_null}")
+    if swept_null:
+        print("[DEBUG]   pipe sweep failed")
+        return None
 
-    for i in range(tooth_count):
-        th = 2.0 * np.pi * i / tooth_count
-        cth = np.cos(th)
-        sth = np.sin(th)
-
-        center = gp_Pnt(major_radius * cth, major_radius * sth, 0.0)
-        tangent = gp_Vec(-sth, cth, 0.0)
-        print(
-            f"[DEBUG] tooth {i + 1}/{tooth_count} | "
-            f"th={th:.6f} rad | center=({center.X():.3f}, {center.Y():.3f}, {center.Z():.3f})"
-        )
-
-        helix_vec = gp_Vec(0.0, 0.0, helix_scale)
-        cutter_a = _tooth_cutter(center, tangent, helix_vec, groove_radius, groove_length)
-        print(f"[DEBUG]   cutter_a_is_null: {cutter_a.IsNull()}")
-        gear = BRepAlgoAPI_Cut(gear, cutter_a).Shape()
-        cut_a_null = gear.IsNull()
-        cut_a_valid = False if cut_a_null else BRepCheck_Analyzer(gear).IsValid()
-        print(f"[DEBUG]   after_cut_a -> is_null={cut_a_null}, is_valid={cut_a_valid}")
-
-        if double_helix:
-            cutter_b = _tooth_cutter(center, tangent, gp_Vec(0.0, 0.0, -helix_scale), groove_radius, groove_length)
-            print(f"[DEBUG]   cutter_b_is_null: {cutter_b.IsNull()}")
-            gear = BRepAlgoAPI_Cut(gear, cutter_b).Shape()
-            cut_b_null = gear.IsNull()
-            cut_b_valid = False if cut_b_null else BRepCheck_Analyzer(gear).IsValid()
-            print(f"[DEBUG]   after_cut_b -> is_null={cut_b_null}, is_valid={cut_b_valid}")
-
+    cut_builder = BRepAlgoAPI_Cut(torus, swept)
+    if not cut_builder.IsDone():
+        print("[DEBUG]   cut operation not done")
+        return None
+    gear = cut_builder.Shape()
+    gear_null = gear is None or gear.IsNull()
+    print(f"[DEBUG]   gear_is_null: {gear_null}")
+    if not gear_null:
+        gear_valid = BRepCheck_Analyzer(gear).IsValid()
+    else:
+        gear_valid = False
+    print(f"[DEBUG]   gear_is_valid: {gear_valid}")
     print("[DEBUG] make_torus_gear end")
-    return gear
+    return gear, path, swept
 
 
 def debug_shape_info(shape):
@@ -112,32 +127,32 @@ def debug_shape_info(shape):
 if __name__ == '__main__':
     major = 120.0
     minor = 40.0
-    teeth = 36
-    groove = 9.0
-    helix = 28.0
-    single = False
+    path_steps = 360
+    section_radius = 14.0
+    v_amplitude = 0.35
+    turns = 12
 
     print("[DEBUG] Build parameters")
-    print(f"[DEBUG]   major     : {major}")
-    print(f"[DEBUG]   minor     : {minor}")
-    print(f"[DEBUG]   teeth     : {teeth}")
-    print(f"[DEBUG]   groove    : {groove}")
-    print(f"[DEBUG]   helix_deg : {helix}")
-    print(f"[DEBUG]   single    : {single}")
+    print(f"[DEBUG]   major        : {major}")
+    print(f"[DEBUG]   minor        : {minor}")
+    print(f"[DEBUG]   path_steps   : {path_steps}")
+    print(f"[DEBUG]   section_radius: {section_radius}")
+    print(f"[DEBUG]   v_amplitude  : {v_amplitude}")
+    print(f"[DEBUG]   tooth_count  : {turns}")
 
     obj = dispocc(touch=True)
 
-    gear = make_torus_gear(
+    gear, path, swept = make_torus_gear(
         major_radius=major,
         minor_radius=minor,
-        tooth_count=teeth,
-        groove_radius=groove,
-        groove_length=2.5 * (major + minor),
-        helix_angle_deg=helix,
-        double_helix=not single,
+        path_steps=path_steps,
+        section_radius=section_radius,
+        v_amplitude=v_amplitude,
+        tooth_count=turns,
     )
     debug_shape_info(gear)
-
+    obj.display.DisplayShape(path, color="BLUE", transparency=0.7)
+    obj.display.DisplayShape(swept, color="RED", transparency=0.6)
     obj.show_axs_pln(gp_Ax3(), scale=major * 0.4)
-    obj.display.DisplayShape(gear)
+    obj.display.DisplayShape(gear, transparency=0.7)
     obj.ShowOCC()
