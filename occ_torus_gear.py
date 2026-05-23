@@ -15,7 +15,6 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
-from OCC.Core.Geom import Geom_Circle
 
 
 def torus_surface_point(major_radius, minor_radius, u, v):
@@ -55,16 +54,34 @@ def torus_surface_wire(
     return wire_builder.Wire(), pts
 
 
-def make_section_face(section_radius, p0, tangent_vec, normal_vec, bite_depth=1.5):
-    """Create a planar circle face perpendicular to the path tangent and bitten into the torus."""
+def make_section_face(section_width, section_height, p0, tangent_vec, normal_vec, bite_depth=1.5):
+    """Create a planar rectangular face perpendicular to the path tangent."""
     center = p0.Translated(normal_vec.Reversed().Scaled(bite_depth))
     tangent_dir = gp_Dir(tangent_vec)
+    # choose a stable in-plane axis
     alt_dir = gp_Dir(1, 0, 0) if abs(tangent_dir.Dot(gp_Dir(0, 0, 1))) > 0.9 else gp_Dir(0, 0, 1)
-    ax2 = gp_Ax2(center, tangent_dir, alt_dir)
-    circle = Geom_Circle(ax2, section_radius)
-    edge = BRepBuilderAPI_MakeEdge(circle).Edge()
-    wire = BRepBuilderAPI_MakeWire(edge).Wire()
-    return BRepBuilderAPI_MakeFace(wire).Face()
+    x_dir = gp_Vec(alt_dir)
+    x_dir.Normalize()
+    # make x_dir perpendicular to tangent_dir
+    tangent_vec_norm = gp_Vec(tangent_dir)
+    x_dir = x_dir.Subtracted(tangent_vec_norm.Scaled(x_dir.Dot(tangent_vec_norm)))
+    x_dir.Normalize()
+    x_dir_dir = gp_Dir(x_dir)
+    y_dir = gp_Vec(tangent_dir.Crossed(x_dir_dir))
+
+    hx = section_width
+    hy = section_height
+    p00 = center.Translated(x_dir.Scaled(-hx)).Translated(y_dir.Scaled(-hy))
+    p01 = center.Translated(x_dir.Scaled(hx)).Translated(y_dir.Scaled(-hy))
+    p11 = center.Translated(x_dir.Scaled(hx)).Translated(y_dir.Scaled(hy))
+    p10 = center.Translated(x_dir.Scaled(-hx)).Translated(y_dir.Scaled(hy))
+
+    wire_builder = BRepBuilderAPI_MakeWire()
+    wire_builder.Add(BRepBuilderAPI_MakeEdge(p00, p01).Edge())
+    wire_builder.Add(BRepBuilderAPI_MakeEdge(p01, p11).Edge())
+    wire_builder.Add(BRepBuilderAPI_MakeEdge(p11, p10).Edge())
+    wire_builder.Add(BRepBuilderAPI_MakeEdge(p10, p00).Edge())
+    return BRepBuilderAPI_MakeFace(wire_builder.Wire()).Face()
 
 
 def make_torus_wires(
@@ -72,7 +89,8 @@ def make_torus_wires(
     minor_radius=40.0,
     wires=5,
     steps=240,
-    section_radius=8.0,
+    section_width=16.0,
+    section_height=8.0,
     tilt=0.08,
 ):
     """Create multiple torus-surface wires and sweep section faces along them."""
@@ -81,7 +99,8 @@ def make_torus_wires(
     print(f"[DEBUG]   minor_radius: {minor_radius}")
     print(f"[DEBUG]   wires       : {wires}")
     print(f"[DEBUG]   steps       : {steps}")
-    print(f"[DEBUG]   section_radius: {section_radius}")
+    print(f"[DEBUG]   section_width: {section_width}")
+    print(f"[DEBUG]   section_height: {section_height}")
     print(f"[DEBUG]   tilt        : {tilt}")
 
     torus = BRepPrimAPI_MakeTorus(major_radius, minor_radius).Shape()
@@ -102,7 +121,7 @@ def make_torus_wires(
 
         tangent_vec = gp_Vec(pts[0], pts[1])
         normal_vec = torus_surface_normal(u0, v_phase)
-        section = make_section_face(section_radius, pts[0], tangent_vec, normal_vec, bite_depth=2.0)
+        section = make_section_face(section_width, section_height, pts[0], tangent_vec, normal_vec, bite_depth=2.0)
         pipe = BRepOffsetAPI_MakePipe(wire, section)
         pipe.Build()
         sweep = pipe.Shape()
@@ -142,8 +161,9 @@ if __name__ == '__main__':
         minor_radius=minor,
         wires=5,
         steps=360,
-        section_radius=8.0,
-        tilt=0.08
+        section_width=16.0,
+        section_height=8.0,
+        tilt=0.2,
     )
 
     debug_shape_info(torus, "torus")
@@ -154,7 +174,7 @@ if __name__ == '__main__':
 
     for idx, sweep in enumerate(sweeps, start=1):
         debug_shape_info(sweep, f"sweep_{idx}")
-        obj.display.DisplayShape(sweep, transparency=0.5)
+        obj.display.DisplayShape(sweep, transparency=0.8)
 
     obj.show_axs_pln(gp_Ax3(), scale=major * 0.4)
     obj.ShowOCC()
