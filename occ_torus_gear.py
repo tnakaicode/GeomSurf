@@ -13,14 +13,14 @@ logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
-from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus
+from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus, BRepPrimAPI_MakePrism
 from OCC.Core.BRepBuilderAPI import (
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeWire,
     BRepBuilderAPI_MakeFace,
 )
-from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
-from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
 
@@ -74,39 +74,49 @@ def torus_surface_wire(
 
 
 def make_section_face(
-    section_width, section_height, p0, tangent_vec, normal_vec, bite_depth=1.5
+    section_width,
+    section_height,
+    p0,
+    major_tangent,
+    tangent_vec,
+    normal_vec,
+    tilt=0.0,
+    bite_depth=1.5,
 ):
-    """Create a planar rectangular face perpendicular to the path tangent."""
-    center = p0.Translated(normal_vec.Reversed().Scaled(bite_depth))
-    tangent_dir = gp_Dir(tangent_vec)
-    # choose a stable in-plane axis
-    alt_dir = (
-        gp_Dir(1, 0, 0)
-        if abs(tangent_dir.Dot(gp_Dir(0, 0, 1))) > 0.9
-        else gp_Dir(0, 0, 1)
-    )
-    x_dir = gp_Vec(alt_dir)
-    x_dir.Normalize()
-    # make x_dir perpendicular to tangent_dir
-    tangent_vec_norm = gp_Vec(tangent_dir)
-    x_dir = x_dir.Subtracted(tangent_vec_norm.Scaled(x_dir.Dot(tangent_vec_norm)))
-    x_dir.Normalize()
-    x_dir_dir = gp_Dir(x_dir)
-    y_dir = gp_Vec(tangent_dir.Crossed(x_dir_dir))
+    """Create a parallelogram section whose plane is perpendicular to the wire."""
+    tangent_dir = gp_Vec(tangent_vec.X(), tangent_vec.Y(), tangent_vec.Z())
+    if tangent_dir.Magnitude() < 1e-9:
+        tangent_dir = gp_Vec(1, 0, 0)
+    tangent_dir.Normalize()
 
-    hx = section_width
-    hy = section_height
-    p00 = center.Translated(x_dir.Scaled(-hx)).Translated(y_dir.Scaled(-hy))
-    p01 = center.Translated(x_dir.Scaled(hx)).Translated(y_dir.Scaled(-hy))
-    p11 = center.Translated(x_dir.Scaled(hx)).Translated(y_dir.Scaled(hy))
-    p10 = center.Translated(x_dir.Scaled(-hx)).Translated(y_dir.Scaled(hy))
+    x_dir = gp_Vec(major_tangent.X(), major_tangent.Y(), major_tangent.Z())
+    if x_dir.Magnitude() < 1e-9:
+        x_dir = gp_Vec(1, 0, 0)
+    proj = tangent_dir.Scaled(x_dir.Dot(tangent_dir))
+    x_dir = x_dir.Subtracted(proj)
+    if x_dir.Magnitude() < 1e-9:
+        x_dir = normal_vec.Crossed(tangent_dir)
+    x_dir.Normalize()
+
+    y_dir = tangent_dir.Crossed(x_dir)
+    if y_dir.Magnitude() < 1e-9:
+        y_dir = normal_vec.Crossed(tangent_dir)
+    y_dir.Normalize()
+
+    p00 = p0
+    p01 = p0.Translated(x_dir.Scaled(section_width))
+    p10 = p0.Translated(y_dir.Scaled(section_height))
+    p11 = p10.Translated(x_dir.Scaled(section_width))
 
     wire_builder = BRepBuilderAPI_MakeWire()
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p00, p01).Edge())
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p01, p11).Edge())
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p11, p10).Edge())
     wire_builder.Add(BRepBuilderAPI_MakeEdge(p10, p00).Edge())
-    return BRepBuilderAPI_MakeFace(wire_builder.Wire()).Face()
+    section_wire = wire_builder.Wire()
+
+    face_normal = tangent_dir
+    return BRepBuilderAPI_MakeFace(section_wire).Face(), section_wire, face_normal
 
 
 def make_torus_wires(
@@ -130,6 +140,7 @@ def make_torus_wires(
 
     torus = BRepPrimAPI_MakeTorus(major_radius, minor_radius).Shape()
     sweep_list = []
+    wire_list = []
     for i in range(wires):
         u0 = 2.0 * np.pi * i / wires
         v_phase = 0.0
@@ -141,27 +152,43 @@ def make_torus_wires(
             tilt=tilt,
             v_phase=v_phase,
         )
+        wire_list.append(wire)
 
-        tangent_vec = gp_Vec(pts[0], pts[1])
+        major_dir = gp_Vec(pts[0].X(), pts[0].Y(), 0.0)
+        if major_dir.Magnitude() < 1e-9:
+            major_dir = gp_Vec(np.cos(u0), np.sin(u0), 0.0)
+        major_dir.Normalize()
+
         normal_vec = torus_surface_normal(u0, v_phase)
+        tangent_vec = gp_Vec(pts[-1], pts[1])
+
         center = pts[0].Translated(normal_vec.Reversed().Scaled(2.0))
         sd = torus_signed_distance(major_radius, minor_radius, center)
         print(
             f"[DEBUG]   section center signed distance: {sd:.6f} ({'inside' if sd < 0 else 'outside' if sd > 0 else 'on surface'})"
         )
-        section = make_section_face(
+        section, section_wire, section_normal = make_section_face(
             section_width,
             section_height,
             pts[0],
+            major_dir,
             tangent_vec,
             normal_vec,
+            tilt=tilt,
             bite_depth=2.0,
         )
-        pipe = BRepOffsetAPI_MakePipe(wire, section)
-        pipe.Build()
-        sweep = pipe.Shape()
-        sweep_list.append(sweep)
-        print(f"[DEBUG]   wire {i + 1}/{wires} swept")
+
+        pipe_shell = BRepOffsetAPI_MakePipeShell(wire)
+        pipe_shell.Add(section_wire, True)
+        pipe_shell.Build()
+        if not pipe_shell.IsDone():
+            print(f"[DEBUG]   wire {i + 1}/{wires} MakePipeShell failed, fallback to prism")
+            cutter = BRepPrimAPI_MakePrism(section, tangent_vec.Scaled(1000)).Shape()
+        else:
+            pipe_shell.MakeSolid()
+            cutter = pipe_shell.Shape()
+        sweep_list.append(cutter)
+        print(f"[DEBUG]   wire {i + 1}/{wires} cutter built (pipe shell sweep, type={cutter.ShapeType()})")
 
     common_shapes = []
     for idx, sweep in enumerate(sweep_list, start=1):
@@ -180,11 +207,20 @@ def make_torus_wires(
 
     result = torus
     for idx, common_shape in enumerate(common_shapes, start=1):
-        result = BRepAlgoAPI_Cut(result, common_shape).Shape()
+        print(f"[DEBUG] cut_{idx}: result type={type(result)}, common_shape type={type(common_shape)}, shapeType={common_shape.ShapeType()}")
+        cut_op = BRepAlgoAPI_Cut(result, common_shape)
+        if not cut_op.IsDone():
+            print(f"[DEBUG] cut_{idx}: operation failed")
+            continue
+        new_result = cut_op.Shape()
+        if new_result is None or new_result.IsNull():
+            print(f"[DEBUG] cut_{idx}: result is null")
+            continue
+        result = new_result
         print(f"[DEBUG] cut_{idx}: removed common region")
 
     print("[DEBUG] make_torus_wires end")
-    return result
+    return result, wire_list, sweep_list, common_shapes
 
 
 def debug_shape_info(shape, name="shape"):
@@ -213,17 +249,24 @@ if __name__ == "__main__":
 
     obj = dispocc(touch=True)
 
-    final_shape = make_torus_wires(
+    final_shape, wire_list, sweep_list, common_shapes = make_torus_wires(
         major_radius=major_radius,
         minor_radius=minor_radius,
         wires=wire_count,
         steps=wire_steps,
         section_width=section_width,
         section_height=section_height,
-        tilt=tilt,
+        tilt=tilt
     )
 
     debug_shape_info(final_shape, "final_shape")
-    obj.display.DisplayShape(final_shape)
+    for idx, wire in enumerate(wire_list, start=1):
+        obj.display.DisplayShape(wire, color="RED")
+    for idx, sweep in enumerate(sweep_list, start=1):
+        obj.display.DisplayShape(sweep, transparency=0.7, color="GREEN")
+    for idx, common_shape in enumerate(common_shapes, start=1):
+        obj.display.DisplayShape(common_shape, transparency=0.5, color="BLUE1")
+    obj.display.DisplayShape(final_shape, transparency=0.9)
     obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
+    obj.save_view("debug")
     obj.ShowOCC()
