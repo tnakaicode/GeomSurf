@@ -19,10 +19,14 @@ from OCC.Core.BRepBuilderAPI import (
     BRepBuilderAPI_MakeWire,
     BRepBuilderAPI_MakeFace,
 )
-from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell
-from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
+from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe, BRepOffsetAPI_MakePipeShell
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Common
+from OCC.Core.ShapeFix import ShapeFix_Solid, ShapeFix_Shape
+from OCC.Core.BRepGProp import brepgprop
+from OCC.Core.GProp import GProp_GProps
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
+from OCC.Extend.TopologyUtils import TopologyExplorer
 
 
 def torus_surface_point(major_radius, minor_radius, u, v):
@@ -71,6 +75,24 @@ def torus_surface_wire(
     edge = BRepBuilderAPI_MakeEdge(curve).Edge()
     wire = BRepBuilderAPI_MakeWire(edge).Wire()
     return wire, pts
+
+
+def shape_fix_shape(shape):
+    if shape is None or shape.IsNull():
+        return shape
+    if shape.ShapeType() == 2:
+        fixer = ShapeFix_Solid()
+        fixer.Init(shape)
+        fixer.Perform()
+        fixed = fixer.Shape()
+    else:
+        fixer = ShapeFix_Shape()
+        fixer.Init(shape)
+        fixer.Perform()
+        fixed = fixer.Shape()
+    if fixed is None or fixed.IsNull():
+        return shape
+    return fixed
 
 
 def make_section_face(
@@ -143,6 +165,39 @@ def make_torus_wires(
     wire_list = []
     section_list = []
     common_shapes = []
+    common_volumes = []
+
+    def count_solids(shape):
+        return sum(1 for _ in TopologyExplorer(shape).solids())
+
+    def shape_volume(shape):
+        props = GProp_GProps()
+        try:
+            brepgprop.VolumeProperties(shape, props)
+            return props.Mass()
+        except Exception:
+            return 0.0
+
+    def choose_largest_solid(shape):
+        solids = list(TopologyExplorer(shape).solids())
+        if not solids:
+            return None
+        if len(solids) == 1:
+            return solids[0]
+
+        best_solid = None
+        best_volume = -1.0
+        for solid in solids:
+            props = GProp_GProps()
+            brepgprop.VolumeProperties(solid, props)
+            volume = props.Mass()
+            print(f"[DEBUG]   candidate solid volume={volume:.6f}")
+            if volume > best_volume:
+                best_volume = volume
+                best_solid = solid
+        print(f"[DEBUG]   chosen largest solid volume={best_volume:.6f}")
+        return best_solid
+
     for i in range(wires):
         u0 = 2.0 * np.pi * i / wires
         v_phase = 0.0
@@ -192,13 +247,28 @@ def make_torus_wires(
         else:
             pipe_shell.MakeSolid()
             cutter = pipe_shell.Shape()
+
+        common_op = BRepAlgoAPI_Common(torus, cutter)
+        common_op.Build()
+        common_shape = common_op.Shape() if common_op.IsDone() else None
+        common_volume = 0.0
+        if common_shape is not None and not common_shape.IsNull():
+            common_shape = shape_fix_shape(common_shape)
+            common_volume = shape_volume(common_shape)
+            common_shapes.append(common_shape)
+        common_volumes.append(common_volume)
+
+        cutter_volume = shape_volume(cutter)
+        print(
+            f"[DEBUG]   wire {i + 1}/{wires} cutter built (pipe shell sweep, type={cutter.ShapeType()}), cutter volume={cutter_volume:.6f}, common volume={common_volume:.6f}"
+        )
         sweep_list.append(cutter)
-        print(f"[DEBUG]   wire {i + 1}/{wires} cutter built (pipe shell sweep, type={cutter.ShapeType()})")
 
     result = torus
+    print(f"[DEBUG] before cuts: torus solids={count_solids(result)}, ShapeType={result.ShapeType()}")
     for idx, cutter in enumerate(sweep_list, start=1):
         print(
-            f"[DEBUG] cut_{idx}: result type={type(result)}, cutter type={type(cutter)}, cutter ShapeType={cutter.ShapeType()}"
+            f"[DEBUG] cut_{idx}: current result type={type(result)}, result solids={count_solids(result)}, cutter type={type(cutter)}, cutter ShapeType={cutter.ShapeType()}"
         )
         cut_op = BRepAlgoAPI_Cut(result, cutter)
         cut_op.Build()
@@ -209,7 +279,27 @@ def make_torus_wires(
         if new_result is None or new_result.IsNull():
             print(f"[DEBUG] cut_{idx}: result is null")
             continue
-        result = new_result
+        solids_after = count_solids(new_result)
+        shape_type_after = new_result.ShapeType()
+        print(f"[DEBUG] cut_{idx}: result solids={solids_after}, ShapeType={shape_type_after}")
+        if shape_type_after == 0 and solids_after == 1:
+            single_solid = next(TopologyExplorer(new_result).solids(), None)
+            if single_solid is not None:
+                result = single_solid
+                print(f"[DEBUG] cut_{idx}: extracted single solid from compound")
+            else:
+                result = new_result
+                print(f"[DEBUG] cut_{idx}: compound with no solid")
+        elif solids_after > 1:
+            best_solid = choose_largest_solid(new_result)
+            if best_solid is not None:
+                result = best_solid
+                print(f"[DEBUG] cut_{idx}: selected largest solid from compound")
+            else:
+                result = new_result
+                print(f"[DEBUG] cut_{idx}: no solid selected, keeping raw result")
+        else:
+            result = new_result
         print(f"[DEBUG] cut_{idx}: removed cutter volume")
 
     print("[DEBUG] make_torus_wires end")
@@ -262,11 +352,11 @@ if __name__ == "__main__":
     for idx, section in enumerate(section_list, start=1):
         obj.display.DisplayShape(section, transparency=0.7, color="BLUE1")
     for idx, sweep in enumerate(sweep_list, start=1):
-        obj.display.DisplayShape(sweep, transparency=0.7, color="GREEN")
+        obj.display.DisplayShape(sweep, transparency=0.2, color="GREEN")
     #for idx, common_shape in enumerate(common_shapes, start=1):
     #    obj.display.DisplayShape(common_shape, transparency=0.5, color="BLUE1")
-    #obj.display.DisplayShape(torus, transparency=0.8)
-    obj.display.DisplayShape(final_shape, transparency=0.8)
+    obj.display.DisplayShape(torus, transparency=0.2)
+    #obj.display.DisplayShape(final_shape, transparency=0.8)
     obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
     obj.save_view("debug")
     obj.ShowOCC()
