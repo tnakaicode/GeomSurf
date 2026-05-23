@@ -8,12 +8,17 @@ sys.path.append(os.path.join("./"))
 from src.base_occ import dispocc
 
 import logging
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir
 from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
+from OCC.Core.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeWire,
+    BRepBuilderAPI_MakeFace,
+)
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Cut
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
@@ -37,7 +42,7 @@ def torus_surface_normal(u, v):
 def torus_signed_distance(major_radius, minor_radius, point):
     """Signed distance to the torus surface: negative is inside."""
     rho = np.hypot(point.X(), point.Y())
-    return (rho - major_radius) ** 2 + point.Z() ** 2 - minor_radius ** 2
+    return (rho - major_radius) ** 2 + point.Z() ** 2 - minor_radius**2
 
 
 def torus_surface_wire(
@@ -68,12 +73,18 @@ def torus_surface_wire(
     return wire, pts
 
 
-def make_section_face(section_width, section_height, p0, tangent_vec, normal_vec, bite_depth=1.5):
+def make_section_face(
+    section_width, section_height, p0, tangent_vec, normal_vec, bite_depth=1.5
+):
     """Create a planar rectangular face perpendicular to the path tangent."""
     center = p0.Translated(normal_vec.Reversed().Scaled(bite_depth))
     tangent_dir = gp_Dir(tangent_vec)
     # choose a stable in-plane axis
-    alt_dir = gp_Dir(1, 0, 0) if abs(tangent_dir.Dot(gp_Dir(0, 0, 1))) > 0.9 else gp_Dir(0, 0, 1)
+    alt_dir = (
+        gp_Dir(1, 0, 0)
+        if abs(tangent_dir.Dot(gp_Dir(0, 0, 1))) > 0.9
+        else gp_Dir(0, 0, 1)
+    )
     x_dir = gp_Vec(alt_dir)
     x_dir.Normalize()
     # make x_dir perpendicular to tangent_dir
@@ -135,8 +146,17 @@ def make_torus_wires(
         normal_vec = torus_surface_normal(u0, v_phase)
         center = pts[0].Translated(normal_vec.Reversed().Scaled(2.0))
         sd = torus_signed_distance(major_radius, minor_radius, center)
-        print(f"[DEBUG]   section center signed distance: {sd:.6f} ({'inside' if sd < 0 else 'outside' if sd > 0 else 'on surface'})")
-        section = make_section_face(section_width, section_height, pts[0], tangent_vec, normal_vec, bite_depth=2.0)
+        print(
+            f"[DEBUG]   section center signed distance: {sd:.6f} ({'inside' if sd < 0 else 'outside' if sd > 0 else 'on surface'})"
+        )
+        section = make_section_face(
+            section_width,
+            section_height,
+            pts[0],
+            tangent_vec,
+            normal_vec,
+            bite_depth=2.0,
+        )
         pipe = BRepOffsetAPI_MakePipe(wire, section)
         pipe.Build()
         sweep = pipe.Shape()
@@ -153,7 +173,9 @@ def make_torus_wires(
         if common_shape.IsNull():
             print(f"[DEBUG] common_{idx}: no intersection")
             continue
-        print(f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})")
+        print(
+            f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})"
+        )
         common_shapes.append(common_shape)
 
     result = torus
@@ -171,7 +193,7 @@ def debug_shape_info(shape, name="shape"):
     print(f"[DEBUG] {name}.ShapeType: {shape.ShapeType()}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     major_radius = 120.0
     minor_radius = 40.0
     wire_count = 5
@@ -202,6 +224,6 @@ if __name__ == '__main__':
     )
 
     debug_shape_info(final_shape, "final_shape")
-    obj.display.DisplayShape(final_shape, color="BLUE1", transparency=0.5)
+    obj.display.DisplayShape(final_shape)
     obj.show_axs_pln(gp_Ax3(), scale=major_radius * 0.4)
     obj.ShowOCC()
