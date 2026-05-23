@@ -16,10 +16,8 @@ from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
 from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
-from OCC.Core.BRepCheck import BRepCheck_Analyzer
 from OCC.Core.TColgp import TColgp_HArray1OfPnt
 from OCC.Core.GeomAPI import GeomAPI_Interpolate
-from OCC.Extend.TopologyUtils import TopologyExplorer
 
 
 def torus_surface_point(major_radius, minor_radius, u, v):
@@ -157,6 +155,25 @@ def debug_shape_info(shape, name="shape"):
     print(f"[DEBUG] {name}.ShapeType: {shape.ShapeType()}")
 
 
+def compute_common_shapes(torus, sweeps):
+    common_shapes = []
+    for idx, sweep in enumerate(sweeps, start=1):
+        common = BRepAlgoAPI_Common(torus, sweep)
+        if not common.IsDone():
+            print(f"[DEBUG] common_{idx}: operation failed")
+            continue
+
+        common_shape = common.Shape()
+        if common_shape.IsNull():
+            print(f"[DEBUG] common_{idx}: no intersection")
+            continue
+
+        print(f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})")
+        common_shapes.append(common_shape)
+
+    return common_shapes
+
+
 if __name__ == '__main__':
     major = 120.0
     minor = 40.0
@@ -186,23 +203,12 @@ if __name__ == '__main__':
     )
 
     debug_shape_info(torus, "torus")
-    obj.display.DisplayShape(torus, color="BLUE1", transparency=0.5)
+    obj.display.DisplayShape(torus, color="BLUE1", transparency=0.8)
     for idx, wire in enumerate(wires, start=1):
         debug_shape_info(wire, f"wire_{idx}")
         obj.display.DisplayShape(wire, color="RED", transparency=0.0)
 
-    common_shapes = []
-    for idx, sweep in enumerate(sweeps, start=1):
-        common = BRepAlgoAPI_Common(torus, sweep)
-        if not common.IsDone():
-            print(f"[DEBUG] common_{idx}: operation failed")
-            continue
-        common_shape = common.Shape()
-        if common_shape.IsNull():
-            print(f"[DEBUG] common_{idx}: no intersection")
-            continue
-        print(f"[DEBUG] common_{idx}: intersection found (type={common_shape.ShapeType()})")
-        common_shapes.append(common_shape)
+    common_shapes = compute_common_shapes(torus, sweeps)
 
     if common_shapes:
         print(f"[DEBUG] Displaying {len(common_shapes)} common shape(s)")
