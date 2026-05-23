@@ -15,6 +15,9 @@ from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Ax3
 from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeTorus
 from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
 from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe
+from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Common
+from OCC.Core.BRepCheck import BRepCheck_Analyzer
+from OCC.Extend.TopologyUtils import TopologyExplorer
 
 
 def torus_surface_point(major_radius, minor_radius, u, v):
@@ -29,6 +32,12 @@ def torus_surface_point(major_radius, minor_radius, u, v):
 def torus_surface_normal(u, v):
     """Return the normalized torus surface normal for parameters u and v."""
     return gp_Vec(np.cos(v) * np.cos(u), np.cos(v) * np.sin(u), np.sin(v))
+
+
+def torus_signed_distance(major_radius, minor_radius, point):
+    """Signed distance to the torus surface: negative is inside."""
+    rho = np.hypot(point.X(), point.Y())
+    return (rho - major_radius) ** 2 + point.Z() ** 2 - minor_radius ** 2
 
 
 def torus_surface_wire(
@@ -121,6 +130,9 @@ def make_torus_wires(
 
         tangent_vec = gp_Vec(pts[0], pts[1])
         normal_vec = torus_surface_normal(u0, v_phase)
+        center = pts[0].Translated(normal_vec.Reversed().Scaled(2.0))
+        sd = torus_signed_distance(major_radius, minor_radius, center)
+        print(f"[DEBUG]   section center signed distance: {sd:.6f} ({'inside' if sd < 0 else 'outside' if sd > 0 else 'on surface'})")
         section = make_section_face(section_width, section_height, pts[0], tangent_vec, normal_vec, bite_depth=2.0)
         pipe = BRepOffsetAPI_MakePipe(wire, section)
         pipe.Build()
@@ -167,14 +179,16 @@ if __name__ == '__main__':
     )
 
     debug_shape_info(torus, "torus")
-    obj.display.DisplayShape(torus, color="BLUE", transparency=0.8)
+    obj.display.DisplayShape(torus, color="BLUE1", transparency=0.5)
     for idx, wire in enumerate(wires, start=1):
         debug_shape_info(wire, f"wire_{idx}")
-        obj.display.DisplayShape(wire, color="RED" if idx % 2 == 0 else "BLUE", transparency=0.0)
+        obj.display.DisplayShape(wire, color="RED", transparency=0.0)
 
     for idx, sweep in enumerate(sweeps, start=1):
-        debug_shape_info(sweep, f"sweep_{idx}")
-        obj.display.DisplayShape(sweep, transparency=0.8)
+        common = BRepAlgoAPI_Common(torus, sweep)
+        if common.IsDone():
+            common_shape = common.Shape()
+            obj.display.DisplayShape(common_shape, color="GREEN", transparency=0.5)
 
     obj.show_axs_pln(gp_Ax3(), scale=major * 0.4)
     obj.ShowOCC()
